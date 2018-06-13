@@ -18,10 +18,9 @@ typedef struct tuning_interface {
 	int		tuned = 0;
 	struct dongle_state *dongle;
 	struct demod_state *demod;
-	//struct agc_state *agc;
 	struct controller_state *controller;
 	struct output_state *output;
-	pthread_t thread;
+	pthread_t *tuner_service;
 }tuner_t;
 
 #endif /* SRC_TUNER_H_ */

@@ -15,9 +15,11 @@
 //TODO revise or replace this dependency
 #include "../../rtl-sdr/src/rtl_fm.c"
 
+#include "debug.h"
 #include "scanner.h"
 #include "scan_tree.h"
 #include "tuner.h"
+#include "interface.h"
 
 /* defines */
 
@@ -30,5 +32,8 @@
 
 /* main function */
 int main(void){
+	debug_init(1);
+	general_info("Starting PiScan");
+
 	return 0;
 }

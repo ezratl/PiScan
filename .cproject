@@ -126,8 +126,8 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/tuner.c|src/scanner.c|src/piscan.c|tests" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="test_tuner_thread.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="tests"/>
+						<entry excluding="src/rtl_fm.c|src/interface/display/graphic_lcd/drv_MatrixOrbitalGX.c|src/display/graphic_lcd/drv_MatrixOrbitalGX.c|src/tuner.c|src/scanner.c|src/piscan.c|tests" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="test_scan_tree.c|test_tuner_thread.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="tests"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

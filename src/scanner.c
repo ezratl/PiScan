@@ -35,9 +35,9 @@ void analog_scan(const struct system *sys, struct tuning_interface *tuner){
 		fprintf(stderr, "Scanning %s\n", sys->tag);
 
 		// TODO thread sync
-		tuner->dongle->freq = sys->channels[cur].freq;
+		tuner->dongle->freq = sys->channels[cur]->freq;
 
-		switch(sys->channels[cur].mode){
+		switch(sys->channels[cur]->mode){
 		case AM:
 			tuner->demod->mode_demod = &am_demod;
 			break;

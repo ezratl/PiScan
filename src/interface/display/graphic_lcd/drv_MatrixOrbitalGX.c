@@ -49,7 +49,7 @@
 //#include <sys/ioctl.h>
 //#include <sys/time.h>
 
-#include <usb.h>
+#include <libusb.h>
 /*
 #include "debug.h"
 #include "cfg.h"
