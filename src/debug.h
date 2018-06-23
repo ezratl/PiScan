@@ -8,6 +8,8 @@
 #ifndef SRC_DEBUG_H_
 #define SRC_DEBUG_H_
 
+//int do_exit = 0;
+
 int debug_init();
 int debug_quit();
 void general_info(char message[]);

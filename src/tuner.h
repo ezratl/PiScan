@@ -10,17 +10,15 @@
 
 #include <pthread.h>
 
-#include "../../rtl-sdr/src/rtl_fm.c"
+//#include "../../rtl-sdr/src/rtl_fm.c"
 #include "../../rtl-sdr/include/rtl-sdr.h"
+#include "scan_tree.h"
 
-typedef struct tuning_interface {
-	int 	ready = 0;
-	int		tuned = 0;
-	struct dongle_state *dongle;
-	struct demod_state *demod;
-	struct controller_state *controller;
-	struct output_state *output;
-	pthread_t *tuner_service;
-}tuner_t;
+//pthread_t tuner_thread;
+
+int tune_to(const CHANNEL *chan);
+int read_rssi();
+
+int rtl_fm_thread_func();
 
 #endif /* SRC_TUNER_H_ */

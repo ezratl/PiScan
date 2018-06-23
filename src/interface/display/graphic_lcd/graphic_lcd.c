@@ -26,6 +26,14 @@ void clear_frame(void *pdisp){
 	memset(disp, 0, sizeof(disp->output_buffer));
 }
 
+/* Clears a rectangular region of the frame buffer */
+void clear_region(void *pdisp, int startX, int startY, int endX, int endY, int fill){
+	DISPLAY *disp = (DISPLAY*) pdisp;
+	for(int x = startX; x <= endX && x < disp->width && x >= 0; ++x)
+		for(int y = startY; y <= endY && y < disp->height && y >= 0; ++y)
+			disp->output_buffer[x + (y * disp->width)] = fill;
+}
+
 /* Draw a single point */
 void draw_point(void *pdisp, int x, int y){
 	DISPLAY *disp = (DISPLAY*) pdisp;
@@ -34,7 +42,7 @@ void draw_point(void *pdisp, int x, int y){
 }
 
 /* Recursively draw characters into frame buffer */
-static void add_char(DISPLAY *disp, struct text_line* line, const char text[],
+void add_char(DISPLAY *disp, struct text_line* line, const char text[],
 		int index, int x_offset, const FONT_INFO *font) {
 	int next_offset = x_offset;
 	int c = text[index];
@@ -94,7 +102,7 @@ static void add_char(DISPLAY *disp, struct text_line* line, const char text[],
 }
 
 /* Recursively look up width of the string to be drawn */
-static int string_px_width(const char text[], int index, int spacing, const FONT_INFO *font){
+int string_px_width(const char text[], int index, int spacing, const FONT_INFO *font){
 	int width = 0;
 	int c = text[index];
 	if(c >= font->start && c <= font->end){
@@ -121,6 +129,8 @@ void draw_text(void *pdisp, struct text_line* line, const char text[]){
 	default:
 		font = &lucidaConsole_7ptFontInfo;
 	}
+
+	clear_region(pdisp, line->startX, line->startY, line->width - 1, font->height - 1, line->invert);
 	DISPLAY *disp = (DISPLAY*) pdisp;
 
 	/* Look up string width */

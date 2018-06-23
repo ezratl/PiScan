@@ -1,0 +1,16 @@
+eclipse.preferences.version=1
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248.1652501512/RASPBERRY/delimiter=;
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248.1652501512/RASPBERRY/operation=append
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248.1652501512/RASPBERRY/value=C\:\\SysGCC\\raspberry
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248.1652501512/append=true
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248.1652501512/appendContributed=true
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248/RASPBERRY/delimiter=;
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248/RASPBERRY/operation=append
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248/RASPBERRY/value=C\:\\SysGCC\\raspberry
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248/append=true
+environment/project/org.eclipse.cdt.msvc.exe.debug.1269692248/appendContributed=true
+environment/project/org.eclipse.cdt.msvc.exe.release.1257106539/RASPBERRY/delimiter=;
+environment/project/org.eclipse.cdt.msvc.exe.release.1257106539/RASPBERRY/operation=append
+environment/project/org.eclipse.cdt.msvc.exe.release.1257106539/RASPBERRY/value=C\:\\SysGCC\\raspberry
+environment/project/org.eclipse.cdt.msvc.exe.release.1257106539/append=true
+environment/project/org.eclipse.cdt.msvc.exe.release.1257106539/appendContributed=true

@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "debug.h"
+//#include "debug.h"
 
 //#include "scan_tree.c"
 #define SCAN_TREE_TAG	"Scan Tree"
@@ -28,8 +28,6 @@ enum system_type {
 	DMR
 };
 
-const char *getSysType(enum system_type type);
-
 enum modulation {
 	FM = 0,
 	NFM,
@@ -39,12 +37,22 @@ enum modulation {
 	RAW
 };
 
-const char *getMode(enum modulation mode);
+enum squelch_mode {
+	CSQ = 0,
+	PL,
+	DCS
+};
+
 
 typedef struct channel {
 	char	*tag;
 	uint32_t	freq;
 	enum modulation	mode;
+	enum squelch_mode squelch;
+	union {
+		int pl_tone;
+		int dcs_tone;
+	};
 	int		delay_enabled;
 	int		lockout;
 	time_t	sigloss_start_time;
@@ -72,12 +80,13 @@ typedef struct system {
 } RADIO_SYSTEM;
 
 struct scan_profile {
+	char	*dir;
 	char	*name;
-	struct system	*systems;
 	int		num_systems;
+	struct system	*systems;
 };
 
-int scan_profile_load(struct scan_profile *sp, char dir[]);
-int scan_profile_save(struct scan_profile *sp, char dir[]);
+int scan_profile_load(void *psp);
+int scan_profile_save(void *psp);
 
 #endif /* SCAN_TREE_H_ */

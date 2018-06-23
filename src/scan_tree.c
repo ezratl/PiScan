@@ -20,6 +20,7 @@
 
 //#include "../../rtl-sdr/src/rtl_fm.c"
 #include "scan_tree.h"
+#include "debug.h"
 
 /* Definitions */
 
@@ -100,11 +101,17 @@ int system_save(struct system *sys, char prf_dir[]){
 	return 0;
 }
 
-int scan_profile_load(struct scan_profile *sp, char dir[]){
+int scan_profile_load(void *psp){
+	info(SCAN_TREE_TAG, "Loading scan profile");
 	return 0;
 }
 
-int scan_profile_save(struct scan_profile *sp, char dir[]) {
+int scan_profile_save(void *psp) {
+	info(SCAN_TREE_TAG, "Saving scan profile");
+
+	struct scan_profile *sp = (struct scan_profile*) sp;
+	char dir[] = sp->dir;
+
 	int err = mkdir(dir);
 	if (err != 0) {
 		fprintf(stderr, "Could not make directory \"%s\": code %i\n", dir, err);

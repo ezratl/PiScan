@@ -33,6 +33,7 @@ typedef struct text_line {
 	int	startY;
 	int	width;
 	int spacing;
+	int invert;
 	enum font_name font;
 	enum layout layout;
 }TEXT_LINE;
@@ -56,6 +57,7 @@ typedef struct bar {
 }BAR;
 
 void clear_frame(void *pdisp);
+void clear_region(void *pdisp, int startX, int startY, int endX, int endY, int fill);
 void draw_point(void *pdisp, int x, int y);
 void draw_text(void *pdisp, struct text_line* line, const char text[]);
 void draw_rect(void *pdisp, struct rectangle* rect);

@@ -10,7 +10,7 @@
 
 #include <pthread.h>
 
-#include "debug.h"
+#include "interface.h"
 
 #define SCANNER_TAG	"Scanner"
 #define SCANNER_SVC_TAG	"Scanner Service"

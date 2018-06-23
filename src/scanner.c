@@ -20,6 +20,7 @@
 
 #include "scan_tree.h"
 #include "scanner.h"
+#include "debug.h"
 
 /* Constants */
 #define SCAN_DELAY_TIMEOUT	2000 //2000ms timeout
@@ -28,6 +29,9 @@
 
 
 /* Methods */
+void broadcast_scan_event(enum scan_event){
+
+}
 
 void analog_scan(const struct system *sys, struct tuning_interface *tuner){
 	for(int cur = 0; cur < sys->channel_count; cur++) {
@@ -61,6 +65,5 @@ void p25_scan(struct system *sys){
 
 void dmr_scan(struct system *sys){
 	// TODO for future implementation
-	//struct tuning_interface ti;
 }
 

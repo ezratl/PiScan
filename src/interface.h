@@ -12,38 +12,80 @@
 #include <pthread.h>
 
 #include "debug.h"
+#include "event.h"
 #include "scan_tree.h"
 
 #define INTERFACE_TAG	"Interface"
 #define INTERFACE_SVC_TAG	"Interface Service"
 
-typedef struct {
-	void	(*init)(void);
-}INFO_COMPONENTS;
+#define MAXIMUM_INTERFACES	4
+#define MIN_DISPLAY_RSSI	-75
+#define MAX_DISPLAY_RSSI	0
 
-typedef struct {
-	void	(*init)(void);
-}MODE_MENU;
+enum interface_mode {
+	MODE_INITIALIZING,
+	MODE_QUIT,
+	MODE_MENU,
+	MODE_SCAN,
+	MODE_PAUSED,
 
-typedef struct {
+};
+/*
+enum interface_output_event {
+	EVENT_QUIT,
+	EVENT_SET_MODE_MENU,
+	EVENT_SET_MODE_SCAN,
+	EVENT_SET_MODE_PAUSED,
+	EVENT_UPDATE_INFO,
+	EVENT_UPDATE_DISPLAY,
+
+};
+
+enum interface_input_event {
+	EVENT_BUTTON_PRESSED,
+	EVENT_SERIAL_DATA_AVAILABLE,
+
+};
+*/
+struct info_components {
+	void	(*init)(void);
+	void	(*update_info)(void);
+	int	current_rssi;
+	int	current_freq;
+	int	notification_status;
+	int	sys_update_status;
+	int	internet_status;
+	char	*ip_address;
+	int	bluetooth_status;
+};
+
+struct mode_menu {
+	void	(*init)(void);
+	void	(*set_option_tree)(void*);
+};
+
+struct mode_scan {
 	void	(*init)(void);
 	void	(*set_system)(RADIO_SYSTEM*);
-}MODE_SCANNING;
+};
 
-typedef struct {
+struct mode_paused {
 	void	(*init)(void);
 	void	(*set_entry)(ENTRY*);
-}MODE_SCAN_PAUSED;
+};
 
 typedef struct {
-	int	(*thread_func)(void);
-	void	(*init)(void);
-	void	(*quit)(void);
-	pthread_t *interface_service;
-	INFO_COMPONENTS	*info_comp;
-	MODE_MENU	*menu_mode;
-	MODE_SCANNING	*scan_mode;
-	MODE_SCAN_PAUSED	*paused_mode;
+	//void	(*broadcast_event)(enum event);
+	//int	(*output_event_handler)(void);
+	int	(*input_event_listener)(void);
+	int	(*init)(void);
+	int	(*quit)(void);
+	int	(*update)(void);
+	pthread_t interface_service;
+	struct info_components	info_comp;
+	struct mode_menu	menu_mode;
+	struct mode_scan	scan_mode;
+	struct mode_paused	paused_mode;
 }INTERFACE;
 
 extern INTERFACE Console_only_no_IO;

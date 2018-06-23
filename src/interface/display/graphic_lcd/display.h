@@ -24,5 +24,6 @@ typedef struct display {
 }DISPLAY;
 
 DISPLAY pipe_fifo;
+DISPLAY disp_MatrixOrbitalGX;
 
 #endif /* SRC_DISPLAY_GRAPHIC_LCD_DISPLAY_H_ */

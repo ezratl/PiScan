@@ -76,6 +76,8 @@
 #include "rtl-sdr.h"
 #include "convenience/convenience.h"
 
+#include "tuner.h"
+
 #define DEFAULT_SAMPLE_RATE		24000
 #define DEFAULT_BUF_LENGTH		(1 * 16384)
 #define MAXIMUM_OVERSAMPLE		16
@@ -243,7 +245,7 @@ struct demod_state demod;
 struct demod_state demod2;
 struct output_state output;
 struct controller_state controller;
-struct tuning_interface *tuning_iface;
+//struct tuning_interface *tuning_iface;
 
 void usage(void)
 {
@@ -1496,7 +1498,7 @@ int generate_header(struct demod_state *d, struct output_state *o)
 
 //TODO modified signature
 /*int main(int argc, char **argv)*/
-int rtl_fm_thread_fn(struct tuning_interface *ptuner)
+int rtl_fm_thread_fn()
 {
 #ifndef _WIN32
 	struct sigaction sigact;
@@ -1511,12 +1513,12 @@ int rtl_fm_thread_fn(struct tuning_interface *ptuner)
 	output_init(&output);
 	controller_init(&controller);
 
-	//assign pointers
+	/*//assign pointers
 	tuning_iface = ptuner;
 	ptuner->dongle = &dongle;
 	ptuner->demod = &demod;
 	ptuner->output = &output;
-	ptuner->controller = &controller;
+	ptuner->controller = &controller;*/
 ///*
 	while ((opt = getopt(argc, argv, "d:f:g:s:b:l:o:t:r:p:E:F:A:M:h")) != -1) {
 		switch (opt) {
