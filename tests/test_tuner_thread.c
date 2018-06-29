@@ -15,7 +15,7 @@
 #include <stdio.h>
 
 //TODO revise or replace this dependency
-#include "../../rtl-sdr/src/rtl_fm.c"
+//#include "../../rtl-sdr/src/rtl_fm.c"
 
 /* defines */
 

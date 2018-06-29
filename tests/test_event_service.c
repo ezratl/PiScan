@@ -24,7 +24,7 @@ int main(void){
 	push_event(GLOBAL_READY, NULL);
 
 	info(TEST_TAG, "Creating thread");
-	pthread_create(&event_thread, NULL, global_event_listener_thread, NULL);
+	pthread_create(&event_thread, NULL, &global_event_listener_thread, NULL);
 	//system("pause");
 
 	info(TEST_TAG, "Pushing thread-time events");

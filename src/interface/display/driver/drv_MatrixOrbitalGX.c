@@ -49,8 +49,8 @@
 //#include <sys/ioctl.h>
 //#include <sys/time.h>
 
-#include <libusb.h>
-#include <usb.h>
+#include <libusb-1.0/libusb.h>
+//#include <usb.h>
 /*
 #include "debug.h"
 #include "cfg.h"

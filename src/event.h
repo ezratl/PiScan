@@ -64,7 +64,7 @@ typedef struct {
 }EVENT;
 
 int push_event(EVENT_ID evid, void *data);
-void *global_event_listener_thread(void);
+void global_event_listener_thread(void);
 
 void global_event_handler(EVENT *event);
 extern void scanner_event_handler(EVENT *event);

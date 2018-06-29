@@ -71,7 +71,7 @@
 
 #include <math.h>
 #include <pthread.h>
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 
 #include "rtl-sdr.h"
 #include "convenience/convenience.h"

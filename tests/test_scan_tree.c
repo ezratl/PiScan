@@ -90,11 +90,11 @@ int main(void){
 	}
 
 	fprintf(stdout, "Saving file\n");
-	if(scan_profile_save(&generated_profile, test_directory))
+	if(scan_profile_save(&generated_profile))
 		fprintf(stdout, "Saved successfully\n");
 
 	fprintf(stdout, "Loading scan file\n");
-	scan_profile_load(&loaded_profile, test_directory);
+	scan_profile_load(&loaded_profile);
 
 	system("pause");
 	return 0;

@@ -34,7 +34,7 @@ int push_event(EVENT_ID evid, void *data){
 	return 0;
 }
 
-void *global_event_listener_thread(void){
+void global_event_listener_thread(void){
 	info(EVT_HANDLER_TAG, "Starting event handler");
 
 	int run = 1;

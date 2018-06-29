@@ -3,6 +3,7 @@
 	<name>PiScan</name>
 	<comment></comment>
 	<projects>
+		<project>rtl-sdr</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
