@@ -19,13 +19,14 @@ typedef struct display {
 	int height;
 	int width;
 	uint8_t backlight[3];
+	int invert;
 	int	(*init)(void*);
 	int (*quit)(void);
 	int (*update)(void);
-	unsigned char *output_buffer;
+	uint8_t *output_buffer;
 }DISPLAY;
 
-DISPLAY pipe_fifo;
-DISPLAY disp_MatrixOrbitalGX;
+extern DISPLAY pipe_fifo;
+extern DISPLAY disp_MatrixOrbitalGX;
 
 #endif /* SRC_DISPLAY_GRAPHIC_LCD_DISPLAY_H_ */

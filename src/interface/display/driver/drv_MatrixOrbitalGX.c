@@ -50,7 +50,9 @@
 //#include <sys/time.h>
 
 //#include <libusb-1.0/libusb.h>
+#include "debug.h"
 #include "libusb-compat-0.1/libusb/usb.h"
+#include "interface/graphic_lcd/display.h"
 //#include "usb.h"
 /*
 #include "debug.h"
@@ -66,6 +68,8 @@
 
 #include "drv_generic_graphic.h"
 */
+#define MOGX_TAG	"Matrix Orbital driver"
+
 #define MatrixOrbitalGX_VENDOR  	0x1b3d
 #define MatrixOrbitalGX_DEVICE_1  	0x000a
 #define MatrixOrbitalGX_DEVICE_2  	0x000b
@@ -81,15 +85,15 @@
 #define SCREEN_SIZE			(SCREEN_H * SCREEN_W)
 /*****************************************/
 
-#if 1
+/*#if 1
 #define DEBUG(x) debug("%s(): %s", __FUNCTION__, x);
 #else
 #define DEBUG(x)
-#endif
+#endif*/
 
 
-static char Name[] = "MatrixOrbitalGX";
-static unsigned char *MOGX_framebuffer;
+//static char Name[] = "MatrixOrbitalGX";
+static uint8_t *MOGX_framebuffer;
 
 /* used to display white text on blue background or inverse */
 static unsigned char invert = 0x00;
@@ -128,7 +132,7 @@ static int drv_MOGX_open(void)
 
     lcd_dev = NULL;
 
-    info("%s: scanning for Matrix Orbital GX Series LCD...", Name);
+    debug(MOGX_TAG, "Scanning for Matrix Orbital GX Series LCD...");
 
     usb_set_debug(0);
 
@@ -148,17 +152,17 @@ static int drv_MOGX_open(void)
 		if (dev->descriptor.idProduct == MatrixOrbitalGX_DEVICE_2)
 		    backlight_RGB = 0;
 
-		info("%s: found Matrix Orbital GX Series LCD on bus %s device %s", Name, bus->dirname, dev->filename);
+		debug(MOGX_TAG, "Found Matrix Orbital GX Series LCD on bus %s device %s"/*, bus->dirname, dev->filename*/);
 
 		lcd_dev = usb_open(dev);
 
 		ret = usb_get_driver_np(lcd_dev, 0, driver, sizeof(driver));
 
 		if (ret == 0) {
-		    info("%s: interface 0 already claimed by '%s'", Name, driver);
-		    info("%s: attempting to detach driver...", Name);
+		    debug(MOGX_TAG, "Interface 0 already claimed by '%s'"/*, driver*/);
+		    debug(MOGX_TAG, "Attempting to detach driver...");
 		    if (usb_detach_kernel_driver_np(lcd_dev, 0) < 0) {
-			error("%s: usb_detach_kernel_driver_np() failed!", Name);
+			error(MOGX_TAG, "%s: usb_detach_kernel_driver_np() failed!");
 			return -1;
 		    }
 		}
@@ -167,7 +171,7 @@ static int drv_MOGX_open(void)
 		usleep(100);
 
 		if (usb_claim_interface(lcd_dev, 0) < 0) {
-		    error("%s: usb_claim_interface() failed!", Name);
+		    error(MOGX_TAG, "usb_claim_interface() failed!");
 		    return -1;
 		}
 
@@ -177,17 +181,17 @@ static int drv_MOGX_open(void)
 		usb_get_string_simple(lcd_dev, dev->descriptor.iManufacturer, manufacturer, sizeof(manufacturer));
 		usb_get_string_simple(lcd_dev, dev->descriptor.iSerialNumber, serialnumber, sizeof(serialnumber));
 
-		info("%s: Manufacturer='%s' Product='%s' SerialNumber='%s'", Name, manufacturer, product, serialnumber);
+		//info("%s: Manufacturer='%s' Product='%s' SerialNumber='%s'", Name, manufacturer, product, serialnumber);
 
 		return 0;
 	    }
 	}
     }
-    error("%s: could not find a Matrix Orbital GX Series LCD", Name);
+    error(MOGX_TAG, "Could not find a Matrix Orbital GX Series LCD");
     return -1;
 }
 
-static void drv_MOGX_send(const unsigned char *data, const unsigned int size)
+static int drv_MOGX_send(const unsigned char *data, const unsigned int size)
 {
     int __attribute__ ((unused)) ret;
 
@@ -202,6 +206,7 @@ static void drv_MOGX_send(const unsigned char *data, const unsigned int size)
     //printf("\nReply : ");
     //for (i=0;i<ret;i++)
     //printf("%3x",rcv_buffer[i]);
+    return ret;
 }
 
 static int drv_MOGX_close(void)
@@ -214,7 +219,7 @@ static int drv_MOGX_close(void)
 }
 
 /* Send framebuffer to lcd */
-static void drv_MOGX_update_lcd()
+static int drv_MOGX_update_lcd(void)
 {
     unsigned char cmd[3852] = { 0x38, 0x46, 0x42, 0x46, 0x50, 0x00, 0x00, 0x07, 0x80, 0xff, 0xff };
     /*
@@ -259,10 +264,10 @@ static void drv_MOGX_update_lcd()
 
     //info("In %s - %s \n", __FUNCTION__, cmd_img);
     /* send command which includes framebuffer */
-    drv_MOGX_send(cmd, cmd_length + 12);
+    return drv_MOGX_send(cmd, cmd_length + 12);
 }
 
-static void drv_MOGX_blit(const int row, const int col, const int height, const int width)
+/*static void drv_MOGX_blit(const int row, const int col, const int height, const int width)
 {
     int r, c;
 
@@ -271,7 +276,7 @@ static void drv_MOGX_blit(const int row, const int col, const int height, const 
 	    MOGX_framebuffer[r * SCREEN_W + c] = drv_generic_graphic_black(r, c);
     }
     drv_MOGX_update_lcd();
-}
+}*/
 
 void drv_MOGX_clear(void)
 {
@@ -354,48 +359,47 @@ static int drv_MOGX_backlightRGB(int backlight_R, int backlight_G, int backlight
 }
 
 /* start graphic display */
-static int drv_MOGX_start(const char *section, const __attribute__ ((unused))
-			  int quiet)
+static int drv_MOGX_start(DISPLAY *pdisp)
 {
-    char *s;
-    int value1, value2, value3;
+    //char *s;
+    //int value1, value2, value3;
 
     /* read display size from config */
-    s = cfg_get(section, "Size", NULL);
+    /*s = cfg_get(section, "Size", NULL);
     if (s == NULL || *s == '\0') {
 	error("%s: no '%s.Size' entry from %s", Name, section, cfg_source());
 	return -1;
-    }
+    }*/
 
-    DROWS = -1;
+    /*DROWS = -1;
     DCOLS = -1;
     if (sscanf(s, "%dx%d", &DCOLS, &DROWS) != 2 || DCOLS < 1 || DROWS < 1) {
 	error("%s: bad %s.Size '%s' from %s", Name, section, s, cfg_source());
 	return -1;
-    }
+    }*/
 
-    s = cfg_get(section, "Font", "6x8");
+    /*s = cfg_get(section, "Font", "6x8");
     if (s == NULL || *s == '\0') {
 	error("%s: no '%s.Font' entry from %s", Name, section, cfg_source());
 	return -1;
-    }
+    }*/
 
-    XRES = -1;
+    /*XRES = -1;
     YRES = -1;
     if (sscanf(s, "%dx%d", &XRES, &YRES) != 2 || XRES < 1 || YRES < 1) {
 	error("%s: bad %s.Font '%s' from %s", Name, section, s, cfg_source());
 	return -1;
-    }
+    }*/
 
     /* Fixme: provider other fonts someday... */
-    if (XRES != 6 && YRES != 8) {
+    /*if (XRES != 6 && YRES != 8) {
 	error("%s: bad Font '%s' from %s (only 6x8 at the moment)", Name, s, cfg_source());
 	return -1;
-    }
+    }*/
 
-    if (cfg_number(section, "Invert", 0, 0, 1, &value1) > 0)
-	if (value1 > 0) {
-	    info("%s: Display is inverted", Name);
+    //if (cfg_number(section, "Invert", 0, 0, 1, &value1) > 0)
+	if (pdisp->invert > 0) {
+	    info(MOGX_TAG, "Display is inverted");
 	    invert = 0x01;
 	}
 
@@ -405,9 +409,9 @@ static int drv_MOGX_start(const char *section, const __attribute__ ((unused))
     }
 
     /* Init framebuffer buffer */
-    MOGX_framebuffer = (unsigned char *) malloc(SCREEN_SIZE * sizeof(unsigned char));
+    MOGX_framebuffer = (uint8_t *) malloc(SCREEN_SIZE * sizeof(uint8_t));
     if (!MOGX_framebuffer) {
-	error("%s: framebuffer could not be allocated: malloc() failed", Name);
+	error(MOGX_TAG, "framebuffer could not be allocated: malloc() failed");
 	return -1;
     }
 
@@ -424,7 +428,7 @@ static int drv_MOGX_start(const char *section, const __attribute__ ((unused))
     }
 */
     /* if lcd has three color backlight call the backlightRGB function */
-    if (backlight_RGB) {
+    /*if (backlight_RGB) {
 	if ((cfg_number(section, "Backlight_R", 0, 0, 255, &value1) > 0) &&
 	    (cfg_number(section, "Backlight_G", 0, 0, 255, &value2) > 0) &&
 	    (cfg_number(section, "Backlight_B", 0, 0, 255, &value3) > 0)) {
@@ -436,7 +440,8 @@ static int drv_MOGX_start(const char *section, const __attribute__ ((unused))
 	    info("%s: Setting backlight to %d", Name, value1);
 	    drv_MOGX_backlight(value1);
 	}
-    }
+    }*/
+    drv_MOGX_backlightRGB(pdisp->backlight[0], pdisp->backlight[1], pdisp->backlight[2]);
 
     //info("In %s\n", __FUNCTION__);
 
@@ -500,8 +505,9 @@ int drv_MOGX_list(void)
 }
 
 /* initialize driver & display */
-int drv_MOGX_init(const char *section, const int quiet)
+int drv_MOGX_init(void *ptr)
 {
+	DISPLAY *pdisp = ptr;
     int ret;
 
     //info("%s: %s", Name, "$Rev: 2$");
@@ -511,7 +517,7 @@ int drv_MOGX_init(const char *section, const int quiet)
 //    drv_generic_graphic_real_blit = drv_MOGX_blit;
 
     /* start display */
-    if ((ret = drv_MOGX_start(section, quiet)) != 0)
+    if ((ret = drv_MOGX_start(pdisp)) != 0)
 	return ret;
 
     /* initialize generic graphic driver */
@@ -542,21 +548,22 @@ int drv_MOGX_init(const char *section, const int quiet)
     memset(MOGX_framebuffer, 0x00, SCREEN_SIZE);
     //DEBUG("zeroed");
 
+    pdisp->output_buffer = MOGX_framebuffer;
+
     return 0;
 }
 
 
 
 /* close driver & display */
-int drv_MOGX_quit(const __attribute__ ((unused))
-		  int quiet)
+int drv_MOGX_quit(void)
 {
-    info("%s: shutting down.", Name);
+    info(MOGX_TAG, "shutting down.");
 
     /* clear display */
     drv_MOGX_clear();
 
-    drv_generic_graphic_quit();
+    //drv_generic_graphic_quit();
 
     //debug("closing connection");
     drv_MOGX_close();
@@ -576,3 +583,11 @@ int drv_MOGX_quit(const __attribute__ ((unused))
     .quit = drv_MOGX_quit,
 };
 */
+
+DISPLAY disp_MatrixOrbitalGX = {
+		.height = SCREEN_H,
+		.width = SCREEN_W,
+		.init = drv_MOGX_init,
+		.update = drv_MOGX_update_lcd,
+		.quit = drv_MOGX_quit
+};
