@@ -5,7 +5,7 @@
 //#include <stdlib.h>
 
 //#include "font.h"
-#include "font_lucida8pt.h"
+#include "interface/graphic_lcd/font_lucida8pt.h"
 
 const FONT_INFO lucidaConsole_8ptFontInfo =
 {

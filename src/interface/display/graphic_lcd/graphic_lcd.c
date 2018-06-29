@@ -14,11 +14,11 @@
 #include <string.h>
 #include <math.h>
 
-#include "../graphic_lcd.h"
-#include "font.h"
+#include "interface/graphic_lcd.h"
+#include "interface/graphic_lcd/font.h"
 //#include "font_lucida16pt.h"
 //#include "font_lucida8pt.h"
-#include "display.h"
+#include "interface/graphic_lcd/display.h"
 
 /* Clears the frame buffer */
 void clear_frame(void *pdisp){

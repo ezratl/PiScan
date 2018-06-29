@@ -1,7 +1,7 @@
 /* 
 **  Font data for Lucida Console 7pt
 */
-#include "font_lucida7pt.h"
+#include "interface/graphic_lcd/font_lucida7pt.h"
 
 /* Font information for Lucida Console 7pt */
 const FONT_INFO lucidaConsole_7ptFontInfo =

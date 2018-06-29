@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "../src/scan_tree.h"
+#include "scan_tree.h"
 
 
 struct scan_profile generated_profile;

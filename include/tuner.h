@@ -11,7 +11,7 @@
 #include <pthread.h>
 
 //#include "../../rtl-sdr/src/rtl_fm.c"
-#include "../../rtl-sdr/include/rtl-sdr.h"
+//#include "../../rtl-sdr/include/rtl-sdr.h"
 #include "scan_tree.h"
 
 //pthread_t tuner_thread;

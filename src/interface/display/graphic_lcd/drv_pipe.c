@@ -18,7 +18,7 @@
 #include <unistd.h>
 #endif
 
-#include "display.h"
+#include "interface/graphic_lcd/display.h"
 
 static DISPLAY *disp;
 static const char fifo_name[] = "./graphic_lcd.fifo";

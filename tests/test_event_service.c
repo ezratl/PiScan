@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "../src/debug.h"
-#include "../src/event.h"
+#include "debug.h"
+#include "event.h"
 
 #define TEST_TAG "Event test"
 

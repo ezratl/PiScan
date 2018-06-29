@@ -11,7 +11,7 @@
 #endif*/
 
 //#include "font.h"
-#include "font_lucida16pt.h"
+#include "interface/graphic_lcd/font_lucida16pt.h"
 
 /* Font information for Lucida Console 16pt */
 const FONT_INFO lucidaConsole_16ptFontInfo =

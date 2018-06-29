@@ -13,9 +13,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../src/interface/display/graphic_lcd.h"
-#include "../src/interface/display/graphic_lcd/display.h"
-#include "../src/interface/display/graphic_lcd/font.h"
+#include "interface/graphic_lcd.h"
+#include "interface/graphic_lcd/display.h"
+#include "interface/graphic_lcd/font.h"
 
 
 int main(){

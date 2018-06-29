@@ -11,9 +11,9 @@
 
 #include <stdlib.h>
 
-#include "../interface.h"
-#include "display/graphic_lcd/display.h"
-#include "display/graphic_lcd.h"
+#include "interface.h"
+#include "interface/graphic_lcd/display.h"
+#include "interface/graphic_lcd.h"
 
 DISPLAY *disp = &disp_MatrixOrbitalGX;
 

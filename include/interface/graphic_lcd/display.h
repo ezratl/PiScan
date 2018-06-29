@@ -4,14 +4,16 @@
  *  Created on: Jun 9, 2018
  *      Author: kidsr
  */
-#include <stdint.h>
 
-#include "../../../debug.h"
-
-#define DISPLAY_TAG	"Display driver"
 
 #ifndef SRC_DISPLAY_GRAPHIC_LCD_DISPLAY_H_
 #define SRC_DISPLAY_GRAPHIC_LCD_DISPLAY_H_
+
+#include <stdint.h>
+
+#include "debug.h"
+
+#define DISPLAY_TAG	"Display driver"
 
 typedef struct display {
 	int height;
