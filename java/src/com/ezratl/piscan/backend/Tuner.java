@@ -1,6 +1,6 @@
 package com.ezratl.piscan.backend;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import com.ezratl.piscan.common.Menuable;
 
@@ -46,7 +46,7 @@ public abstract class Tuner implements Menuable {
 			return (String.valueOf(minFreq / FREQ_MHZ_DIVIDE_RATIO) + " - " + String.valueOf(maxFreq / FREQ_MHZ_DIVIDE_RATIO));
 		}
 		@Override
-		public List<Menuable> getKeys() {
+		public ArrayList<Menuable> getKeys() {
 			return null;
 		}
 		@Override
@@ -80,6 +80,26 @@ public abstract class Tuner implements Menuable {
 		@Override
 		public boolean isModifiable() {
 			return false;
+		}
+		@Override
+		public boolean addKey(Menuable value) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+		@Override
+		public ArrayList<String> getKeyDescriptors() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		@Override
+		public int getSelectedKeyIndex() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		@Override
+		public Menuable removeKey(int index) {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 }

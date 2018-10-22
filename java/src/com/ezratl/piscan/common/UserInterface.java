@@ -10,5 +10,6 @@ public abstract class UserInterface {
 	public interface InterfaceUpdateHandler {
 		abstract void onViewChangeRequest(Views view);
 		abstract void onViewDataAvailable();
+		abstract void onSystemStatusUpdate();
 	}
 }

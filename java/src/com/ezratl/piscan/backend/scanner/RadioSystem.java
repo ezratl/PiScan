@@ -1,4 +1,4 @@
-package com.ezratl.piscan.common.scanner;
+package com.ezratl.piscan.backend.scanner;
 import java.io.*;
 
 public abstract class RadioSystem implements Serializable {
@@ -34,12 +34,8 @@ public abstract class RadioSystem implements Serializable {
 		return channelCount;
 	}
 	
-	public void lockOut() {
-		lockedOut = true;
-	}
-	
-	public void unLock() {
-		lockedOut = false;
+	public void setLockout(boolean lock) {
+		lockedOut = lock;
 	}
 	
 	public boolean lockedOut() {

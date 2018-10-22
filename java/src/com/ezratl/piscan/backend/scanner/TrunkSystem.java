@@ -1,4 +1,4 @@
-package com.ezratl.piscan.common.scanner;
+package com.ezratl.piscan.backend.scanner;
 
 public class TrunkSystem extends RadioSystem {
 

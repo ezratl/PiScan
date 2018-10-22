@@ -15,7 +15,8 @@ import java.util.*;
 import java.awt.event.*;
 import javax.swing.table.*;
 
-import piScan.*;
+import com.ezratl.piscan.backend.config.SystemConfiguration;
+import com.ezratl.piscan.backend.scanner.*;
 
 public class ScanManager {
 
@@ -279,10 +280,10 @@ public class ScanManager {
 			protected void commonHandler() {
 				//common handler
 				selectedSystem.setName(nameField.getText());
-				if(trueButton.isSelected())
+				/*if(trueButton.isSelected())
 					selectedSystem.lockOut();
 				else
-					selectedSystem.unLock();
+					selectedSystem.unLock();*/
 				
 				setVisible(false);
 			}

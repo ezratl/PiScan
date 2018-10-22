@@ -1,8 +1,6 @@
-package com.ezratl.piscan.common.config;
+package com.ezratl.piscan.common;
 
-import java.util.List;
-
-import com.ezratl.piscan.common.Menuable;
+import java.util.ArrayList;
 
 public abstract class Configuration implements Menuable {
 
@@ -12,7 +10,7 @@ public abstract class Configuration implements Menuable {
 	public abstract String getDescriptor();
 
 	@Override
-	public List<Menuable> getKeys() {
+	public ArrayList<Menuable> getKeys() {
 		return null;
 	}
 

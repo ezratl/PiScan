@@ -7,7 +7,9 @@ package com.ezratl.piscan.scanmanager;
 
 import java.io.*;
 import java.util.*;
-import piScan.*;
+
+import com.ezratl.piscan.backend.SignalDemodulator.Squelch;
+import com.ezratl.piscan.backend.scanner.*;
 
 public class SentinelConverter {
 
@@ -42,8 +44,8 @@ public class SentinelConverter {
 			System.out.println("System: " + sys + "\tType: " + sys.getSystemType());
 			if(sys.getSystemType().equals("Analog"))
 				for(Channel chan: ((AnalogSystem) sys).channels) {
-					System.out.print("\tChannel: " + chan + "\tFreq: " + chan.getFreqMHz() + chan.getModulation() + "\tLockout: " + chan.lockedOut());
-					System.out.println("\tSquelch: " + chan.getSquelch() + "\tAtten: " + chan.attenuation() + "\tDelay: " + chan.checkDelay());
+					System.out.print("\tChannel: " + chan + "\tFreq: " + chan.getFreqMHz() + " " + chan.getSquelch() + "\tLockout: " + chan.lockedOut());
+					System.out.println("\tSquelch: " + chan.getSquelch() + "\tDelay: " + chan.checkDelay());
 				}
 		}
 	}
@@ -70,7 +72,7 @@ public class SentinelConverter {
 			String tag = lineScanner.next(), lockout = lineScanner.next(), freq = lineScanner.next(), mod = lineScanner.next(), tone = lineScanner.next();
 			lineScanner.next();
 			String atten = lineScanner.next(), delay = lineScanner.next();
-			Channel newChannel = new Channel(tag, parseBool(lockout), Long.parseLong(freq), mod, tone, parseBool(atten), parseBool(delay));
+			Channel newChannel = new Channel(tag, parseBool(lockout), Long.parseLong(freq), parseTone(mod, tone), parseBool(atten), parseBool(delay));
 			currentSys.addEntry(newChannel);
 			//System.out.println("Added channel " + newChannel);
 		}
@@ -80,4 +82,23 @@ public class SentinelConverter {
 	private boolean parseBool(String token) {
 		return (token.equals("On") || token.equals("2"));
 	}
+	
+	public static Squelch parseTone(String modulation, String tone) {
+		if(modulation.equals("AM"))
+			return new Squelch.SquelchAM();
+		else {
+			System.out.println(tone);
+			StringBuilder newTone = new StringBuilder(tone);
+			if (tone.startsWith("TONE=C")) {
+				newTone.delete(0, 6);
+				return Squelch.SquelchPL.parseTone(newTone.toString());
+			} else if (tone.startsWith("TONE=D")) {
+				newTone.delete(0, 6);
+				return Squelch.SquelchDC.parseTone(newTone.toString());
+			}
+			return new Squelch.SquelchFM();
+		}
+	}
+	
+	
 }
