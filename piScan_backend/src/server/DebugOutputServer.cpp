@@ -5,14 +5,14 @@
  *      Author: ezra
  */
 
-#include "ServerDebugOutput.h"
+#include "DebugOutputServer.h"
 
-ServerDebugOutput::ServerDebugOutput() {
+DebugOutputServer::DebugOutputServer() {
 	// TODO Auto-generated constructor stub
 
 }
 
-ServerDebugOutput::~ServerDebugOutput() {
+DebugOutputServer::~DebugOutputServer() {
 	// TODO Auto-generated destructor stub
 }
 

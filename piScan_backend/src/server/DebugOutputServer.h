@@ -8,10 +8,10 @@
 #ifndef SERVERDEBUGOUTPUT_H_
 #define SERVERDEBUGOUTPUT_H_
 
-class ServerDebugOutput {
+class DebugOutputServer {
 public:
-	ServerDebugOutput();
-	virtual ~ServerDebugOutput();
+	DebugOutputServer();
+	virtual ~DebugOutputServer();
 };
 
 #endif /* SERVERDEBUGOUTPUT_H_ */
