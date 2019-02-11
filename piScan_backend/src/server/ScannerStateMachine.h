@@ -11,9 +11,10 @@
 #include "StateMachine.h"
 #include "SystemList.h"
 #include "Entry.h"
+#include "messages.h"
 
 
-class ScannerStateMachine: public StateMachine {
+class ScannerStateMachine: public MessageReceiver, StateMachine {
 public:
 	ScannerStateMachine();
 	//~ScannerStateMachine();
@@ -51,6 +52,7 @@ private:
 	};
 
 private:
+	moodycamel::ReaderWriterQueue _msgQueue;
 	SystemList systems;
 	RadioSystem* currentSystem;
 	Entry* currentEntry;

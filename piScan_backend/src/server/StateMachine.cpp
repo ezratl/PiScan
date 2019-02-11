@@ -11,9 +11,19 @@
 StateMachine::StateMachine(int maxStates) :
     _maxStates(maxStates),
     currentState(0),
+	lastState(0),
+	evtSrcExternal(false),
     _eventGenerated(false),
     _pEventData(NULL)
 {
+}
+
+StateMachine::~StateMachine(){
+	_stateMachineThread.join();
+}
+
+void StateMachine::start() {
+	_stateMachineThread(StateThreadFunc);
 }
 
 // generates an external event. called once per external event
@@ -28,9 +38,10 @@ void StateMachine::ExternalEvent(unsigned char newState,
             delete pData;
     }
     else {
+    	std::lock_guard<std::mutex> lock(_eventMutex);
         // generate the event and execute the state engine
         InternalEvent(newState, pData);
-        StateEngine();
+        //StateEngine();
     }
 }
 
@@ -41,6 +52,7 @@ void StateMachine::InternalEvent(unsigned char newState,
 {
     _pEventData = pData;
     _eventGenerated = true;
+    lastState = currentState;
     currentState = newState;
 }
 
@@ -50,8 +62,10 @@ void StateMachine::StateEngine(void)
     EventData* pDataTemp = NULL;
 
     // TBD - lock semaphore here
+    std::lock_guard<std::mutex> lock(_eventMutex);
+
     // while events are being generated keep executing states
-    while (_eventGenerated) {
+    if (_eventGenerated) {
         pDataTemp = _pEventData;  // copy of event data pointer
         _pEventData = NULL;       // event data used up, reset ptr
         _eventGenerated = false;  // event used up, reset flag
@@ -69,5 +83,14 @@ void StateMachine::StateEngine(void)
         }
     }
     // TBD - unlock semaphore here
+}
+
+void StateMachine::StateThreadFunc(void){
+	assert(currentState == 0);
+
+	//TODO add a break condition
+	while(1){
+		StateEngine();
+	}
 }
 

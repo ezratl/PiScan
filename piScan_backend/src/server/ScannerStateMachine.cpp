@@ -26,7 +26,7 @@ ScannerStateMachine::ScannerStateMachine() :
 
 void ScannerStateMachine::startScan(){
 	BEGIN_TRANSITION_MAP
-		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
+		TRANSITION_MAP_ENTRY(ST_SCAN)
 		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
 		TRANSITION_MAP_ENTRY(ST_SCAN)
 		TRANSITION_MAP_ENTRY(ST_SCAN)
@@ -63,11 +63,11 @@ void ScannerStateMachine::stopScanner(){
 void ScannerStateMachine::ST_Load(){
 	//file read and system tree population
 
-	InternalEvent(ST_SCAN);
+	// do not issue event - SM will wait until an event is generated before proceeding
+	//InternalEvent(ST_SCAN);
 }
 
 void ScannerStateMachine::ST_Scan(){
-
 	if(currentEntry->hasSignal()){
 		InternalEvent(ST_RECEIVE);
 	}
@@ -82,6 +82,10 @@ void ScannerStateMachine::ST_Hold(){
 }
 
 void ScannerStateMachine::ST_Receive(){
+	/*
+	 * -open audio stream
+	 * -notify signal stats to listeners
+	 */
 
 	if (currentEntry->hasSignal()) {
 		InternalEvent(ST_RECEIVE);

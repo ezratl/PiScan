@@ -9,6 +9,8 @@
 #define SERVER_STATEMACHINE_H_
 
 #include <stdio.h>
+#include <thread>
+#include <mutex>
 //#include "EventData.h"
 
 class EventData
@@ -25,9 +27,12 @@ class StateMachine
 public:
     StateMachine(int maxStates);
     virtual ~StateMachine() {}
+    void start();
 protected:
     enum { EVENT_IGNORED = 0xFE, CANNOT_HAPPEN };
     unsigned char currentState;
+    unsigned char lastState;
+    bool evtSrcExternal;
     void ExternalEvent(unsigned char, EventData* = NULL);
     void InternalEvent(unsigned char, EventData* = NULL);
     virtual const StateStruct* GetStateMap() = 0;
@@ -36,6 +41,9 @@ private:
     bool _eventGenerated;
     EventData* _pEventData;
     void StateEngine(void);
+    void StateThreadFunc(void);
+    std::thread _stateMachineThread;
+    std::mutex _eventMutex;
 };
 
 typedef void (StateMachine::*StateFunc)(EventData *);
