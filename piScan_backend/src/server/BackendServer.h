@@ -8,7 +8,9 @@
 #ifndef BACKENDSERVER_H_
 #define BACKENDSERVER_H_
 
-class BackendServer {
+#include "messages.h"
+
+class BackendServer : public MessageReceiver {
 public:
 	BackendServer();
 	virtual ~BackendServer();

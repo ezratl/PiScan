@@ -13,11 +13,12 @@
 #include "readerwriterqueue.h"
 
 enum {
-	MAIN_THREAD,
+	SYSTEM_CONTROL,
 	SCANNER_SM,
 	DEMOD,
 	SERVER_MAN,
 	AUDIO_MAN,
+	CLIENT,
 };
 
 /* basic interthread message structure */
@@ -29,13 +30,17 @@ public:
 	void* const pData;
 };
 
+class ControllerMessage : public Message{
+
+};
+
 class ScannerMessage : public Message {
 public:
 	ScannerMessage(unsigned char src, unsigned char msgType, void* data) :
 		Message(src, SCANNER_SM, data), type(msgType) {}
 	const unsigned char type;
 	enum {
-		STATE_REQUEST = 0,
+		CLIENT_REQUEST,
 
 		STOP = 0xFF
 	};
@@ -58,6 +63,19 @@ public:
 	enum {
 		ENABLE_OUTPUT = 0,
 		DISABLE_OUTPUT,
+
+		STOP = 0xFF
+	};
+};
+
+class ServerMessage : public Message {
+public:
+	enum {
+		CONTEXT_UPDATE,
+
+		NOTIFY_ALL_CLIENTS,
+		NOTIFY_USERS,
+		NOTIFY_VIEWERS,
 
 		STOP = 0xFF
 	};
