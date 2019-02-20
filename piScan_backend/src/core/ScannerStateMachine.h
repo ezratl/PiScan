@@ -16,12 +16,13 @@
 
 class ScannerStateMachine: public MessageReceiver, StateMachine {
 public:
-	ScannerStateMachine();
+	ScannerStateMachine(MessageReceiver& central, SystemList& dataSource);
 	//~ScannerStateMachine();
 
 	void startScan();
 	void holdScan();
 	void stopScanner();
+	void giveMessage(Message& message);
 private:
 	void ST_Load();
 	void ST_Scan();
@@ -52,10 +53,25 @@ private:
 	};
 
 private:
-	moodycamel::ReaderWriterQueue _msgQueue;
-	SystemList systems;
-	RadioSystem* currentSystem;
-	Entry* currentEntry;
+	MessageReceiver& _centralQueue;
+	//moodycamel::ReaderWriterQueue<Message> _msgQueue;
+	SystemList& _systems;
+	RadioSystem& _currentSystem;
+	Entry& _currentEntry;
+	size_t _sysCounter = 0, _entryCounter = 0;
+
+	struct EntryContext {
+		States state;
+		const RadioSystem& system;
+		const Entry& entry;
+	};
+
+	EntryContext _currentContext = {0, NULL, NULL};
+
+	void _broadcastSystemContext(RadioSystem& sys);
+	void _broadcastEntryContext(RadioSystem& sys, Entry& entry);
+	void _enableAudioOut(bool en);
+
 };
 
 #endif /* SERVER_SCANNERSTATEMACHINE_H_ */

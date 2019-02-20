@@ -8,6 +8,10 @@
 #ifndef RADIOSYSTEM_H_
 #define RADIOSYSTEM_H_
 
+#include <stdint.h>
+
+#include "Entry.h"
+
 typedef enum {
 	SYSTEM_ANALOG
 } RadioSystemType;
@@ -17,14 +21,21 @@ public:
 	RadioSystem() = 0;
 	virtual ~RadioSystem();
 
-	const RadioSystemType type;
-	char* name;
+	virtual Entry& operator[](size_t pos) = 0;
+
+	size_t size() { return _size; }
+private:
+	//const RadioSystemType type;
+	const char tag[];
+	size_t _size = 0;
 };
 
 class AnalogSystem: public RadioSystem {
 public:
 	AnalogSystem();
 	virtual ~AnalogSystem();
+
+	Entry& operator[](size_t pos);
 };
 
 #endif /* RADIOSYSTEM_H_ */

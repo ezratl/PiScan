@@ -15,12 +15,13 @@
 class SystemList {
 public:
 	SystemList();
-	virtual ~SystemList();
 
+	RadioSystem& operator[](size_t pos);
 
-
+	size_t size(){ return _size; }
 private:
-	std::list<RadioSystem> systems;
+	RadioSystem& _systems[];
+	size_t _size = 0;
 };
 
 #endif /* SYSTEMLIST_H_ */

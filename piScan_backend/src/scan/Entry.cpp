@@ -5,14 +5,19 @@
  *      Author: ezra
  */
 
+#include <assert.h>
+#include <stddef.h>
+
 #include "Entry.h"
 
-Entry::Entry() {
-	// TODO Auto-generated constructor stub
+bool FMChannel::hasSignal(void){
+	assert(demod != NULL);
 
+	if(!demod.setFrequency(this->frequency))
+		return false;
+
+	if(demod.squelchThresholdMet())
+		return true;
+
+	return false;
 }
-
-Entry::~Entry() {
-	// TODO Auto-generated destructor stub
-}
-
