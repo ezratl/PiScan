@@ -58,10 +58,10 @@ const StateStruct* GetStateMap() {\
     static const StateStruct StateMap[] = {
 
 #define STATE_MAP_ENTRY(entry)\
-    { reinterpret_cast<StateFunc>(entry) },
+    { static_cast<StateFunc>/*(static_cast<void(*)(EventData*)>*/(entry)/*)*/ },
 
 #define END_STATE_MAP \
-    { reinterpret_cast<StateFunc>(NULL) }\
+    { /*reinterpret_cast<StateFunc>*/(NULL) }\
     }; \
     return &StateMap[0]; }
 

@@ -8,6 +8,8 @@
 #ifndef SERVER_SERVERMANAGER_H_
 #define SERVER_SERVERMANAGER_H_
 
+#include <vector>
+
 #include "messages.h"
 
 class Connection;
@@ -30,17 +32,21 @@ public:
 
 	Connection(ConnectionLevel lvl, AudioReceive aud);
 
-	virtual void giveMessage(Message message) = 0;
-	void disconnect();
+	virtual void giveMessage(Message& message) = 0;
+	virtual void connect() = 0;
+	virtual void disconnect() = 0;
 
 private:
 	friend class ServerManager;
 	int _handle;
 	ConnectionLevel _level;
 	AudioReceive _audio;
-	ServerInterface _serverManager;
+protected:
+	ServerInterface& serverManager;
 
-	void _notifyDisconnected();
+	void notifyDisconnected() {
+
+	}
 };
 
 class ClientRequest : public Message {
@@ -51,7 +57,7 @@ public:
 	};
 
 	enum RequestType {
-		SYSTEM_FUNCTION,
+		SYSTEM_FUNCTION = 0,
 		SCANNER_FUNCTION,
 		DATABASE_RETRIEVE,
 		DATABASE_MODIFY,
@@ -59,10 +65,10 @@ public:
 		CONFIG_MODIFY,
 	};
 
-	ClientRequest(Connection client, unsigned char dst);
+	ClientRequest(Connection& client, unsigned char dst);
 
 private:
-	static const Connection::ConnectionLevel permissionMap = {
+	static constexpr Connection::ConnectionLevel permissionMap[] = {
 			[SYSTEM_FUNCTION] = Connection::ConnectionLevel::FULL_CONTROL,
 			[SCANNER_FUNCTION] = Connection::ConnectionLevel::FULL_CONTROL,
 			[DATABASE_RETRIEVE] = Connection::ConnectionLevel::VIEWER,
@@ -72,14 +78,13 @@ private:
 	};
 
 	friend class ServerManager;
-	Connection src;
+	Connection& src;
 	RequestType requestType;
 	void (*_callback)(void*);
 };
 
 class ServerInterface {
 public:
-	ServerInterface() = 0;
 	virtual ~ServerInterface();
 
 	enum RequestResponse {
@@ -89,31 +94,31 @@ public:
 		RQ_INVALID_HANDLE,
 	};
 
-	virtual RequestResponse requestConnection(Connection::Connection client) = 0;
-	virtual RequestResponse giveRequest(ClientRequest request) = 0;
+	virtual RequestResponse requestConnection(Connection& client) = 0;
+	virtual RequestResponse giveRequest(ClientRequest& request) = 0;
 };
 
 class ServerManager : public MessageReceiver, ServerInterface {
 public:
-	ServerManager(MessageReceiver central);
+	ServerManager(MessageReceiver& central);
 
 	void start();
 	void allowConnections();
 	void disconnectClients();
-	void giveMessage(Message message);
+	void giveMessage(Message& message);
 protected:
 
 private:
-	moodycamel::ConcurrentQueue _queue;
+	moodycamel::ConcurrentQueue<Message> _queue;
 	int _activeConnections;
-	Connection _connections[];
-	MessageReceiver _centralQueue;
+	std::vector<Connection*> _connections;
+	MessageReceiver& _centralQueue;
 
 	void _queueThreadFunc(void);
-	void _handleMessage(Message message);
-	void _addConnection(Connection::Connection client);
-	RequestResponse requestConnection(Connection::Connection client);
-	RequestResponse giveRequest(ClientRequest request);
+	void _handleMessage(Message& message);
+	void _addConnection(Connection& client);
+	RequestResponse requestConnection(Connection& client);
+	RequestResponse giveRequest(ClientRequest& request);
 
 };
 

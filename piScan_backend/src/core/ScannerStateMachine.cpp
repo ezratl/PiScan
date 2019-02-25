@@ -56,7 +56,7 @@ void ScannerStateMachine::stopScanner(){
 	END_TRANSITION_MAP(NULL)
 }
 
-void ScannerStateMachine::ST_Load(){
+void ScannerStateMachine::ST_Load(EventData* data){
 	//file read and system tree population
 
 	// do not issue event - SM will wait until an event is generated before proceeding
@@ -65,7 +65,7 @@ void ScannerStateMachine::ST_Load(){
 	_centralQueue.giveMessage(message);
 }
 
-void ScannerStateMachine::ST_Scan(){
+void ScannerStateMachine::ST_Scan(EventData* data){
 	_enableAudioOut(false);
 
 	// incremental scan pattern
@@ -90,7 +90,7 @@ void ScannerStateMachine::ST_Scan(){
 
 }
 
-void ScannerStateMachine::ST_Hold(){
+void ScannerStateMachine::ST_Hold(EventData* data){
 	_enableAudioOut(false);
 	_broadcastEntryContext(_currentSystem, _currentEntry);
 
@@ -99,7 +99,7 @@ void ScannerStateMachine::ST_Hold(){
 	}
 }
 
-void ScannerStateMachine::ST_Receive(){
+void ScannerStateMachine::ST_Receive(EventData* data){
 	_enableAudioOut(true);
 	_broadcastEntryContext(_currentSystem, _currentEntry);
 
@@ -111,16 +111,16 @@ void ScannerStateMachine::ST_Receive(){
 	}
 }
 
-void ScannerStateMachine::ST_Manual(){
+void ScannerStateMachine::ST_Manual(EventData* data){
 	//TODO state for later implementation
 }
 
-void ScannerStateMachine::ST_SaveAll(){
+void ScannerStateMachine::ST_SaveAll(EventData* data){
 
 	InternalEvent(ST_STOPPED);
 }
 
-void ScannerStateMachine::ST_Stopped(){
+void ScannerStateMachine::ST_Stopped(EventData* data){
 	Message& message = new ControllerMessage(SCANNER_SM, ControllerMessage::NOTIFY_STOPPED);
 	_centralQueue.giveMessage(message);
 }

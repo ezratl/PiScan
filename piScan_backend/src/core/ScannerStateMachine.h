@@ -24,22 +24,22 @@ public:
 	void stopScanner();
 	void giveMessage(Message& message);
 private:
-	void ST_Load();
-	void ST_Scan();
-	void ST_Hold();
-	void ST_Receive();
-	void ST_Manual();
-	void ST_SaveAll();
-	void ST_Stopped();
+	void ST_Load(EventData* data);
+	void ST_Scan(EventData* data);
+	void ST_Hold(EventData* data);
+	void ST_Receive(EventData* data);
+	void ST_Manual(EventData* data);
+	void ST_SaveAll(EventData* data);
+	void ST_Stopped(EventData* data);
 
 	BEGIN_STATE_MAP
-		STATE_MAP_ENTRY(ST_Load)
-		STATE_MAP_ENTRY(ST_Scan)
-		STATE_MAP_ENTRY(ST_Hold)
-		STATE_MAP_ENTRY(ST_Receive)
-		STATE_MAP_ENTRY(ST_Manual)
-		STATE_MAP_ENTRY(ST_SaveAll)
-		STATE_MAP_ENTRY(ST_Stopped)
+		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Load)
+		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Scan)
+		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Hold)
+		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Receive)
+		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Manual)
+		STATE_MAP_ENTRY(&ScannerStateMachine::ST_SaveAll)
+		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Stopped)
 	END_STATE_MAP
 
 	enum States {
@@ -62,11 +62,11 @@ private:
 
 	struct EntryContext {
 		States state;
-		const RadioSystem& system;
-		const Entry& entry;
+		const RadioSystem* system;
+		const Entry* entry;
 	};
 
-	EntryContext _currentContext = {0, NULL, NULL};
+	EntryContext _currentContext = {(States) 0, NULL, NULL};
 
 	void _broadcastSystemContext(RadioSystem& sys);
 	void _broadcastEntryContext(RadioSystem& sys, Entry& entry);

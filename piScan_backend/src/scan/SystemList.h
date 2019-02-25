@@ -8,7 +8,7 @@
 #ifndef SYSTEMLIST_H_
 #define SYSTEMLIST_H_
 
-#include <list>
+#include <vector>
 
 #include "RadioSystem.h"
 
@@ -20,7 +20,7 @@ public:
 
 	size_t size(){ return _size; }
 private:
-	RadioSystem& _systems[];
+	std::vector<RadioSystem*> _systems;
 	size_t _size = 0;
 };
 

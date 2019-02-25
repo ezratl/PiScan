@@ -14,14 +14,14 @@
 
 class Entry {
 public:
-	virtual Entry(char* tag, bool lo, bool del);
+	Entry(char* tag, bool lo, bool del);
 	virtual ~Entry();
 
 	char*	getTag() { return &tag[0]; }
 	virtual char*	getModulation() = 0;
 	virtual char*	getIdentity() = 0;
 	bool	isLockedOut() { return lockedOut; }
-	void	lockout(bool val) : lockedOut(val){}
+	void	lockout(bool val) { lockedOut = val; }
 	virtual bool	hasSignal() = 0;
 
 protected:
@@ -34,7 +34,7 @@ protected:
 
 class Channel: public Entry {
 public:
-	virtual Channel(unsigned long freq, char* tag, bool lo, bool del) : frequency(freq){}
+	Channel(unsigned long freq, char* tag, bool lo, bool del) : Entry(tag, lo, del), frequency(freq){}
 	virtual ~Channel();
 protected:
 	const unsigned long frequency;

@@ -28,7 +28,7 @@ private:
 	bool setFrequency(unsigned long freq);
 	int getRssi();
 	float getDecodedPL();
-	int getDecodedDC();
+	unsigned int getDecodedDC();
 	bool squelchThresholdMet();
 };
 

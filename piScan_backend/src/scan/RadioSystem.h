@@ -9,6 +9,7 @@
 #define RADIOSYSTEM_H_
 
 #include <stdint.h>
+#include <string>
 
 #include "Entry.h"
 
@@ -18,7 +19,7 @@ typedef enum {
 
 class RadioSystem {
 public:
-	RadioSystem() = 0;
+	RadioSystem();
 	virtual ~RadioSystem();
 
 	virtual Entry& operator[](size_t pos) = 0;
@@ -26,7 +27,7 @@ public:
 	size_t size() { return _size; }
 private:
 	//const RadioSystemType type;
-	const char tag[];
+	const std::string tag;
 	size_t _size = 0;
 };
 

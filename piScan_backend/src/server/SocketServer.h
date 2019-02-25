@@ -9,7 +9,16 @@
 #define SERVER_SOCKETSERVER_H_
 
 #include "BackendServer.h"
+#include "ServerManager.h"
 
+class SocketConnection : public Connection {
+public:
+
+private:
+
+};
+
+/* listener for socket connections */
 class SocketServer: public BackendServer {
 public:
 	SocketServer();
