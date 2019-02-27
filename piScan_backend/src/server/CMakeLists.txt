@@ -1,0 +1,11 @@
+add_library(server
+	BackendServer.cpp
+	BackendServer.h
+	Connection.cpp
+	DebugServer.cpp
+	DebugServer.h
+	ServerManager.cpp
+	ServerManager.h
+	SocketServer.cpp
+	SocketServer.h
+	)
