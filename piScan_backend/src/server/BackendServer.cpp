@@ -7,12 +7,6 @@
 
 #include "BackendServer.h"
 
-BackendServer::BackendServer() {
-	// TODO Auto-generated constructor stub
 
-}
 
-BackendServer::~BackendServer() {
-	// TODO Auto-generated destructor stub
-}
 

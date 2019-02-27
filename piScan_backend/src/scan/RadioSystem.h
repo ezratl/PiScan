@@ -19,10 +19,10 @@ typedef enum {
 
 class RadioSystem {
 public:
-	RadioSystem();
-	virtual ~RadioSystem();
+	RadioSystem() {};
+	virtual ~RadioSystem() {};
 
-	virtual Entry& operator[](size_t pos) = 0;
+	virtual Entry* operator[](size_t pos) = 0;
 
 	size_t size() { return _size; }
 private:
@@ -33,10 +33,10 @@ private:
 
 class AnalogSystem: public RadioSystem {
 public:
-	AnalogSystem();
-	virtual ~AnalogSystem();
+	AnalogSystem() : RadioSystem() {};
+	~AnalogSystem() {};
 
-	Entry& operator[](size_t pos);
+	Entry* operator[](size_t pos) { return nullptr; };
 };
 
 #endif /* RADIOSYSTEM_H_ */

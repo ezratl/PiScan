@@ -18,12 +18,15 @@ StateMachine::StateMachine(int maxStates) :
 {
 }
 
-StateMachine::~StateMachine(){
-	_stateMachineThread.join();
+void StateMachine::start() {
+	_run = true;
+	_stateMachineThread = std::thread(&StateMachine::StateThreadFunc, this);
 }
 
-void StateMachine::start() {
-	_stateMachineThread(StateThreadFunc);
+void StateMachine::stop(bool block){
+	_run = false;
+	if(block)
+		_stateMachineThread.join();
 }
 
 // generates an external event. called once per external event
@@ -88,8 +91,7 @@ void StateMachine::StateEngine(void)
 void StateMachine::StateThreadFunc(void){
 	assert(currentState == 0);
 
-	//TODO add a break condition
-	while(1){
+	while(_run){
 		StateEngine();
 	}
 }

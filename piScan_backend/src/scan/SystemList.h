@@ -15,8 +15,9 @@
 class SystemList {
 public:
 	SystemList();
+	~SystemList();
 
-	RadioSystem& operator[](size_t pos);
+	RadioSystem* operator[](size_t pos) { return nullptr; };
 
 	size_t size(){ return _size; }
 private:

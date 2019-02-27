@@ -21,14 +21,14 @@ void DebugConsole::disconnect(){
 }
 
 void DebugConsole::giveMessage(Message& message){
-	delete message;
+	delete &message;
 }
 
 
 
 void DebugServer::start(){
-	_connection();
-	_host.requestConnection(_connection);
+	this->_connection = new DebugConsole();
+	this->_host.requestConnection(*_connection);
 }
 
 void DebugServer::stop(){
@@ -36,6 +36,6 @@ void DebugServer::stop(){
 }
 
 void DebugServer::giveMessage(Message& message){
-	delete message;
+	delete &message;
 }
 

@@ -12,6 +12,8 @@
 
 #include "messages.h"
 
+#define HANDLE_NULL	-1
+
 class Connection;
 class ClientRequest;
 class ServerInterface;
@@ -30,7 +32,9 @@ public:
 		AUDIO_RECEIVE,
 	};
 
-	Connection(ConnectionLevel lvl, AudioReceive aud);
+	Connection(ConnectionLevel lvl, AudioReceive aud) :
+		_level(lvl), _audio(aud), serverManager(nullptr), _handle(HANDLE_NULL) {}
+	virtual ~Connection() {};
 
 	virtual void giveMessage(Message& message) = 0;
 	virtual void connect() = 0;
@@ -42,7 +46,7 @@ private:
 	ConnectionLevel _level;
 	AudioReceive _audio;
 protected:
-	ServerInterface& serverManager;
+	ServerInterface* serverManager;
 
 	void notifyDisconnected() {
 
@@ -66,26 +70,20 @@ public:
 	};
 
 	ClientRequest(Connection& client, unsigned char dst);
+	~ClientRequest() {};
 
 private:
-	static constexpr Connection::ConnectionLevel permissionMap[] = {
-			[SYSTEM_FUNCTION] = Connection::ConnectionLevel::FULL_CONTROL,
-			[SCANNER_FUNCTION] = Connection::ConnectionLevel::FULL_CONTROL,
-			[DATABASE_RETRIEVE] = Connection::ConnectionLevel::VIEWER,
-			[DATABASE_MODIFY] = Connection::ConnectionLevel::FULL_CONTROL,
-			[CONFIG_RETRIEVE] = Connection::ConnectionLevel::VIEWER,
-			[CONFIG_MODIFY] = Connection::ConnectionLevel::FULL_CONTROL,
-	};
+	static Connection::ConnectionLevel permissionMap[];
 
 	friend class ServerManager;
-	Connection& src;
+	Connection* src;
 	RequestType requestType;
 	void (*_callback)(void*);
 };
 
 class ServerInterface {
 public:
-	virtual ~ServerInterface();
+	virtual ~ServerInterface() {};
 
 	enum RequestResponse {
 		RQ_ACCEPTED,
@@ -98,9 +96,10 @@ public:
 	virtual RequestResponse giveRequest(ClientRequest& request) = 0;
 };
 
-class ServerManager : public MessageReceiver, ServerInterface {
+class ServerManager : public MessageReceiver, public ServerInterface {
 public:
 	ServerManager(MessageReceiver& central);
+	~ServerManager() {};
 
 	void start();
 	void allowConnections();
@@ -109,10 +108,11 @@ public:
 protected:
 
 private:
-	moodycamel::ConcurrentQueue<Message> _queue;
+	MessageReceiver& _centralQueue;
+	moodycamel::ConcurrentQueue<Message*> _queue;
 	int _activeConnections;
 	std::vector<Connection*> _connections;
-	MessageReceiver& _centralQueue;
+
 
 	void _queueThreadFunc(void);
 	void _handleMessage(Message& message);

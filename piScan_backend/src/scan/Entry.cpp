@@ -10,13 +10,15 @@
 
 #include "Entry.h"
 
-bool FMChannel::hasSignal(void){
-	assert(demod != NULL);
+DemodInterface* Entry::demod = nullptr;
 
-	if(!demod.setFrequency(this->frequency))
+bool FMChannel::hasSignal(void){
+	assert(demod != nullptr);
+
+	if(!demod->setFrequency(this->frequency))
 		return false;
 
-	if(demod.squelchThresholdMet())
+	if(demod->squelchThresholdMet())
 		return true;
 
 	return false;

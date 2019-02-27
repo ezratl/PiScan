@@ -12,19 +12,23 @@
 #include "concurrentqueue.h"
 #include "readerwriterqueue.h"
 
+#define MESSAGE_RECEIVERS	5
+
 enum {
-	SYSTEM_CONTROL,
+	SYSTEM_CONTROL = 0,
 	SCANNER_SM,
 	DEMOD,
 	SERVER_MAN,
 	AUDIO_MAN,
-	CLIENT,
+
+	CLIENT = 255,
 };
 
 /* basic interthread message structure */
 class Message {
 public:
 	Message(unsigned char src, unsigned char dst, void* data = 0) : source(src), destination(dst), pData(data) {}
+	virtual ~Message() {};
 	const unsigned char source;
 	const unsigned char destination;
 	void* const pData;
@@ -35,7 +39,7 @@ class ControllerMessage : public Message{
 public:
 	ControllerMessage(unsigned char src, unsigned char msgType, void* data = 0) :
 		Message(src, SYSTEM_CONTROL, data), type(msgType) {}
-
+	~ControllerMessage() {};
 	enum {
 		NOTIFY_READY,
 		NOTIFY_STOPPED,
@@ -50,6 +54,7 @@ class ScannerMessage : public Message {
 public:
 	ScannerMessage(unsigned char src, unsigned char msgType, void* data = 0) :
 		Message(src, SCANNER_SM, data), type(msgType) {}
+	~ScannerMessage() {};
 	const unsigned char type;
 	enum {
 		CLIENT_REQUEST,
@@ -69,6 +74,7 @@ class DemodMessage : public Message {
 public:
 	DemodMessage(unsigned char src, unsigned char msgType, void* data = 0) :
 		Message(src, DEMOD, data), type(msgType) {}
+	~DemodMessage() {};
 	const unsigned char type;
 	enum {
 		SET_SQUELCH = 0,
@@ -82,6 +88,7 @@ class AudioMessage : public Message {
 public:
 	AudioMessage(unsigned char src, unsigned char msgType, void* data = 0) :
 		Message(src, AUDIO_MAN, data), type(msgType) {}
+	~AudioMessage() {};
 	const unsigned char type;
 	enum {
 		ENABLE_OUTPUT = 0,
@@ -96,7 +103,7 @@ class ServerMessage : public Message {
 public:
 	ServerMessage(unsigned char src, unsigned char msgType, void* data = 0) :
 		Message(src, SERVER_MAN, data), type(msgType) {}
-
+	~ServerMessage() {};
 	enum {
 		CONTEXT_UPDATE,
 
@@ -113,7 +120,7 @@ public:
 /* interface for all classes using ITC */
 class MessageReceiver {
 public:
-	virtual ~MessageReceiver();
+	virtual ~MessageReceiver() {};
 	virtual void giveMessage(Message& msg) = 0;
 };
 

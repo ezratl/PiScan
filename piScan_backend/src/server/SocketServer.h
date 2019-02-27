@@ -13,7 +13,7 @@
 
 class SocketConnection : public Connection {
 public:
-
+	~SocketConnection() {};
 private:
 
 };
@@ -21,8 +21,8 @@ private:
 /* listener for socket connections */
 class SocketServer: public BackendServer {
 public:
-	SocketServer();
-	virtual ~SocketServer();
+	SocketServer(ServerInterface& host) : BackendServer(host) {};
+	~SocketServer() {};
 };
 
 #endif /* SERVER_SOCKETSERVER_H_ */

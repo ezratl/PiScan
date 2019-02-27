@@ -28,6 +28,7 @@ public:
     StateMachine(int maxStates);
     virtual ~StateMachine() {}
     void start();
+    void stop(bool);
 protected:
     enum { EVENT_IGNORED = 0xFE, CANNOT_HAPPEN };
     unsigned char currentState;
@@ -44,6 +45,7 @@ private:
     void StateThreadFunc(void);
     std::thread _stateMachineThread;
     std::mutex _eventMutex;
+    bool _run = false;
 };
 
 typedef void (StateMachine::*StateFunc)(EventData *);

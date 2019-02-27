@@ -15,12 +15,13 @@
 class Entry {
 public:
 	Entry(char* tag, bool lo, bool del);
-	virtual ~Entry();
+	virtual ~Entry() {};
 
 	char*	getTag() { return &tag[0]; }
 	virtual char*	getModulation() = 0;
 	virtual char*	getIdentity() = 0;
 	bool	isLockedOut() { return lockedOut; }
+	bool	useDelay() { return scanDelay; }
 	void	lockout(bool val) { lockedOut = val; }
 	virtual bool	hasSignal() = 0;
 
@@ -29,13 +30,14 @@ protected:
 	bool	lockedOut;
 	bool	scanDelay;
 
-	static DemodInterface& demod;
+	static DemodInterface* demod;
+	friend void setDemodulator(DemodInterface* demod);
 };
 
 class Channel: public Entry {
 public:
 	Channel(unsigned long freq, char* tag, bool lo, bool del) : Entry(tag, lo, del), frequency(freq){}
-	virtual ~Channel();
+	virtual ~Channel() {};
 protected:
 	const unsigned long frequency;
 };
@@ -43,6 +45,7 @@ protected:
 class FMChannel : public Channel {
 public:
 	FMChannel(unsigned long freq, char* tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
+	~FMChannel() {};
 
 	char* getModulation() {
 		return "FM";
@@ -56,6 +59,7 @@ public:
 	PLChannel(unsigned long freq, float tn, char* tag, bool lo, bool del) :
 			FMChannel(freq, tag, lo, del), tone(tn) {
 	}
+	~PLChannel() {};
 
 	//bool hasSignal();
 protected:
@@ -67,6 +71,7 @@ public:
 	DCChannel(unsigned long freq, unsigned int tn, char* tag, bool lo, bool del) :
 			FMChannel(freq, tag, lo, del), code(tn) {
 	}
+	~DCChannel() {};
 
 	//bool hasSignal();
 protected:
@@ -76,8 +81,9 @@ protected:
 class AMChannel : public Channel {
 public:
 	AMChannel(unsigned long freq, char* tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
+	~AMChannel() {};
 
-	bool hasSignal();
+	bool hasSignal() { return false; };
 };
 
 #endif /*Channel_ */

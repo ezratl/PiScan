@@ -27,9 +27,9 @@ void ServerManager::allowConnections(){
 void ServerManager::disconnectClients(){
 	//TODO might need locks for array
 	for(int i = 0; i < MAX_CONNECTIONS; ++i){
-		Connection::Connection& con = _connections[i];
+		Connection* con = _connections[i];
 		if(con != NULL){
-			con.disconnect();
+			con->disconnect();
 		}
 	}
 }
@@ -37,20 +37,21 @@ void ServerManager::disconnectClients(){
 void ServerManager::_queueThreadFunc(void){
 	//todo break condition
 	while(1){
-		Message& message;
+		Message* message;
 		if(_queue.try_dequeue(message)){
-			if(message.destination != SERVER_MAN){
-				_centralQueue.giveMessage(message);
+			assert(message != nullptr);
+			if(message->destination != SERVER_MAN){
+				_centralQueue.giveMessage(*message);
 			}
 			else{
-				_handleMessage(message);
+				_handleMessage(*message);
 			}
 		}
 	}
 }
 
 void ServerManager::giveMessage(Message& message){
-	_queue.enqueue(message);
+	_queue.enqueue(&message);
 }
 
 ServerInterface::RequestResponse ServerManager::requestConnection(Connection& client){
@@ -59,24 +60,24 @@ ServerInterface::RequestResponse ServerManager::requestConnection(Connection& cl
 		return RQ_ACCEPTED;
 	}
 	else{
-		delete client;
+		delete &client;
 		return RQ_DENIED;
 	}
 }
 
 ServerInterface::RequestResponse ServerManager::giveRequest(ClientRequest& request){
-	if(_connections[request.src._handle] != request.src){
-		delete request;
+	if(_connections[request.src->_handle] != request.src){
+		delete &request;
 		return RQ_INVALID_HANDLE;
 	}
-	else if(request.src._level < ClientRequest::permissionMap[request.requestType]){
-		delete request;
+	else if(request.src->_level < ClientRequest::permissionMap[request.requestType]){
+		delete &request;
 		return RQ_INSUFFICIENT_PERMISSION;
 	}
 
 	//todo new message, request passed as data
 	//unsigned char dest = 0;
-	Message message;
+	Message* message;
 	switch(request.requestType){
 	case ClientRequest::SYSTEM_FUNCTION:
 		//dest = SYSTEM_CONTROL;
@@ -99,7 +100,7 @@ ServerInterface::RequestResponse ServerManager::giveRequest(ClientRequest& reque
 		break;
 	}
 
-	this->giveMessage(message);
+	this->giveMessage(*message);
 	//delete request;
 	return RQ_ACCEPTED;
 }
@@ -112,7 +113,7 @@ void ServerManager::_addConnection(Connection& client){
 	//TODO
 	for(int i = 0; i < MAX_CONNECTIONS; ++i){
 		if(_connections[i] == NULL){
-			_connections[i] = client;
+			_connections[i] = &client;
 			client._handle = i;
 			client.serverManager = this;
 			client.connect();

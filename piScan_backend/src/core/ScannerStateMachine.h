@@ -8,16 +8,18 @@
 #ifndef SERVER_SCANNERSTATEMACHINE_H_
 #define SERVER_SCANNERSTATEMACHINE_H_
 
+#include <ctime>
+
 #include "StateMachine.h"
 #include "SystemList.h"
 #include "Entry.h"
 #include "messages.h"
 
 
-class ScannerStateMachine: public MessageReceiver, StateMachine {
+class ScannerStateMachine: public MessageReceiver, public StateMachine {
 public:
 	ScannerStateMachine(MessageReceiver& central, SystemList& dataSource);
-	//~ScannerStateMachine();
+	~ScannerStateMachine() {};
 
 	void startScan();
 	void holdScan();
@@ -50,15 +52,21 @@ private:
 		ST_MANUAL,
 		ST_SAVEALL,
 		ST_STOPPED,
+
+		ST_INVALID = 255
 	};
 
 private:
 	MessageReceiver& _centralQueue;
 	//moodycamel::ReaderWriterQueue<Message> _msgQueue;
 	SystemList& _systems;
-	RadioSystem& _currentSystem;
-	Entry& _currentEntry;
+	RadioSystem* _currentSystem;
+	Entry* _currentEntry;
 	size_t _sysCounter = 0, _entryCounter = 0;
+	States _lastState = ST_INVALID;
+
+	bool _externalHold = false;
+	std::time_t timeoutStart = 0;
 
 	struct EntryContext {
 		States state;
@@ -66,10 +74,10 @@ private:
 		const Entry* entry;
 	};
 
-	EntryContext _currentContext = {(States) 0, NULL, NULL};
+	EntryContext _currentContext = {ST_INVALID, NULL, NULL};
 
-	void _broadcastSystemContext(RadioSystem& sys);
-	void _broadcastEntryContext(RadioSystem& sys, Entry& entry);
+	void _broadcastSystemContext(RadioSystem* sys);
+	void _broadcastEntryContext(RadioSystem* sys, Entry* entry);
 	void _enableAudioOut(bool en);
 
 };
