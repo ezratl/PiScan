@@ -4,4 +4,6 @@ add_library(external
 	loguru.cpp
 	loguru.hpp
 	readerwriterqueue.h
+	convenience.h
+	convenience.c
 	)

@@ -38,4 +38,10 @@ public:
 	TunerStatus setSquelchLevel(int8_t newLevel);
 };
 
+class RtlTuner : public Tuner {
+public:
+
+private:
+};
+
 #endif /* DRIVERS_TUNER_H_ */
