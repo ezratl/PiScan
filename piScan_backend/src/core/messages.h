@@ -21,14 +21,17 @@ enum {
 	SERVER_MAN,
 	AUDIO_MAN,
 
-	CLIENT = 255,
+	CLIENT = 254,
+	ALL = 255
 };
+
+static int activeMessages = 0;
 
 /* basic interthread message structure */
 class Message {
 public:
-	Message(unsigned char src, unsigned char dst, void* data = 0) : source(src), destination(dst), pData(data) {}
-	virtual ~Message() {};
+	Message(unsigned char src, unsigned char dst, void* data = 0) : source(src), destination(dst), pData(data) { activeMessages++; }
+	virtual ~Message() { activeMessages--; };
 	const unsigned char source;
 	const unsigned char destination;
 	void* const pData;

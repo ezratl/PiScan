@@ -8,21 +8,31 @@
 #ifndef SERVERDEBUGOUTPUT_H_
 #define SERVERDEBUGOUTPUT_H_
 
+#include <thread>
+
 #include "BackendServer.h"
-#include "ServerManager.h"
+#include "connection.h"
 
 class DebugServer;
 
 class DebugConsole : public Connection {
 public:
 	DebugConsole() : Connection(FULL_CONTROL, AUDIO_NONE) {}
-	~DebugConsole() {};
+	~DebugConsole() {
+		_requestThread.join();
+	};
 
 	void connect();
 	void disconnect();
 	void giveMessage(Message& message);
 
 	friend DebugServer;
+
+private:
+	bool _run = false;
+	std::thread _requestThread;
+
+	void _consoleInputFunc();
 };
 
 class DebugServer : public BackendServer {

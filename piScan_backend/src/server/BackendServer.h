@@ -9,7 +9,7 @@
 #define BACKENDSERVER_H_
 
 #include "messages.h"
-#include "ServerManager.h"
+#include "connection.h"
 
 class BackendServer : public MessageReceiver {
 public:

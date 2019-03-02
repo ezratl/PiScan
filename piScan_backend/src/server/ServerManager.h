@@ -11,95 +11,19 @@
 #include <vector>
 
 #include "messages.h"
-
-#define HANDLE_NULL	-1
+#include "request.h"
+#include "connection.h"
+#include "BackendServer.h"
 
 class Connection;
-class ClientRequest;
-class ServerInterface;
-class ServerManager;
-
-class Connection : public MessageReceiver {
-public:
-	enum ConnectionLevel {
-		RECEIVE_ONLY,
-		VIEWER,
-		FULL_CONTROL,
-	};
-
-	enum AudioReceive {
-		AUDIO_NONE,
-		AUDIO_RECEIVE,
-	};
-
-	Connection(ConnectionLevel lvl, AudioReceive aud) :
-		_level(lvl), _audio(aud), serverManager(nullptr), _handle(HANDLE_NULL) {}
-	virtual ~Connection() {};
-
-	virtual void giveMessage(Message& message) = 0;
-	virtual void connect() = 0;
-	virtual void disconnect() = 0;
-
-private:
-	friend class ServerManager;
-	int _handle;
-	ConnectionLevel _level;
-	AudioReceive _audio;
-protected:
-	ServerInterface* serverManager;
-
-	void notifyDisconnected() {
-
-	}
-};
-
-class ClientRequest : public Message {
-public:
-	enum {
-		REQUEST,
-		NOTIFY_DISCONNECTED,
-	};
-
-	enum RequestType {
-		SYSTEM_FUNCTION = 0,
-		SCANNER_FUNCTION,
-		DATABASE_RETRIEVE,
-		DATABASE_MODIFY,
-		CONFIG_RETRIEVE,
-		CONFIG_MODIFY,
-	};
-
-	ClientRequest(Connection& client, unsigned char dst);
-	~ClientRequest() {};
-
-private:
-	static Connection::ConnectionLevel permissionMap[];
-
-	friend class ServerManager;
-	Connection* src;
-	RequestType requestType;
-	void (*_callback)(void*);
-};
-
-class ServerInterface {
-public:
-	virtual ~ServerInterface() {};
-
-	enum RequestResponse {
-		RQ_ACCEPTED,
-		RQ_DENIED,
-		RQ_INSUFFICIENT_PERMISSION,
-		RQ_INVALID_HANDLE,
-	};
-
-	virtual RequestResponse requestConnection(Connection& client) = 0;
-	virtual RequestResponse giveRequest(ClientRequest& request) = 0;
-};
 
 class ServerManager : public MessageReceiver, public ServerInterface {
 public:
 	ServerManager(MessageReceiver& central);
-	~ServerManager() {};
+	~ServerManager() {
+		for(unsigned int i = 0; i < _servers.size(); i++)
+			delete _servers[i];
+		_queueThread.join(); };
 
 	void start();
 	void allowConnections();
@@ -110,15 +34,20 @@ protected:
 private:
 	MessageReceiver& _centralQueue;
 	moodycamel::ConcurrentQueue<Message*> _queue;
+	moodycamel::ReaderWriterQueue<Connection*> _connectionQueue;
 	int _activeConnections;
 	std::vector<Connection*> _connections;
+	std::vector<BackendServer*> _servers;
+	std::thread _queueThread;
+	bool _allowConnections = false;
+	bool _run = false;
 
 
 	void _queueThreadFunc(void);
 	void _handleMessage(Message& message);
 	void _addConnection(Connection& client);
-	RequestResponse requestConnection(Connection& client);
-	RequestResponse giveRequest(ClientRequest& request);
+	int requestConnection(void* client);
+	int giveRequest(void* request);
 
 };
 
