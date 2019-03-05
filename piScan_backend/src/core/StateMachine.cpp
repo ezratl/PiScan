@@ -20,6 +20,7 @@ StateMachine::StateMachine(int maxStates) :
 
 void StateMachine::start() {
 	_run = true;
+	InternalEvent(0);
 	_stateMachineThread = std::thread(&StateMachine::StateThreadFunc, this);
 }
 
@@ -44,7 +45,7 @@ void StateMachine::ExternalEvent(unsigned char newState,
     	std::lock_guard<std::mutex> lock(_eventMutex);
         // generate the event and execute the state engine
         InternalEvent(newState, pData);
-        //StateEngine();
+        _cv.notify_one();
     }
 }
 
@@ -65,13 +66,15 @@ void StateMachine::StateEngine(void)
     EventData* pDataTemp = NULL;
 
     // TBD - lock semaphore here
-    std::lock_guard<std::mutex> lock(_eventMutex);
+    std::unique_lock<std::mutex> lock(_eventMutex);
+    _cv.wait(lock, [this]{return this->_eventGenerated;});
 
     // while events are being generated keep executing states
-    if (_eventGenerated) {
+    while (_eventGenerated) {
         pDataTemp = _pEventData;  // copy of event data pointer
         _pEventData = NULL;       // event data used up, reset ptr
         _eventGenerated = false;  // event used up, reset flag
+        lock.unlock();
 
         assert(currentState < _maxStates);
 
@@ -84,7 +87,12 @@ void StateMachine::StateEngine(void)
             delete pDataTemp;
             pDataTemp = NULL;
         }
+        if(!_run)
+        	return;
+        if(_eventGenerated)
+        	lock.lock();
     }
+
     // TBD - unlock semaphore here
 }
 

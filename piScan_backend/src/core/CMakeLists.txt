@@ -3,8 +3,8 @@ add_library(core
 	Configuration.h
 	constants.h
 	messages.h
-	ScannerStateMachine.cpp
-	ScannerStateMachine.h
+	ScannerSM.cpp
+	ScannerSM.h
 	StateMachine.cpp
 	StateMachine.h
 	)

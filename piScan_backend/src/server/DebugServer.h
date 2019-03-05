@@ -22,7 +22,7 @@ public:
 		_requestThread.join();
 	};
 
-	void connect();
+	bool connect();
 	void disconnect();
 	void giveMessage(Message& message);
 

@@ -237,6 +237,8 @@ struct demod_state demod2;
 struct output_state output;
 struct controller_state controller;
 
+int sq_rms;
+
 void usage(void)
 {
 	fprintf(stderr,
@@ -834,6 +836,24 @@ int squelch_to_rms(int db, struct dongle_state *dongle, struct demod_state *demo
 	return (int)linear + 1;
 }
 
+double rms_to_db(int rms, struct dongle_state *dongle, struct demod_state *demod)
+{
+	double linear, gain, downsample;
+	gain = 50.0;
+	if (dongle->gain != AUTO_GAIN) {
+		gain = (double) (dongle->gain) / 10.0;
+	}
+	gain = 50.0 - gain;
+	gain = pow(10.0, gain / 20.0);
+	downsample = 1024.0 / (double) demod->downsample;
+
+	linear = rms - 1.0;
+	linear = linear * downsample;
+	linear = linear * gain;
+
+	return 20.0 * log10(linear);
+}
+
 void software_agc(struct demod_state *d)
 {
 	int i = 0;
@@ -907,11 +927,12 @@ void full_demod(struct demod_state *d)
 		low_pass(d);
 	}
 	/* power squelch */
-	if (d->squelch_level) {
+	//if (d->squelch_level) {
 		sr = rms(d->lowpassed, d->lp_len, 1);
-		if (sr < d->squelch_level) {
+		sq_rms = sr;
+	/*	if (sr < d->squelch_level) {
 			do_squelch = 1;}
-	}
+	}*/
 	if (do_squelch) {
 		d->squelch_hits++;
 		for (i=0; i<d->lp_len; i++) {
@@ -1299,6 +1320,7 @@ int rtl_fm_setfreq(uint32_t freq){
 	optimal_settings(freq, demod.rate_in);
 	//r = rtlsdr_set_center_freq(dongle.dev, freq);
 	r = verbose_set_frequency(dongle.dev, dongle.freq);
+	dongle.mute = BUFFER_DUMP;
 	return r;
 }
 
@@ -1331,8 +1353,14 @@ int rtl_fm_setmode(enum mode_demod newMode) {
 	return 0;
 }
 
-int rtl_fm_get_rssi(){
-	return 0;
+float rtl_fm_get_rssi(){
+	//struct demod_state* d = &demod;
+	//safe_cond_wait(&d->ready, &d->ready_m);
+	//pthread_rwlock_wrlock(&d->rw);
+	//full_demod(d);
+	int sr = sq_rms;
+	//pthread_rwlock_unlock(&d->rw);
+	return rms_to_db(sr, &dongle, &demod);
 }
 
 void frequency_range(struct controller_state *s, char *arg)

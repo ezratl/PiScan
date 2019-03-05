@@ -9,13 +9,19 @@
 #define DRIVERS_TUNER_H_
 
 #include <stdint.h>
+#include <unistd.h>
 
-typedef enum {
+#include "rtl_fm.h"
+#include "loguru.hpp"
+
+#define RTL_DEMOD_WAIT	50000
+
+enum TunerStatus {
 	TUNER_ERROR = -1,
 	TUNER_SUCCESS,
 	TUNER_BUSY,
 	TUNER_UNSUPPORTED,
-} TunerStatus;
+};
 
 typedef enum {
 	MODE_FM,
@@ -29,18 +35,51 @@ typedef struct {
 	int8_t		gain;
 } Frequency;
 
+class RtlFmTuner;
+
 class Tuner {
 public:
-	Tuner();
-	virtual ~Tuner();
+	Tuner() {};
+	virtual ~Tuner() {};
 
-	TunerStatus setFrequency(Frequency* newFreq);
-	TunerStatus setSquelchLevel(int8_t newLevel);
+	virtual TunerStatus init() { return TUNER_UNSUPPORTED; };
+	virtual TunerStatus stop() { return TUNER_UNSUPPORTED; };
+	virtual TunerStatus setFrequency(uint32_t freq) { return TUNER_UNSUPPORTED; };
+	virtual TunerStatus setSquelchLevel(int8_t newLevel) { return TUNER_UNSUPPORTED; };
+	virtual float rssi() { return 0; };
 };
 
-class RtlTuner : public Tuner {
+class RtlFmTuner : public Tuner {
 public:
+	RtlFmTuner() {};
+	~RtlFmTuner() {};
 
+	TunerStatus init() {
+		LOG_F(2, "Starting rtl_fm");
+		if(rtl_fm_init(nullptr, 0, 12000))
+			return TUNER_ERROR;
+		return TUNER_SUCCESS;
+	}
+
+	TunerStatus stop() {
+		LOG_F(2, "Stopping rtl_fm");
+		if(rtl_fm_deinit())
+			return TUNER_ERROR;
+		return TUNER_SUCCESS;
+	}
+
+	TunerStatus setFrequency(uint32_t freq){
+		if(freq >= RTL_MIN_FREQ && freq <= RTL_MAX_FREQ){
+			if(rtl_fm_setfreq(freq))
+				return TUNER_ERROR;
+			usleep(RTL_DEMOD_WAIT);
+			return TUNER_SUCCESS;
+		}
+		else
+			return TUNER_UNSUPPORTED;
+	}
+
+	float rssi() { return rtl_fm_get_rssi(); }
 private:
 };
 

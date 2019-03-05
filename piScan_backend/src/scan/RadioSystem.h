@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 #include "Entry.h"
 
@@ -36,7 +37,10 @@ public:
 	AnalogSystem() : RadioSystem() {};
 	~AnalogSystem() {};
 
-	Entry* operator[](size_t pos) { return nullptr; };
+	Entry* operator[](size_t pos) { return &entries[pos]; };
+
+protected:
+	std::vector<Entry> entries;
 };
 
 #endif /* RADIOSYSTEM_H_ */

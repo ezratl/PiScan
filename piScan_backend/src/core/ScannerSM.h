@@ -16,10 +16,10 @@
 #include "messages.h"
 
 
-class ScannerStateMachine: public MessageReceiver, public StateMachine {
+class ScannerSM: public MessageReceiver, public StateMachine {
 public:
-	ScannerStateMachine(MessageReceiver& central, SystemList& dataSource);
-	~ScannerStateMachine() {};
+	ScannerSM(MessageReceiver& central, SystemList& dataSource);
+	~ScannerSM() {};
 
 	void startScan();
 	void holdScan();
@@ -35,13 +35,13 @@ private:
 	void ST_Stopped(EventData* data);
 
 	BEGIN_STATE_MAP
-		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Load)
-		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Scan)
-		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Hold)
-		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Receive)
-		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Manual)
-		STATE_MAP_ENTRY(&ScannerStateMachine::ST_SaveAll)
-		STATE_MAP_ENTRY(&ScannerStateMachine::ST_Stopped)
+		STATE_MAP_ENTRY(&ScannerSM::ST_Load)
+		STATE_MAP_ENTRY(&ScannerSM::ST_Scan)
+		STATE_MAP_ENTRY(&ScannerSM::ST_Hold)
+		STATE_MAP_ENTRY(&ScannerSM::ST_Receive)
+		STATE_MAP_ENTRY(&ScannerSM::ST_Manual)
+		STATE_MAP_ENTRY(&ScannerSM::ST_SaveAll)
+		STATE_MAP_ENTRY(&ScannerSM::ST_Stopped)
 	END_STATE_MAP
 
 	enum States {

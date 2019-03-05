@@ -13,17 +13,18 @@
 #include "DebugServer.h"
 #include "loguru.hpp"
 
-void DebugConsole::connect(){
-	std::cout << "Connecting...";
+bool DebugConsole::connect(){
+	std::cerr << "Connecting...";
 	_run = true;
 	_requestThread = std::thread(&DebugConsole::_consoleInputFunc, this);
+	return true;
 }
 
 void DebugConsole::disconnect(){
 	_run = false;
 
 	std::fprintf(stdin, "\n");
-	std::cout << "\nConsole disconnected\n";
+	std::cerr << "\nConsole disconnected\n";
 	notifyDisconnected();
 }
 
@@ -33,7 +34,7 @@ void DebugConsole::giveMessage(Message& message){
 
 void DebugConsole::_consoleInputFunc() {
 	std::string input = "";
-	std::cout << "\nConsole connected\n";
+	std::cerr << "\nConsole connected\n";
 	while(_run){
 		input.clear();
 		std::getline(std::cin, input);
@@ -41,11 +42,11 @@ void DebugConsole::_consoleInputFunc() {
 		if(input.compare("stop") == 0){
 			_run = false;
 
-			ClientRequest::RequestParams params;
+			ClientRequest::RequestParams params = {.type = SYSTEM_FUNCTION, .subType = SYSTEM_STOP};
 			issueRequest(params);
 		}
 	}
-	std::cout << "\nConsole thread exited\n";
+	std::cerr << "\nConsole thread exited\n";
 }
 
 void DebugServer::start(){

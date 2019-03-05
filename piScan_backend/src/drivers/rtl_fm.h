@@ -3,6 +3,9 @@
 #ifndef DRIVERS_RTL_FM_H_
 #define DRIVERS_RTL_FM_H_
 
+#define RTL_MIN_FREQ	24000000
+#define RTL_MAX_FREQ	1450000000
+
 enum custom_atan {
     STD,
     FAST,
@@ -27,7 +30,7 @@ extern "C" {
 
     int rtl_fm_setfreq(uint32_t freq);
     int rtl_fm_setmode(enum mode_demod newMode);
-    int rtl_fm_get_rssi();
+    float rtl_fm_get_rssi();
 #ifdef __cplusplus
 }
 #endif

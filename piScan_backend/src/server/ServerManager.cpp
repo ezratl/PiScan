@@ -5,6 +5,8 @@
  *      Author: ezra
  */
 
+//#include <unistd.h>
+
 #include "ServerManager.h"
 #include "loguru.hpp"
 #include "DebugServer.h"
@@ -49,24 +51,31 @@ void ServerManager::disconnectClients(){
 
 void ServerManager::_queueThreadFunc(void){
 	while(_run){
+		std::unique_lock<std::mutex> lock(_msgMutex);
+		_cv.wait(lock, [this]{return this->_msgAvailable;});
+
 		Message* message;
 		if(_queue.try_dequeue(message)){
 			assert(message != nullptr);
-			if(message->destination != SERVER_MAN && message->source != CLIENT){
+			if(message->destination != SERVER_MAN){
 				_centralQueue.giveMessage(*message);
 			}
 			else{
 				_handleMessage(*message);
 			}
+			_msgAvailable = false;
 		}
 
 		Connection* newCon = nullptr;
 		if(_allowConnections && _connectionQueue.try_dequeue(newCon)){
 			_addConnection(*newCon);
+			_msgAvailable = false;
 		}
+
+		lock.unlock();
 	}
 
-	for(int i = 0; i < _servers.size(); i++)
+	for(unsigned int i = 0; i < _servers.size(); i++)
 		_servers[i]->stop();
 
 	// empty queue
@@ -80,12 +89,20 @@ void ServerManager::_queueThreadFunc(void){
 
 void ServerManager::giveMessage(Message& message){
 	_queue.enqueue(&message);
+	std::unique_lock<std::mutex> lock(_msgMutex);
+	_msgAvailable = true;
+	lock.unlock();
+	_cv.notify_one();
 }
 
 int ServerManager::requestConnection(void* client){
 	if(_activeConnections < MAX_CONNECTIONS){
-
+		DLOG_F(8, "New connection request");
 		_connectionQueue.enqueue(static_cast<Connection*>(client));
+		std::unique_lock<std::mutex> lock(_msgMutex);
+		_msgAvailable = true;
+		lock.unlock();
+		_cv.notify_one();
 		return RQ_ACCEPTED;
 	}
 	else{
@@ -109,6 +126,7 @@ int ServerManager::giveRequest(void* request){
 	Message* message;
 	switch(rq->rqInfo.type){
 	case NOTIFY_DISCONNECTED:
+		LOG_F(INFO, "Connection %i disconnected", rq->source);
 		delete _connections[rq->source];
 		break;
 	case SYSTEM_FUNCTION:
@@ -137,40 +155,29 @@ int ServerManager::giveRequest(void* request){
 		break;
 	}
 
-	this->giveMessage(*message);
+	if(message != nullptr)
+		this->giveMessage(*message);
 	return rq->rqHandle;
 }
 
 void ServerManager::_handleMessage(Message& message){
-	//TODO
-	if(message.source == CLIENT){
-		if(_allowConnections){
-			_addConnection(*(static_cast<Connection*>(message.pData)));
-		}
-		else {
-			// connections not yet allowed, put request back on queue
-			giveMessage(message);
-			return;
-		}
-	}
-	else{
-		auto msg = dynamic_cast<ServerMessage&>(message);
-		switch(msg.type){
-		case ServerMessage::CONTEXT_UPDATE:
-			break;
-		case ServerMessage::NOTIFY_ALL_CLIENTS:
-			break;
-		case ServerMessage::NOTIFY_USERS:
-			break;
-		case ServerMessage::NOTIFY_VIEWERS:
-			break;
-		case ServerMessage::STOP:
-			disconnectClients();
-			_run = false;
-			break;
-		default:
-			break;
-		}
+	assert(message.destination == SERVER_MAN);
+	auto msg = dynamic_cast<ServerMessage&>(message);
+	switch (msg.type) {
+	case ServerMessage::CONTEXT_UPDATE:
+		break;
+	case ServerMessage::NOTIFY_ALL_CLIENTS:
+		break;
+	case ServerMessage::NOTIFY_USERS:
+		break;
+	case ServerMessage::NOTIFY_VIEWERS:
+		break;
+	case ServerMessage::STOP:
+		disconnectClients();
+		_run = false;
+		break;
+	default:
+		break;
 	}
 
 	delete &message;
@@ -182,10 +189,17 @@ void ServerManager::_addConnection(Connection& client){
 		if(_connections[i] == nullptr){
 			LOG_F(1, "Initiating connection with handle %i", i);
 
-			_connections[i] = &client;
+
 			client._handle = i;
 			client._serverManager = this;
-			client.connect();
+			if(client.connect()){
+				_connections[i] = &client;
+				LOG_F(INFO, "Client %i connected", i);
+			}
+			else{
+				LOG_F(INFO, "Connection attempt failed");
+				delete &client;
+			}
 			break;
 		}
 	}

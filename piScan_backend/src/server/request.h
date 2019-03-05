@@ -27,14 +27,14 @@ public:
 	};
 
 
-	ClientRequest(unsigned char handle, RequestParams info, void (*callback)(void*) = 0) :
+	ClientRequest(unsigned char handle, RequestParams info, void (*callback)(int, void*) = 0) :
 		Message(handle, 0), rqInfo(info), _callback(callback) {}
 	~ClientRequest() {};
 
 
 	int rqHandle = 0;
 	RequestParams rqInfo;
-	void (*_callback)(void*);
+	void (*_callback)(int, void*);
 
 private:
 

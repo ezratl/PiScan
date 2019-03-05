@@ -5,12 +5,12 @@
  *      Author: ezra
  */
 
+#include <ScannerSM.h>
 #include "loguru.hpp"
-#include "ScannerStateMachine.h"
 
 #define DELAY_TIMEOUT	2.0
 
-ScannerStateMachine::ScannerStateMachine(MessageReceiver& central, SystemList& dataSource) :
+ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
 		StateMachine(7), _centralQueue(central), _systems(dataSource), _currentSystem(nullptr), _currentEntry(nullptr) {
 }
 
@@ -23,7 +23,7 @@ ScannerStateMachine::ScannerStateMachine(MessageReceiver& central, SystemList& d
 //		ST_STOPPED,
 //	};
 
-void ScannerStateMachine::startScan(){
+void ScannerSM::startScan(){
 	LOG_F(1, "ExtEvent: startScan");
 	BEGIN_TRANSITION_MAP
 		TRANSITION_MAP_ENTRY(ST_SCAN)
@@ -36,7 +36,7 @@ void ScannerStateMachine::startScan(){
 	END_TRANSITION_MAP(NULL)
 }
 
-void ScannerStateMachine::holdScan(){
+void ScannerSM::holdScan(){
 	_externalHold = true;
 	LOG_F(1, "ExtEvent: holdScan");
 	BEGIN_TRANSITION_MAP
@@ -50,7 +50,7 @@ void ScannerStateMachine::holdScan(){
 	END_TRANSITION_MAP(NULL)
 }
 
-void ScannerStateMachine::stopScanner(){
+void ScannerSM::stopScanner(){
 	LOG_F(1, "ExtEvent: stopScanner");
 	BEGIN_TRANSITION_MAP
 		TRANSITION_MAP_ENTRY(ST_SAVEALL)
@@ -63,7 +63,8 @@ void ScannerStateMachine::stopScanner(){
 	END_TRANSITION_MAP(NULL)
 }
 
-void ScannerStateMachine::ST_Load(EventData* data){
+void ScannerSM::ST_Load(EventData* data){
+	DLOG_F(9, "ST_Load");
 	//file read and system tree population
 
 	// do not issue event - SM will wait until an event is generated before proceeding
@@ -73,7 +74,8 @@ void ScannerStateMachine::ST_Load(EventData* data){
 	LOG_F(1, "ScannerSM ready");
 }
 
-void ScannerStateMachine::ST_Scan(EventData* data){
+void ScannerSM::ST_Scan(EventData* data){
+	DLOG_F(9, "ST_Scan");
 	_enableAudioOut(false);
 
 	// incremental scan pattern
@@ -98,7 +100,8 @@ void ScannerStateMachine::ST_Scan(EventData* data){
 
 }
 
-void ScannerStateMachine::ST_Hold(EventData* data){
+void ScannerSM::ST_Hold(EventData* data){
+	DLOG_F(9, "ST_Hold");
 	_enableAudioOut(false);
 	_broadcastEntryContext(_currentSystem, _currentEntry);
 
@@ -129,7 +132,8 @@ void ScannerStateMachine::ST_Hold(EventData* data){
 
 }
 
-void ScannerStateMachine::ST_Receive(EventData* data){
+void ScannerSM::ST_Receive(EventData* data){
+	DLOG_F(9, "ST_Receive");
 	_enableAudioOut(true);
 	_broadcastEntryContext(_currentSystem, _currentEntry);
 
@@ -143,23 +147,26 @@ void ScannerStateMachine::ST_Receive(EventData* data){
 	}
 }
 
-void ScannerStateMachine::ST_Manual(EventData* data){
+void ScannerSM::ST_Manual(EventData* data){
 	//TODO state for later implementation
 }
 
-void ScannerStateMachine::ST_SaveAll(EventData* data){
+void ScannerSM::ST_SaveAll(EventData* data){
+	DLOG_F(9, "ST_SaveAll");
 	LOG_F(1, "Saving database");
 
 	InternalEvent(ST_STOPPED);
 }
 
-void ScannerStateMachine::ST_Stopped(EventData* data){
+void ScannerSM::ST_Stopped(EventData* data){
+	DLOG_F(9, "ST_Stopped");
+	stop(false);
 	Message* message = new ControllerMessage(SCANNER_SM, ControllerMessage::NOTIFY_STOPPED);
 	_centralQueue.giveMessage(*message);
 	LOG_F(1, "ScannerSM stopped");
 }
 
-void ScannerStateMachine::_broadcastSystemContext(RadioSystem* sys){
+void ScannerSM::_broadcastSystemContext(RadioSystem* sys){
 	assert(sys != NULL);
 	//TODO not thread safe
 	_currentContext.state = static_cast<States>(currentState);
@@ -169,7 +176,7 @@ void ScannerStateMachine::_broadcastSystemContext(RadioSystem* sys){
 	_centralQueue.giveMessage(*message);
 }
 
-void ScannerStateMachine::_broadcastEntryContext(RadioSystem* sys, Entry* entry){
+void ScannerSM::_broadcastEntryContext(RadioSystem* sys, Entry* entry){
 	assert(sys != NULL);
 	assert(entry != NULL);
 	//TODO not thread safe
@@ -180,7 +187,7 @@ void ScannerStateMachine::_broadcastEntryContext(RadioSystem* sys, Entry* entry)
 	_centralQueue.giveMessage(*message);
 }
 
-void ScannerStateMachine::_enableAudioOut(bool en){
+void ScannerSM::_enableAudioOut(bool en){
 	Message* message;
 	if(en){
 		message = new AudioMessage(SCANNER_SM, AudioMessage::ENABLE_OUTPUT);
@@ -191,7 +198,7 @@ void ScannerStateMachine::_enableAudioOut(bool en){
 	_centralQueue.giveMessage(*message);
 }
 
-void ScannerStateMachine::giveMessage(Message& message) {
+void ScannerSM::giveMessage(Message& message) {
 	//assert(message != NULL);
 	auto msg = dynamic_cast<ScannerMessage&>(message);
 

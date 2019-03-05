@@ -14,19 +14,19 @@
 
 class Entry {
 public:
-	Entry(char* tag, bool lo, bool del);
+	Entry(std::string tag, bool lo, bool del);
 	virtual ~Entry() {};
 
-	char*	getTag() { return &tag[0]; }
-	virtual char*	getModulation() = 0;
-	virtual char*	getIdentity() = 0;
+	std::string*	getTag() { return &tag; }
+	virtual std::string	getModulation() = 0;
+	virtual std::string*	getIdentity() = 0;
 	bool	isLockedOut() { return lockedOut; }
 	bool	useDelay() { return scanDelay; }
 	void	lockout(bool val) { lockedOut = val; }
 	virtual bool	hasSignal() = 0;
 
 protected:
-	char	tag[TAG_LENGTH];
+	std::string	tag;
 	bool	lockedOut;
 	bool	scanDelay;
 
@@ -47,7 +47,7 @@ public:
 	FMChannel(unsigned long freq, char* tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
 	~FMChannel() {};
 
-	char* getModulation() {
+	std::string getModulation() {
 		return "FM";
 	}
 

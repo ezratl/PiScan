@@ -8,6 +8,7 @@
 #ifndef SERVER_STATEMACHINE_H_
 #define SERVER_STATEMACHINE_H_
 
+#include <condition_variable>
 #include <stdio.h>
 #include <thread>
 #include <mutex>
@@ -26,7 +27,10 @@ class StateMachine
 {
 public:
     StateMachine(int maxStates);
-    virtual ~StateMachine() {}
+    virtual ~StateMachine() {
+    	_run = false;
+    	_stateMachineThread.join();
+    }
     void start();
     void stop(bool);
 protected:
@@ -45,6 +49,7 @@ private:
     void StateThreadFunc(void);
     std::thread _stateMachineThread;
     std::mutex _eventMutex;
+    std::condition_variable _cv;
     bool _run = false;
 };
 

@@ -19,6 +19,6 @@ add_subdirectory(server)
 add_subdirectory(sigproc)
 add_subdirectory(tests)
 
-target_link_libraries(piScan_backend core drivers external scan server sigproc pthread dl)
+target_link_libraries(piScan_backend core drivers external scan server sigproc pthread dl rtlsdr)
 
 

@@ -44,7 +44,7 @@ public:
 	virtual ~Connection() {};
 
 	virtual void giveMessage(Message& message) = 0;
-	virtual void connect() = 0;
+	virtual bool connect() = 0;
 	virtual void disconnect() = 0;
 
 private:
@@ -60,7 +60,7 @@ protected:
 
 
 	void notifyDisconnected() {
-		ClientRequest::RequestParams params = {.type = static_cast<RequestType>(ClientRequest::NOTIFY_DISCONNECTED)};
+		ClientRequest::RequestParams params = {.type = NOTIFY_DISCONNECTED};
 		issueRequest(params);
 	}
 

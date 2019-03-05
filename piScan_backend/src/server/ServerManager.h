@@ -8,6 +8,8 @@
 #ifndef SERVER_SERVERMANAGER_H_
 #define SERVER_SERVERMANAGER_H_
 
+#include <condition_variable>
+#include <thread>
 #include <vector>
 
 #include "messages.h"
@@ -39,6 +41,9 @@ private:
 	std::vector<Connection*> _connections;
 	std::vector<BackendServer*> _servers;
 	std::thread _queueThread;
+	std::mutex _msgMutex;
+	std::condition_variable _cv;
+	bool _msgAvailable = false;
 	bool _allowConnections = false;
 	bool _run = false;
 

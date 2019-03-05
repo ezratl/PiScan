@@ -9,13 +9,16 @@
 #define SIGPROC_DEMODULATOR_H_
 
 #include "messages.h"
+#include "Tuner.h"
+
+#define DEFAULT_SQUELCH		65.0
 
 class DemodInterface {
 public:
 	virtual ~DemodInterface() {};
 
 	virtual bool setFrequency(unsigned long freq) = 0;
-	virtual int getRssi() = 0;
+	virtual float getRssi() = 0;
 	virtual float getDecodedPL() = 0;
 	virtual unsigned int getDecodedDC() = 0;
 	virtual bool squelchThresholdMet() = 0;
@@ -23,16 +26,27 @@ public:
 
 class Demodulator : public MessageReceiver, public DemodInterface {
 public:
-	Demodulator() {};
-	~Demodulator() {};
+	Demodulator(MessageReceiver& central) : _centralQueue(central), _tuner(*(new RtlFmTuner())) {
+		//_tuner = *(new RtlFmTuner());
+	};
+	~Demodulator() {
+		delete &_tuner;
+	};
+
+	void start();
+	void stop();
 
 private:
+	MessageReceiver& _centralQueue;
+	Tuner& _tuner;
+	float _squelchLevel = DEFAULT_SQUELCH;
+
 	void giveMessage(Message& message) {};
-	bool setFrequency(unsigned long freq) { return false; };
-	int getRssi() { return 0; };
-	float getDecodedPL() { return 0; };
-	unsigned int getDecodedDC() { return 0; };
-	bool squelchThresholdMet() { return false; };
+	bool setFrequency(unsigned long freq);
+	float getRssi();
+	float getDecodedPL();
+	unsigned int getDecodedDC();
+	bool squelchThresholdMet();
 };
 
 #endif /* SIGPROC_DEMODULATOR_H_ */

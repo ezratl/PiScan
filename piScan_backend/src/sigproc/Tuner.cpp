@@ -7,12 +7,4 @@
 
 #include "Tuner.h"
 
-Tuner::Tuner() {
-	// TODO Auto-generated constructor stub
-
-}
-
-Tuner::~Tuner() {
-	// TODO Auto-generated destructor stub
-}
 
