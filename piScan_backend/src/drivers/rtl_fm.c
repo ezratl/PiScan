@@ -901,10 +901,16 @@ void software_agc(struct demod_state *d)
 	}
 }
 
+//TODO temporary
+int do_squelch = 0;
+void rtl_fm_mute(int mute){
+	do_squelch = mute;
+}
+
 void full_demod(struct demod_state *d)
 {
 	int i, ds_p;
-	int do_squelch = 0;
+	//int do_squelch = 0;
 	int sr = 0;
 	if(d->rotate_enable) {
 		translate(d);
@@ -1318,8 +1324,8 @@ int rtl_fm_setfreq(uint32_t freq){
 	assert(freq > 0);
 	int r;
 	optimal_settings(freq, demod.rate_in);
-	//r = rtlsdr_set_center_freq(dongle.dev, freq);
-	r = verbose_set_frequency(dongle.dev, dongle.freq);
+	r = rtlsdr_set_center_freq(dongle.dev, dongle.freq);
+	//r = verbose_set_frequency(dongle.dev, dongle.freq);
 	dongle.mute = BUFFER_DUMP;
 	return r;
 }
@@ -1558,7 +1564,7 @@ int generate_header(struct demod_state *d, struct output_state *o)
 
 //TODO modified signature
 //int main(int argc, char **argv)
-int rtl_fm_init(void* audioBuffer, size_t bufferSize, int sampleRate)
+int rtl_fm_init(void* audioBuffer, size_t bufferSize, int sampleRate, int gain)
 {
 #ifndef _WIN32
 	struct sigaction sigact;
@@ -1575,6 +1581,7 @@ int rtl_fm_init(void* audioBuffer, size_t bufferSize, int sampleRate)
 
 	controller.freqs[controller.freq_len] = 100000000;
 	controller.freq_len++;
+	dongle.gain = gain;
 
 	output.rate = sampleRate;
 	demod.rate_out2 = sampleRate;

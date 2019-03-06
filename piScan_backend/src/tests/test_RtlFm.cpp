@@ -46,7 +46,7 @@ int main(int argc, char** argv){
 	timespec time1, time2;
 
 	timespec_get(&time1, TIME_UTC);
-	if(rtl_fm_init((void*)0, (size_t)0, 12000))
+	if(rtl_fm_init((void*)0, (size_t)0, 12000, 30))
 		return 1;
 	timespec_get(&time2, TIME_UTC);
 	fprintf(stderr, "%li\n", (time2.tv_nsec - time1.tv_nsec)/1000);

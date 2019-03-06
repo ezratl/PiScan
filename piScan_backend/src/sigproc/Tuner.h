@@ -15,6 +15,7 @@
 #include "loguru.hpp"
 
 #define RTL_DEMOD_WAIT	50000
+#define RTL_GAIN	-100
 
 enum TunerStatus {
 	TUNER_ERROR = -1,
@@ -56,7 +57,7 @@ public:
 
 	TunerStatus init() {
 		LOG_F(2, "Starting rtl_fm");
-		if(rtl_fm_init(nullptr, 0, 12000))
+		if(rtl_fm_init(nullptr, 0, 12000, RTL_GAIN))
 			return TUNER_ERROR;
 		return TUNER_SUCCESS;
 	}

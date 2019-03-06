@@ -14,12 +14,12 @@
 
 class Entry {
 public:
-	Entry(std::string tag, bool lo, bool del);
+	Entry(std::string tag, bool lo, bool del) : tag(tag), lockedOut(lo), scanDelay(del){};
 	virtual ~Entry() {};
 
-	std::string*	getTag() { return &tag; }
+	std::string	getTag() { return tag; }
 	virtual std::string	getModulation() = 0;
-	virtual std::string*	getIdentity() = 0;
+	virtual std::string	getIdentity() = 0;
 	bool	isLockedOut() { return lockedOut; }
 	bool	useDelay() { return scanDelay; }
 	void	lockout(bool val) { lockedOut = val; }
@@ -36,7 +36,7 @@ protected:
 
 class Channel: public Entry {
 public:
-	Channel(unsigned long freq, char* tag, bool lo, bool del) : Entry(tag, lo, del), frequency(freq){}
+	Channel(unsigned long freq, std::string tag, bool lo, bool del) : Entry(tag, lo, del), frequency(freq){}
 	virtual ~Channel() {};
 protected:
 	const unsigned long frequency;
@@ -44,11 +44,15 @@ protected:
 
 class FMChannel : public Channel {
 public:
-	FMChannel(unsigned long freq, char* tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
+	FMChannel(unsigned long freq, std::string tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
 	~FMChannel() {};
 
 	std::string getModulation() {
 		return "FM";
+	}
+
+	std::string getIdentity() {
+		return tag;
 	}
 
 	bool hasSignal();
@@ -56,7 +60,7 @@ public:
 
 class PLChannel: public FMChannel {
 public:
-	PLChannel(unsigned long freq, float tn, char* tag, bool lo, bool del) :
+	PLChannel(unsigned long freq, float tn, std::string tag, bool lo, bool del) :
 			FMChannel(freq, tag, lo, del), tone(tn) {
 	}
 	~PLChannel() {};
@@ -68,7 +72,7 @@ protected:
 
 class DCChannel : public FMChannel {
 public:
-	DCChannel(unsigned long freq, unsigned int tn, char* tag, bool lo, bool del) :
+	DCChannel(unsigned long freq, unsigned int tn, std::string tag, bool lo, bool del) :
 			FMChannel(freq, tag, lo, del), code(tn) {
 	}
 	~DCChannel() {};
@@ -80,7 +84,7 @@ protected:
 
 class AMChannel : public Channel {
 public:
-	AMChannel(unsigned long freq, char* tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
+	AMChannel(unsigned long freq, std::string tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
 	~AMChannel() {};
 
 	bool hasSignal() { return false; };

@@ -26,9 +26,17 @@ void Demodulator::stop(){
 	LOG_F(1, "Demodulator stopped");
 }
 
-bool Demodulator::setFrequency(unsigned long freq) {
-	if(_tuner.setFrequency(freq) == TunerStatus::TUNER_SUCCESS)
+bool Demodulator::setFrequency(uint32_t freq) {
+	if(freq == _currentFreq){
+		DLOG_F(8, "Frequency already set");
 		return true;
+	}
+	if(_tuner.setFrequency(freq) == TunerStatus::TUNER_SUCCESS){
+		_currentFreq = freq;
+		return true;
+	}
+
+	LOG_F(ERROR, "Tuning error");
 	return false;
 }
 

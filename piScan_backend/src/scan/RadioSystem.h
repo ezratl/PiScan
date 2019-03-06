@@ -25,7 +25,7 @@ public:
 
 	virtual Entry* operator[](size_t pos) = 0;
 
-	size_t size() { return _size; }
+	virtual size_t size() { return _size; }
 private:
 	//const RadioSystemType type;
 	const std::string tag;
@@ -37,10 +37,14 @@ public:
 	AnalogSystem() : RadioSystem() {};
 	~AnalogSystem() {};
 
-	Entry* operator[](size_t pos) { return &entries[pos]; };
+	Entry* operator[](size_t pos) { return entries[pos]; };
+
+	size_t size() {
+		return entries.size();
+	}
 
 protected:
-	std::vector<Entry> entries;
+	std::vector<Entry*> entries;
 };
 
 #endif /* RADIOSYSTEM_H_ */

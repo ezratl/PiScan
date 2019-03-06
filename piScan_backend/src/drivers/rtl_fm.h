@@ -25,12 +25,15 @@ enum mode_demod {
 #ifdef __cplusplus
 extern "C" {
 #endif
-    int rtl_fm_init(void* audioBuffer, size_t bufferSize, int sampleRate);
+    int rtl_fm_init(void* audioBuffer, size_t bufferSize, int sampleRate, int gain);
     int rtl_fm_deinit();
 
     int rtl_fm_setfreq(uint32_t freq);
     int rtl_fm_setmode(enum mode_demod newMode);
     float rtl_fm_get_rssi();
+
+    //TODO temporary
+    void rtl_fm_mute(int mute);
 #ifdef __cplusplus
 }
 #endif

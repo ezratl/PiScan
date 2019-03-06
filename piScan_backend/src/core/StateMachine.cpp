@@ -70,11 +70,11 @@ void StateMachine::StateEngine(void)
     _cv.wait(lock, [this]{return this->_eventGenerated;});
 
     // while events are being generated keep executing states
-    while (_eventGenerated) {
+    if (_eventGenerated) {
         pDataTemp = _pEventData;  // copy of event data pointer
         _pEventData = NULL;       // event data used up, reset ptr
         _eventGenerated = false;  // event used up, reset flag
-        lock.unlock();
+        //lock.unlock();
 
         assert(currentState < _maxStates);
 
@@ -89,8 +89,8 @@ void StateMachine::StateEngine(void)
         }
         if(!_run)
         	return;
-        if(_eventGenerated)
-        	lock.lock();
+        //if(!_eventGenerated)
+        	//lock.unlock();
     }
 
     // TBD - unlock semaphore here

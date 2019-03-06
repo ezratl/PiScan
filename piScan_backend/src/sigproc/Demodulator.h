@@ -11,13 +11,13 @@
 #include "messages.h"
 #include "Tuner.h"
 
-#define DEFAULT_SQUELCH		65.0
+#define DEFAULT_SQUELCH		70.0
 
 class DemodInterface {
 public:
 	virtual ~DemodInterface() {};
 
-	virtual bool setFrequency(unsigned long freq) = 0;
+	virtual bool setFrequency(uint32_t freq) = 0;
 	virtual float getRssi() = 0;
 	virtual float getDecodedPL() = 0;
 	virtual unsigned int getDecodedDC() = 0;
@@ -40,9 +40,10 @@ private:
 	MessageReceiver& _centralQueue;
 	Tuner& _tuner;
 	float _squelchLevel = DEFAULT_SQUELCH;
+	uint32_t _currentFreq = 0;
 
 	void giveMessage(Message& message) {};
-	bool setFrequency(unsigned long freq);
+	bool setFrequency(uint32_t freq);
 	float getRssi();
 	float getDecodedPL();
 	unsigned int getDecodedDC();

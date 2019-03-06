@@ -8,6 +8,9 @@
 #include <ScannerSM.h>
 #include "loguru.hpp"
 
+//TODO temporary
+#include "rtl_fm.h"
+
 #define DELAY_TIMEOUT	2.0
 
 ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
@@ -67,6 +70,8 @@ void ScannerSM::ST_Load(EventData* data){
 	DLOG_F(9, "ST_Load");
 	//file read and system tree population
 
+	_currentSystem = _systems[0];
+
 	// do not issue event - SM will wait until an event is generated before proceeding
 	//InternalEvent(ST_SCAN);
 	Message* message = new ControllerMessage(SCANNER_SM, ControllerMessage::NOTIFY_READY);
@@ -95,7 +100,11 @@ void ScannerSM::ST_Scan(EventData* data){
 	assert(_currentEntry != NULL);
 
 	if(_currentEntry->hasSignal()){
+		LOG_F(1, "Signal found: %s", _currentEntry->getTag().c_str());
 		InternalEvent(ST_RECEIVE);
+	}
+	else{
+		InternalEvent(ST_SCAN);
 	}
 
 }
@@ -130,6 +139,8 @@ void ScannerSM::ST_Hold(EventData* data){
 		InternalEvent(ST_SCAN);
 	}
 
+	/* wait for 1ms */
+	usleep(1000);
 }
 
 void ScannerSM::ST_Receive(EventData* data){
@@ -144,7 +155,11 @@ void ScannerSM::ST_Receive(EventData* data){
 		LOG_F(1, "Signal lost");
 		InternalEvent(ST_HOLD);
 		timeoutStart = std::time(nullptr);
+		return;
 	}
+
+	/* wait for 1ms */
+	usleep(1000);
 }
 
 void ScannerSM::ST_Manual(EventData* data){
@@ -167,35 +182,38 @@ void ScannerSM::ST_Stopped(EventData* data){
 }
 
 void ScannerSM::_broadcastSystemContext(RadioSystem* sys){
-	assert(sys != NULL);
+	/*assert(sys != NULL);
 	//TODO not thread safe
 	_currentContext.state = static_cast<States>(currentState);
 	_currentContext.system = sys;
 	_currentContext.entry = nullptr;
 	Message* message = new ServerMessage(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, &_currentContext);
-	_centralQueue.giveMessage(*message);
+	_centralQueue.giveMessage(*message);*/
 }
 
 void ScannerSM::_broadcastEntryContext(RadioSystem* sys, Entry* entry){
-	assert(sys != NULL);
+	/*assert(sys != NULL);
 	assert(entry != NULL);
 	//TODO not thread safe
 	_currentContext.state = static_cast<States>(currentState);
 	_currentContext.system = sys;
 	_currentContext.entry = entry;
 	Message* message = new ServerMessage(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, &_currentContext);
-	_centralQueue.giveMessage(*message);
+	_centralQueue.giveMessage(*message);*/
 }
 
 void ScannerSM::_enableAudioOut(bool en){
-	Message* message;
+	/*Message* message;
 	if(en){
 		message = new AudioMessage(SCANNER_SM, AudioMessage::ENABLE_OUTPUT);
 	}
 	else{
 		message = new AudioMessage(SCANNER_SM, AudioMessage::DISABLE_OUTPUT);
 	}
-	_centralQueue.giveMessage(*message);
+	_centralQueue.giveMessage(*message);*/
+
+	//TODO temporary
+	rtl_fm_mute((int)(!en));
 }
 
 void ScannerSM::giveMessage(Message& message) {

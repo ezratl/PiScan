@@ -14,6 +14,8 @@ using namespace std;
 #include "ScannerSM.h"
 #include "SystemList.h"
 
+#include "demo_system.h"
+
 //enum {
 //	SYSTEM_CONTROL,
 //	SCANNER_SM,
@@ -145,6 +147,7 @@ public:
 		LOG_F(INFO, "System initialized");
 
 		_connectionManager.allowConnections();
+		_scanner.startScan();
 
 		sysRun = true;
 	}
@@ -274,7 +277,7 @@ void setDemodulator(DemodInterface* demod) {
 int main(int argc, char **argv) {
 	loguru::init(argc, argv);
 	loguru::add_file(LOG_PATH, loguru::Truncate, loguru::Verbosity_2);
-	loguru::g_stderr_verbosity = loguru::Verbosity_MAX;
+	//loguru::g_stderr_verbosity = loguru::Verbosity_MAX;
 
 	signal(SIGINT, sigHandler);
 	signal(SIGTERM, sigHandler);
@@ -286,6 +289,10 @@ int main(int argc, char **argv) {
 	messageManager.setReceiver(DEMOD, &demod);
 	messageManager.setReceiver(SERVER_MAN, &connectionManager);
 	//messageManager.setReceiver(AUDIO_MAN, &audioControl);
+
+	//DEMO
+	AnalogSystem demo = DemoSystem();
+	scanSystems.addSystem(dynamic_cast<RadioSystem&>(demo));
 
 	setDemodulator(&demod);
 

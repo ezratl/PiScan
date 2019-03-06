@@ -17,12 +17,15 @@ public:
 	SystemList();
 	~SystemList();
 
-	RadioSystem* operator[](size_t pos) { return nullptr; };
+	RadioSystem* operator[](size_t pos) { return _systems[pos]; };
 
-	size_t size(){ return _size; }
+	size_t size(){ return _systems.size(); }
+	void addSystem(RadioSystem& system){
+		_systems.push_back(&system);
+	}
 private:
 	std::vector<RadioSystem*> _systems;
-	size_t _size = 0;
+	//size_t _size = 0;
 };
 
 #endif /* SYSTEMLIST_H_ */
