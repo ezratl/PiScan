@@ -14,6 +14,17 @@
 #define MAX_CONNECTIONS	5
 #define QUEUE_SIZE		64
 
+static ConnectionLevel const permissionMap[] = {
+		static_cast<ConnectionLevel>(0), //NOTIFY_DISCONNECTED
+		FULL_CONTROL, //SYSTEM_FUNCTION
+		FULL_CONTROL, //SCANNER_FUNCTION
+		VIEWER, //DATABASE_RETRIEVE
+		FULL_CONTROL, //DATABASE_MODIFY
+		VIEWER, //CONFIG_RETRIEVE
+		FULL_CONTROL, //CONFIG_MODIFY
+		FULL_CONTROL, //DEMOD_CONFIGURE
+};
+
 ServerManager::ServerManager(MessageReceiver& central) :
 		_centralQueue(central), _queue(QUEUE_SIZE), _activeConnections(0), _connections(
 				MAX_CONNECTIONS) {
@@ -55,7 +66,7 @@ void ServerManager::_queueThreadFunc(void){
 		_cv.wait(lock, [this]{return this->_msgAvailable;});
 
 		Message* message;
-		if(_queue.try_dequeue(message)){
+		while(_queue.try_dequeue(message)){
 			assert(message != nullptr);
 			if(message->destination != SERVER_MAN){
 				_centralQueue.giveMessage(*message);
@@ -67,7 +78,7 @@ void ServerManager::_queueThreadFunc(void){
 		}
 
 		Connection* newCon = nullptr;
-		if(_allowConnections && _connectionQueue.try_dequeue(newCon)){
+		while(_allowConnections && _connectionQueue.try_dequeue(newCon)){
 			_addConnection(*newCon);
 			_msgAvailable = false;
 		}
@@ -118,10 +129,14 @@ int ServerManager::giveRequest(void* request){
 		delete &rq;
 		return RQ_INVALID_HANDLE;
 	}
-	else if(rq->src->_level < Connection::permissionMap[rq->rqInfo.type]){
-		delete &rq;
+	else */
+	int clientLevel = _connections[rq->source]->_level;
+	int requestLevel = static_cast<int>(permissionMap[rq->rqInfo.type]);
+	if(clientLevel < requestLevel){
+		delete rq;
+		DLOG_F(ERROR, "Insufficient permission request: %i < %i", clientLevel, requestLevel);
 		return RQ_INSUFFICIENT_PERMISSION;
-	}*/
+	}
 
 	Message* message;
 	switch(rq->rqInfo.type){
@@ -153,6 +168,11 @@ int ServerManager::giveRequest(void* request){
 		//dest = SYSTEM_CONTROL;
 		delete rq;
 		break;
+	case DEMOD_CONFIGURE:
+		message = new DemodMessage(CLIENT, DemodMessage::CLIENT_REQUEST, rq);
+		break;
+	default:
+		delete rq;
 	}
 
 	if(message != nullptr)
@@ -194,7 +214,7 @@ void ServerManager::_addConnection(Connection& client){
 			client._serverManager = this;
 			if(client.connect()){
 				_connections[i] = &client;
-				LOG_F(INFO, "Client %i connected", i);
+				LOG_F(INFO, "Client %i connected, permission level %i", i, client._level);
 			}
 			else{
 				LOG_F(INFO, "Connection attempt failed");
@@ -204,13 +224,4 @@ void ServerManager::_addConnection(Connection& client){
 		}
 	}
 }
-
-/*ConnectionLevel Connection::permissionMap[] = {
-		[SYSTEM_FUNCTION] = FULL_CONTROL,
-		[SCANNER_FUNCTION] = FULL_CONTROL,
-		[DATABASE_RETRIEVE] = VIEWER,
-		[DATABASE_MODIFY] = FULL_CONTROL,
-		[CONFIG_RETRIEVE] = VIEWER,
-		[CONFIG_MODIFY] = FULL_CONTROL,
-};*/
 

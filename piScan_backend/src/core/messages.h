@@ -80,7 +80,9 @@ public:
 	~DemodMessage() {};
 	const unsigned char type;
 	enum {
-		SET_SQUELCH = 0,
+		CLIENT_REQUEST = 0,
+		SET_SQUELCH,
+		SET_GAIN,
 
 		STOP = 0xFF
 	};

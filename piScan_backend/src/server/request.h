@@ -15,11 +15,6 @@ class ServerManager;
 
 class ClientRequest : public Message {
 public:
-	enum {
-		REQUEST,
-		NOTIFY_DISCONNECTED,
-	};
-
 
 	struct RequestParams {
 		RequestType type;
@@ -27,8 +22,8 @@ public:
 	};
 
 
-	ClientRequest(unsigned char handle, RequestParams info, void (*callback)(int, void*) = 0) :
-		Message(handle, 0), rqInfo(info), _callback(callback) {}
+	ClientRequest(unsigned char handle, RequestParams info, void* data, void (*callback)(int, void*) = 0) :
+		Message(handle, 0, data), rqInfo(info), _callback(callback) {}
 	~ClientRequest() {};
 
 

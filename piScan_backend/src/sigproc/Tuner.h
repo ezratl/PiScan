@@ -47,6 +47,7 @@ public:
 	virtual TunerStatus stop() { return TUNER_UNSUPPORTED; };
 	virtual TunerStatus setFrequency(uint32_t freq) { return TUNER_UNSUPPORTED; };
 	virtual TunerStatus setSquelchLevel(int8_t newLevel) { return TUNER_UNSUPPORTED; };
+	virtual TunerStatus setGain(int level) { return TUNER_UNSUPPORTED; };
 	virtual float rssi() { return 0; };
 };
 
@@ -78,6 +79,11 @@ public:
 		}
 		else
 			return TUNER_UNSUPPORTED;
+	}
+
+	TunerStatus setGain(int level) {
+		rtl_fm_set_gain(level * 10);
+		return TUNER_SUCCESS;
 	}
 
 	float rssi() { return rtl_fm_get_rssi(); }

@@ -17,7 +17,9 @@
 class EventData
 {
 public:
+	EventData(void* d) : data(d) {};
     virtual ~EventData() {};
+    void* data;
 };
 
 struct StateStruct;

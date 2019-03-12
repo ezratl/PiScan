@@ -31,6 +31,7 @@ extern "C" {
     int rtl_fm_setfreq(uint32_t freq);
     int rtl_fm_setmode(enum mode_demod newMode);
     float rtl_fm_get_rssi();
+    void rtl_fm_set_gain(int level);
 
     //TODO temporary
     void rtl_fm_mute(int mute);

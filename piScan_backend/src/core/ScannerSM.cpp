@@ -27,6 +27,7 @@ ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
 //	};
 
 void ScannerSM::startScan(){
+	_externalHold = false;
 	LOG_F(1, "ExtEvent: startScan");
 	BEGIN_TRANSITION_MAP
 		TRANSITION_MAP_ENTRY(ST_SCAN)
@@ -64,6 +65,19 @@ void ScannerSM::stopScanner(){
 		TRANSITION_MAP_ENTRY(ST_SAVEALL)
 		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
 	END_TRANSITION_MAP(NULL)
+}
+
+void ScannerSM::manualEntry(uint32_t* freq){
+	LOG_F(1, "ExtEvent: manualEntry");
+	BEGIN_TRANSITION_MAP
+		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
+		TRANSITION_MAP_ENTRY(ST_MANUAL)
+		TRANSITION_MAP_ENTRY(ST_MANUAL)
+		TRANSITION_MAP_ENTRY(ST_MANUAL)
+		TRANSITION_MAP_ENTRY(ST_MANUAL)
+		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
+		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
+	END_TRANSITION_MAP(new EventData(freq))
 }
 
 void ScannerSM::ST_Load(EventData* data){
@@ -116,7 +130,7 @@ void ScannerSM::ST_Hold(EventData* data){
 
 	/* start receive if signal active */
 	if (_currentEntry->hasSignal()) {
-		LOG_F(1, "Receiving signal");
+		LOG_F(3, "Receiving signal");
 		InternalEvent(ST_RECEIVE);
 	}
 	/* stay in hold if state was triggered externally */
@@ -152,7 +166,7 @@ void ScannerSM::ST_Receive(EventData* data){
 		InternalEvent(ST_RECEIVE);
 	}
 	else{
-		LOG_F(1, "Signal lost");
+		LOG_F(3, "Signal lost");
 		InternalEvent(ST_HOLD);
 		timeoutStart = std::time(nullptr);
 		return;
@@ -163,7 +177,20 @@ void ScannerSM::ST_Receive(EventData* data){
 }
 
 void ScannerSM::ST_Manual(EventData* data){
-	//TODO state for later implementation
+	DLOG_F(9, "ST_Manual");
+	uint32_t freq = *(reinterpret_cast<uint32_t*>(data->data));
+	delete reinterpret_cast<uint32_t*>(data->data);
+
+	LOG_F(1, "Setting manual frequency to %.4lfMHz", (freq / 1E6));
+
+	/* delete old manual entry */
+	if(_manualEntry != nullptr)
+		delete _manualEntry;
+
+	_manualEntry = new FMChannel(freq, "Manual entry", false, false);
+	_currentEntry = _manualEntry;
+	_externalHold = true;
+	InternalEvent(ST_HOLD);
 }
 
 void ScannerSM::ST_SaveAll(EventData* data){
@@ -217,7 +244,6 @@ void ScannerSM::_enableAudioOut(bool en){
 }
 
 void ScannerSM::giveMessage(Message& message) {
-	//assert(message != NULL);
 	auto msg = dynamic_cast<ScannerMessage&>(message);
 
 	switch (msg.type) {
@@ -228,7 +254,7 @@ void ScannerSM::giveMessage(Message& message) {
 
 	/* handle client request */
 	case ScannerMessage::CLIENT_REQUEST:
-
+		_handleRequest(*(static_cast<ClientRequest*>(msg.pData)));
 		break;
 	/* handle external state trigger */
 	case ScannerMessage::STATE_CHANGE:
@@ -247,5 +273,24 @@ void ScannerSM::giveMessage(Message& message) {
 
 	}
 
-	delete &msg;
+	delete &message;
+}
+
+void ScannerSM::_handleRequest(ClientRequest& request) {
+	DCHECK_F(request.rqInfo.type == SCANNER_FUNCTION);
+	switch(request.rqInfo.subType){
+	case SCANNER_STATE_SCAN:
+		startScan();
+		break;
+	case SCANNER_STATE_HOLD:
+		holdScan();
+		break;
+	case SCANNER_STATE_MANUAL:
+		manualEntry(reinterpret_cast<uint32_t*>(request.pData));
+		break;
+	default:
+		break;
+	}
+
+	delete &request;
 }

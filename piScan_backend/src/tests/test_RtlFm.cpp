@@ -26,7 +26,7 @@ void printrssi(){
 		//cerr << "rssi:" << curval << "\t\t" << (curval - lastval) << "\r";
 
 
-		if(abs(curval - lastval) > 0.4){
+		if(std::abs(curval - lastval) > 0.4){
 			millis += 10;
 		}
 		else if(millis > 0){

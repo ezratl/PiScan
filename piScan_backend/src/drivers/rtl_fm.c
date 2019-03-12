@@ -1363,10 +1363,23 @@ float rtl_fm_get_rssi(){
 	//struct demod_state* d = &demod;
 	//safe_cond_wait(&d->ready, &d->ready_m);
 	//pthread_rwlock_wrlock(&d->rw);
-	//full_demod(d);
 	int sr = sq_rms;
 	//pthread_rwlock_unlock(&d->rw);
 	return rms_to_db(sr, &dongle, &demod);
+}
+
+void rtl_fm_set_gain(int level){
+	/* Set the tuner gain */
+	//safe_cond_wait(&d->ready, &d->ready_m);
+	//pthread_rwlock_wrlock(&d->rw);
+	dongle.gain = level;
+	if (dongle.gain == AUTO_GAIN) {
+		verbose_auto_gain(dongle.dev);
+	} else {
+		dongle.gain = nearest_gain(dongle.dev, dongle.gain);
+		verbose_gain_set(dongle.dev, dongle.gain);
+	}
+	//pthread_rwlock_unlock(&d->rw);
 }
 
 void frequency_range(struct controller_state *s, char *arg)

@@ -80,10 +80,10 @@ private:
 			_cv.wait(lock, [this]{return this->_msgAvailable;});
 
 			Message* message;
-			if(_queue.try_dequeue(message)){
+			while(_queue.try_dequeue(message)){
 				DCHECK_F(message != nullptr);
 				DCHECK_F(message->destination != message->source);
-				DLOG_F(9, "Message receive | dst:%d | src:%d", message->destination, message->source);
+				DLOG_F(7, "Message receive | dst:%d | src:%d", message->destination, message->source);
 
 				if(message->destination < MESSAGE_RECEIVERS){
 					MessageReceiver* receiver = _receivers[message->destination];
@@ -135,7 +135,8 @@ public:
 		_connectionManager.start();
 		_demod.start();
 
-		while(1){
+		/* let a stop call break the loop */
+		while(sysRun){
 			//_flagLock.lock();
 			if(_activeModules == ALL_FLAG){
 				//_flagLock.unlock();
@@ -195,12 +196,15 @@ private:
 			switch(msg.source){
 			case SCANNER_SM:
 				_activeModules |= SCANNER_FLAG;
+				DLOG_F(8, "scanner started");
 				break;
 			case DEMOD:
 				_activeModules |= DEMOD_FLAG;
+				DLOG_F(8, "demod started");
 				break;
 			case SERVER_MAN:
 				_activeModules |= CONNMGR_FLAG;
+				DLOG_F(8, "conmgr started");
 				break;
 			case AUDIO_MAN:
 				_activeModules |= AUDIO_FLAG;

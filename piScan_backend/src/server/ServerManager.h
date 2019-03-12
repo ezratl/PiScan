@@ -53,6 +53,7 @@ private:
 	void _addConnection(Connection& client);
 	int requestConnection(void* client);
 	int giveRequest(void* request);
+	void _broadcastConnections();
 
 };
 

@@ -24,6 +24,7 @@ public:
 	void startScan();
 	void holdScan();
 	void stopScanner();
+	void manualEntry(uint32_t* freq);
 	void giveMessage(Message& message);
 private:
 	void ST_Load(EventData* data);
@@ -62,6 +63,7 @@ private:
 	SystemList& _systems;
 	RadioSystem* _currentSystem;
 	Entry* _currentEntry;
+	Entry* _manualEntry = nullptr;
 	size_t _sysCounter = 0, _entryCounter = 0;
 	States _lastState = ST_INVALID;
 
@@ -79,6 +81,7 @@ private:
 	void _broadcastSystemContext(RadioSystem* sys);
 	void _broadcastEntryContext(RadioSystem* sys, Entry* entry);
 	void _enableAudioOut(bool en);
+	void _handleRequest(ClientRequest& request);
 
 };
 

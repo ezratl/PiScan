@@ -16,8 +16,10 @@
 #define CONFIG_PATH	"~/piscan.config"
 #endif
 
+#define AUTO_GAIN	-10
+
 enum ConnectionLevel {
-	RECEIVE_ONLY, VIEWER, FULL_CONTROL,
+	RECEIVE_ONLY = 0, VIEWER, FULL_CONTROL,
 };
 
 enum RequestType {
@@ -28,10 +30,25 @@ enum RequestType {
 	DATABASE_MODIFY,
 	CONFIG_RETRIEVE,
 	CONFIG_MODIFY,
+	DEMOD_CONFIGURE,
 };
 
+/* system functions */
 enum {
 	SYSTEM_STOP,
+};
+
+/* scanner functions */
+enum {
+	SCANNER_STATE_SCAN,
+	SCANNER_STATE_HOLD,
+	SCANNER_STATE_MANUAL,
+};
+
+/* demod functions */
+enum {
+	DEMOD_SET_SQUELCH,
+	DEMOD_SET_GAIN,
 };
 
 

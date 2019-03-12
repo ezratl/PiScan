@@ -10,6 +10,7 @@
 
 #include "messages.h"
 #include "Tuner.h"
+#include "request.h"
 
 #define DEFAULT_SQUELCH		70.0
 
@@ -42,12 +43,15 @@ private:
 	float _squelchLevel = DEFAULT_SQUELCH;
 	uint32_t _currentFreq = 0;
 
-	void giveMessage(Message& message) {};
+	void giveMessage(Message& message);
 	bool setFrequency(uint32_t freq);
 	float getRssi();
 	float getDecodedPL();
 	unsigned int getDecodedDC();
 	bool squelchThresholdMet();
+
+	void _handleMessage(DemodMessage& message);
+	void _handleRequest(ClientRequest& request);
 };
 
 #endif /* SIGPROC_DEMODULATOR_H_ */
