@@ -35,7 +35,7 @@ void DebugConsole::giveMessage(Message& message){
 
 void DebugConsole::_consoleInputFunc() {
 	std::string input = "";
-	std::vector<std::string> tokens;
+	std::vector<std::string> tokens(5);
 	std::stringstream sstream;
 	std::string intermediate;
 	std::cerr << "\nConsole connected\n";
@@ -59,7 +59,6 @@ void DebugConsole::_consoleInputFunc() {
 				scannerFunction(ScannerFunction::HOLD);
 			} else if (tokens[0].compare("gain") == 0) {
 				int gain = 0;
-				//TODO segfaults with typos
 				if (tokens[1].compare("auto") == 0)
 					gain = AUTO_GAIN;
 				else
@@ -67,7 +66,12 @@ void DebugConsole::_consoleInputFunc() {
 				setDemodGain(gain);
 			} else if (tokens[0].compare("manual") == 0) {
 				scannerFunction(ScannerFunction::MANUAL, std::stof(tokens[1]));
-			} else if (tokens[0].compare("help") == 0) {
+			}
+			else if (tokens[0].compare("get") == 0){
+				if(tokens[1].compare("context") == 0)
+					getCurrentContext();
+			}
+			else if (tokens[0].compare("help") == 0) {
 				std::cerr << "\n Available commands:"
 						<< "\n\thelp\t\tPrints all commands"
 						<< "\n\texit\t\tExit program"
@@ -76,6 +80,8 @@ void DebugConsole::_consoleInputFunc() {
 						<< "\n\tscan\t\tContinue scanning entries"
 						<< "\n\thold\t\tHold scanner at current entry"
 						<< "\n\tmanual [freq]\tTune to the specified frequency"
+						<< "\n\tget [subcommand]"
+						<< "\n\t\t\tcontext"
 						<< "\n";
 			} else
 				std::cerr << "Invalid command\n";
@@ -87,6 +93,55 @@ void DebugConsole::_consoleInputFunc() {
 		tokens.clear();
 	}
 	std::cerr << "\nConsole thread exited\n";
+}
+
+void DebugConsole::contextUpdate(ScannerContext context){
+	/*std::thread([context]{*/
+		switch(context.state()){
+		case ScannerContext::SCAN:
+			std::cerr << "\rScanning: " << context.systemTag() << "\n";
+			break;
+		case ScannerContext::HOLD:
+			std::cerr << "\rHold: " << context.entryIndex() << " | "
+				<< context.systemTag() << " | "
+				<< context.entryTag() << " | " << (context.frequency() / 1E6) << "MHz\n";
+			break;
+		case ScannerContext::RECEIVE:
+			std::cerr << "\rReceive: " << context.entryIndex() << " | "
+				<< context.systemTag() << " | "
+				<< context.entryTag() << " | " << (context.frequency() / 1E6) << "MHz\n";
+			break;
+		default:
+			break;
+		}
+	/*});*/
+}
+
+void DebugConsole::systemMessage(GeneralMessage message){
+	/*std::thread([message]{*/
+		std::cerr << "\rSystem message: ";
+		switch(message.type()){
+		case GeneralMessage::INFO:
+			std::cerr << "info";
+			break;
+		case GeneralMessage::WARNING:
+			std::cerr << "warning";
+			break;
+		case GeneralMessage::ERROR:
+			std::cerr << "error";
+			break;
+		}
+		std::cerr << "\n" << message.content();
+	/*});*/
+}
+
+void DebugConsole::gainReceived(int handle, int gain) {
+	std::cerr << "\rGain: ";
+	if(gain >= 0)
+		std::cerr << gain;
+	else
+		std::cerr << "auto";
+	std::cerr << "\n";
 }
 
 void DebugServer::start(){

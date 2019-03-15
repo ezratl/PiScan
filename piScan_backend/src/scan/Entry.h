@@ -14,22 +14,23 @@
 
 class Entry {
 public:
-	Entry(std::string tag, bool lo, bool del) : tag(tag), lockedOut(lo), scanDelay(del){};
+	Entry(std::string tag, bool lo, bool del) : _tag(tag), _lockedOut(lo), _scanDelay(del){};
 	virtual ~Entry() {};
 
-	std::string	getTag() { return tag; }
-	virtual std::string	getModulation() = 0;
-	virtual std::string	getIdentity() = 0;
-	bool	isLockedOut() { return lockedOut; }
-	bool	useDelay() { return scanDelay; }
-	void	lockout(bool val) { lockedOut = val; }
+	std::string	tag() { return _tag; }
+	virtual std::string	modulation() = 0;
+	bool	isLockedOut() { return _lockedOut; }
+	bool	useDelay() { return _scanDelay; }
+	void	lockout(bool val) { _lockedOut = val; }
 	virtual bool	hasSignal() = 0;
+	virtual unsigned long freq() = 0;
+
+private:
+	std::string	_tag;
+	bool	_lockedOut;
+	bool	_scanDelay;
 
 protected:
-	std::string	tag;
-	bool	lockedOut;
-	bool	scanDelay;
-
 	static DemodInterface* demod;
 	friend void setDemodulator(DemodInterface* demod);
 };
@@ -38,6 +39,7 @@ class Channel: public Entry {
 public:
 	Channel(unsigned long freq, std::string tag, bool lo, bool del) : Entry(tag, lo, del), frequency(freq){}
 	virtual ~Channel() {};
+	virtual unsigned long freq() { return frequency; };
 protected:
 	const unsigned long frequency;
 };
@@ -47,12 +49,8 @@ public:
 	FMChannel(unsigned long freq, std::string tag, bool lo, bool del) : Channel(freq, tag, lo, del){}
 	~FMChannel() {};
 
-	std::string getModulation() {
+	std::string modulation() {
 		return "FM";
-	}
-
-	std::string getIdentity() {
-		return tag;
 	}
 
 	bool hasSignal();

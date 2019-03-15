@@ -23,6 +23,7 @@ static ConnectionLevel const permissionMap[] = {
 		VIEWER, //CONFIG_RETRIEVE
 		FULL_CONTROL, //CONFIG_MODIFY
 		FULL_CONTROL, //DEMOD_CONFIGURE
+		RECEIVE_ONLY, //GET_CONTEXT
 };
 
 ServerManager::ServerManager(MessageReceiver& central) :
@@ -68,6 +69,7 @@ void ServerManager::_queueThreadFunc(void){
 		Message* message;
 		while(_queue.try_dequeue(message)){
 			assert(message != nullptr);
+			DLOG_F(7, "Message receive | dst:%d | src:%d", message->destination, message->source);
 			if(message->destination != SERVER_MAN){
 				_centralQueue.giveMessage(*message);
 			}
@@ -99,20 +101,25 @@ void ServerManager::_queueThreadFunc(void){
 }
 
 void ServerManager::giveMessage(Message& message){
+	DLOG_F(7, "Message queue | dst:%d | src:%d", message.destination, message.source);
 	_queue.enqueue(&message);
-	std::unique_lock<std::mutex> lock(_msgMutex);
-	_msgAvailable = true;
-	lock.unlock();
-	_cv.notify_one();
+	std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
+	if (lock.try_lock()) {
+		_msgAvailable = true;
+		lock.unlock();
+		_cv.notify_one();
+	}
 }
 
 int ServerManager::requestConnection(void* client){
 	if(_activeConnections < MAX_CONNECTIONS){
 		DLOG_F(8, "New connection request");
 		_connectionQueue.enqueue(static_cast<Connection*>(client));
-		std::unique_lock<std::mutex> lock(_msgMutex);
-		_msgAvailable = true;
-		lock.unlock();
+		std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
+		if(lock.try_lock()){
+			_msgAvailable = true;
+			lock.unlock();
+		}
 		_cv.notify_one();
 		return RQ_ACCEPTED;
 	}
@@ -138,11 +145,13 @@ int ServerManager::giveRequest(void* request){
 		return RQ_INSUFFICIENT_PERMISSION;
 	}
 
-	Message* message;
+	Message* message = nullptr;
 	switch(rq->rqInfo.type){
 	case NOTIFY_DISCONNECTED:
 		LOG_F(INFO, "Connection %i disconnected", rq->source);
 		delete _connections[rq->source];
+		_connections.erase(_connections.begin() + (rq->source));
+		delete rq;
 		break;
 	case SYSTEM_FUNCTION:
 		//dest = SYSTEM_CONTROL;
@@ -171,6 +180,9 @@ int ServerManager::giveRequest(void* request){
 	case DEMOD_CONFIGURE:
 		message = new DemodMessage(CLIENT, DemodMessage::CLIENT_REQUEST, rq);
 		break;
+	case GET_CONTEXT:
+		message = new ScannerMessage(CLIENT, ScannerMessage::CLIENT_REQUEST, rq);
+		break;
 	default:
 		delete rq;
 	}
@@ -185,12 +197,12 @@ void ServerManager::_handleMessage(Message& message){
 	auto msg = dynamic_cast<ServerMessage&>(message);
 	switch (msg.type) {
 	case ServerMessage::CONTEXT_UPDATE:
+		_broadcastContextUpdate(*(reinterpret_cast<ScannerContext*>(msg.pData)));
 		break;
 	case ServerMessage::NOTIFY_ALL_CLIENTS:
-		break;
 	case ServerMessage::NOTIFY_USERS:
-		break;
 	case ServerMessage::NOTIFY_VIEWERS:
+		_broadcastGeneralMessage(msg.type, *(reinterpret_cast<GeneralMessage*>(msg.pData)));
 		break;
 	case ServerMessage::STOP:
 		disconnectClients();
@@ -223,5 +235,38 @@ void ServerManager::_addConnection(Connection& client){
 			break;
 		}
 	}
+}
+
+void ServerManager::_broadcastContextUpdate(ScannerContext& context){
+	for(size_t i = 0; i < _connections.size(); i++)
+		if(_connections[i] != nullptr)
+			_connections[i]->contextUpdate(ScannerContext(context));
+
+	delete &context;
+}
+
+void ServerManager::_broadcastGeneralMessage(unsigned char group, GeneralMessage& message){
+	unsigned char connectionLevel = 0;
+	switch(group){
+	case ServerMessage::NOTIFY_ALL_CLIENTS:
+		connectionLevel = RECEIVE_ONLY;
+		break;
+	case ServerMessage::NOTIFY_USERS:
+		connectionLevel = FULL_CONTROL;
+		break;
+	case ServerMessage::NOTIFY_VIEWERS:
+		connectionLevel = VIEWER;
+		break;
+	default:
+		connectionLevel = VIEWER;
+	}
+
+	for(size_t i = 0; i < _connections.size(); i++){
+		Connection* con = _connections[i];
+		if(con->_level >= connectionLevel)
+			con->systemMessage(GeneralMessage(message));
+	}
+
+	delete &message;
 }
 

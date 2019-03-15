@@ -14,6 +14,7 @@
 #include "SystemList.h"
 #include "Entry.h"
 #include "messages.h"
+#include "clientmessage.h"
 
 
 class ScannerSM: public MessageReceiver, public StateMachine {
@@ -65,21 +66,13 @@ private:
 	Entry* _currentEntry;
 	Entry* _manualEntry = nullptr;
 	size_t _sysCounter = 0, _entryCounter = 0;
-	States _lastState = ST_INVALID;
+	ScannerContext _currentContext;
+	std::mutex _contextMutex;
 
 	bool _externalHold = false;
 	std::time_t timeoutStart = 0;
 
-	struct EntryContext {
-		States state;
-		const RadioSystem* system;
-		const Entry* entry;
-	};
-
-	EntryContext _currentContext = {ST_INVALID, NULL, NULL};
-
-	void _broadcastSystemContext(RadioSystem* sys);
-	void _broadcastEntryContext(RadioSystem* sys, Entry* entry);
+	void _broadcastContextUpdate();
 	void _enableAudioOut(bool en);
 	void _handleRequest(ClientRequest& request);
 

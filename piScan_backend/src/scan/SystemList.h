@@ -20,8 +20,12 @@ public:
 	RadioSystem* operator[](size_t pos) { return _systems[pos]; };
 
 	size_t size(){ return _systems.size(); }
+
 	void addSystem(RadioSystem& system){
-		_systems.push_back(&system);
+		addSystem(&system);
+	}
+	void addSystem(RadioSystem* system) {
+		_systems.push_back(system);
 	}
 private:
 	std::vector<RadioSystem*> _systems;

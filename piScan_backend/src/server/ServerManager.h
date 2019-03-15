@@ -15,6 +15,7 @@
 #include "messages.h"
 #include "request.h"
 #include "connection.h"
+#include "clientmessage.h"
 #include "BackendServer.h"
 
 class Connection;
@@ -53,7 +54,8 @@ private:
 	void _addConnection(Connection& client);
 	int requestConnection(void* client);
 	int giveRequest(void* request);
-	void _broadcastConnections();
+	void _broadcastContextUpdate(ScannerContext& context);
+	void _broadcastGeneralMessage(unsigned char group, GeneralMessage& message);
 
 };
 

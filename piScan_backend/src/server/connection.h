@@ -9,6 +9,7 @@
 #define SERVER_CONNECTION_H_
 
 #include "constants.h"
+#include "clientmessage.h"
 #include "messages.h"
 #include "request.h"
 
@@ -30,7 +31,7 @@ public:
 	virtual int giveRequest(void* request) = 0;
 };
 
-class Connection : public MessageReceiver {
+class Connection : public RequestCallbackInterface, public MessageReceiver {
 public:
 
 
@@ -46,6 +47,8 @@ public:
 	virtual void giveMessage(Message& message) = 0;
 	virtual bool connect() = 0;
 	virtual void disconnect() = 0;
+	virtual void contextUpdate(ScannerContext context) = 0;
+	virtual void systemMessage(GeneralMessage message) = 0;
 
 private:
 	friend class ServerManager;
@@ -56,7 +59,22 @@ private:
 	AudioReceive _audio;
 	ServerInterface* _serverManager;
 	int _handle;
+
+	void contextRequestCallback(int handle, void* data){
+		assert(data != nullptr);
+		ScannerContext* context = reinterpret_cast<ScannerContext*>(data);
+		contextUpdate(ScannerContext(*context));
+		delete context;
+	}
+
+	void gainRequestCallback(int handle, void* data){
+		assert(data != nullptr);
+		int* gain = reinterpret_cast<int*>(data);
+		gainReceived(handle, *gain);
+		delete gain;
+	}
 protected:
+	virtual void gainReceived(int handle, int gain) = 0;
 
 
 	void notifyDisconnected() {
@@ -64,9 +82,23 @@ protected:
 		issueRequest(params);
 	}
 
-	int issueRequest(ClientRequest::RequestParams params, void* data = nullptr, void (*_callback)(int, void*) = nullptr){
-		ClientRequest* rq = new ClientRequest(_handle, params, data, _callback);
-		return _serverManager->giveRequest(rq);
+	int issueRequest(ClientRequest::RequestParams params, void* data = nullptr){
+		ClientRequest* rq = new ClientRequest(_handle, params, data, this);
+		int r = _serverManager->giveRequest(rq);
+		switch(r){
+		case ServerInterface::RQ_DENIED:
+			systemMessage(GeneralMessage(GeneralMessage::ERROR, "Request failed: denied"));
+			break;
+		case ServerInterface::RQ_INSUFFICIENT_PERMISSION:
+			systemMessage(GeneralMessage(GeneralMessage::ERROR, "Request failed: insufficient permissions"));
+			break;
+		case ServerInterface::RQ_INVALID_HANDLE:
+			systemMessage(GeneralMessage(GeneralMessage::ERROR, "Request failed: bad connection handle"));
+			break;
+		default:
+			break;
+		}
+		return r;
 	}
 
 	enum SystemFunction {
@@ -116,6 +148,11 @@ protected:
 	int setDemodGain(int level){
 		ClientRequest::RequestParams params = { .type = DEMOD_CONFIGURE, .subType = DEMOD_SET_GAIN };
 		return issueRequest(params, new int(level));
+	}
+
+	int getCurrentContext(){
+		ClientRequest::RequestParams params = { .type = GET_CONTEXT };
+		return issueRequest(params);
 	}
 };
 

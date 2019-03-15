@@ -25,6 +25,8 @@ public:
 	bool connect();
 	void disconnect();
 	void giveMessage(Message& message);
+	void contextUpdate(ScannerContext context);
+	void systemMessage(GeneralMessage message);
 
 	friend DebugServer;
 
@@ -33,6 +35,8 @@ private:
 	std::thread _requestThread;
 
 	void _consoleInputFunc();
+
+	void gainReceived(int handle, int gain);
 };
 
 class DebugServer : public BackendServer {

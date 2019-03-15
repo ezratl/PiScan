@@ -14,8 +14,6 @@ using namespace std;
 #include "ScannerSM.h"
 #include "SystemList.h"
 
-#include "demo_system.h"
-
 //enum {
 //	SYSTEM_CONTROL,
 //	SCANNER_SM,
@@ -56,10 +54,12 @@ public:
 
 	void stop(bool block) {
 		_run = false;
-		std::unique_lock<std::mutex> lock(_msgMutex);
-		_msgAvailable = true;
-		lock.unlock();
-		_cv.notify_one();
+		std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
+		if (lock.try_lock()) {
+			_msgAvailable = true;
+			lock.unlock();
+			_cv.notify_one();
+		}
 		if(block)
 			_workThread.join();
 	}
@@ -110,11 +110,19 @@ private:
 	}
 
 	void giveMessage(Message& message){
+		DLOG_F(7, "Queueing message");
+		if(message.destination > MESSAGE_RECEIVERS){
+			DLOG_F(ERROR, "Message has invalid destination | dst:%d | src:%d", message.destination, message.source);
+			delete &message;
+			return;
+		}
 		_queue.enqueue(&message);
-		std::unique_lock<std::mutex> lock(_msgMutex);
-		_msgAvailable = true;
-		lock.unlock();
-		_cv.notify_one();
+		std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
+		if (lock.try_lock()) {
+			_msgAvailable = true;
+			lock.unlock();
+			_cv.notify_one();
+		}
 	}
 };
 
@@ -293,10 +301,6 @@ int main(int argc, char **argv) {
 	messageManager.setReceiver(DEMOD, &demod);
 	messageManager.setReceiver(SERVER_MAN, &connectionManager);
 	//messageManager.setReceiver(AUDIO_MAN, &audioControl);
-
-	//DEMO
-	AnalogSystem demo = DemoSystem();
-	scanSystems.addSystem(dynamic_cast<RadioSystem&>(demo));
 
 	setDemodulator(&demod);
 

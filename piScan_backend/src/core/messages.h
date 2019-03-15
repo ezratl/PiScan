@@ -11,6 +11,7 @@
 #include "atomicops.h"
 #include "concurrentqueue.h"
 #include "readerwriterqueue.h"
+#include "loguru.hpp"
 
 #define MESSAGE_RECEIVERS	5
 
@@ -30,8 +31,12 @@ static int activeMessages = 0;
 /* basic interthread message structure */
 class Message {
 public:
-	Message(unsigned char src, unsigned char dst, void* data = 0) : source(src), destination(dst), pData(data) { activeMessages++; }
-	virtual ~Message() { activeMessages--; };
+	Message(unsigned char src, unsigned char dst, void* data = 0) : source(src), destination(dst), pData(data) {
+		DLOG_F(7, "Message create | dst:%d | src:%d", destination, source);
+		activeMessages++; }
+	virtual ~Message() {
+		DLOG_F(7, "Message delete | dst:%d | src:%d", destination, source);
+		activeMessages--; };
 	const unsigned char source;
 	const unsigned char destination;
 	void* const pData;
@@ -41,7 +46,8 @@ public:
 class ControllerMessage : public Message{
 public:
 	ControllerMessage(unsigned char src, unsigned char msgType, void* data = 0) :
-		Message(src, SYSTEM_CONTROL, data), type(msgType) {}
+		Message(src, SYSTEM_CONTROL, data), type(msgType) {
+	}
 	~ControllerMessage() {};
 	enum {
 		NOTIFY_READY,

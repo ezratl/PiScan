@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "Entry.h"
+#include "loguru.hpp"
 
 typedef enum {
 	SYSTEM_ANALOG
@@ -20,27 +21,41 @@ typedef enum {
 
 class RadioSystem {
 public:
-	RadioSystem() {};
+	RadioSystem(std::string tag, bool lo) : _tag(tag), _lockout(lo) {};
 	virtual ~RadioSystem() {};
 
 	virtual Entry* operator[](size_t pos) = 0;
 
-	virtual size_t size() { return _size; }
+	virtual size_t size() { return numEntries; }
+
+	std::string tag() { return _tag; };
+
+	virtual void addEntry(Entry* entry) = 0;
 private:
 	//const RadioSystemType type;
-	const std::string tag;
-	size_t _size = 0;
+	const std::string _tag;
+
+	bool _lockout;
+protected:
+	size_t numEntries = 0;
 };
 
 class AnalogSystem: public RadioSystem {
 public:
-	AnalogSystem() : RadioSystem() {};
+	AnalogSystem(std::string tag, bool lo) : RadioSystem(tag, lo) {};
 	~AnalogSystem() {};
 
-	Entry* operator[](size_t pos) { return entries[pos]; };
+	virtual Entry* operator[](size_t pos) { return entries[pos]; };
 
-	size_t size() {
+	/*virtual size_t size() {
 		return entries.size();
+	}*/
+
+	virtual void addEntry(Entry* entry){
+		if(entry != nullptr){
+			entries.push_back(entry);
+			numEntries++;
+		}
 	}
 
 protected:

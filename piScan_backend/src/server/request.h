@@ -12,6 +12,15 @@
 #include "constants.h"
 
 class ServerManager;
+class ClientRequest;
+
+class RequestCallbackInterface {
+public:
+	virtual ~RequestCallbackInterface() {};
+	virtual void contextRequestCallback(int handle, void* data) = 0;
+	virtual void gainRequestCallback(int handle, void* data) = 0;
+
+};
 
 class ClientRequest : public Message {
 public:
@@ -22,15 +31,15 @@ public:
 	};
 
 
-	ClientRequest(unsigned char handle, RequestParams info, void* data, void (*callback)(int, void*) = 0) :
-		Message(handle, 0, data), rqInfo(info), _callback(callback) {}
+	ClientRequest(unsigned char handle, RequestParams info, void* data, RequestCallbackInterface* source = 0) :
+		Message(handle, 0, data), rqInfo(info), connection(source) {}
 	~ClientRequest() {};
 
 
 	int rqHandle = 0;
 	RequestParams rqInfo;
-	void (*_callback)(int, void*);
 
+	RequestCallbackInterface* connection;
 private:
 
 

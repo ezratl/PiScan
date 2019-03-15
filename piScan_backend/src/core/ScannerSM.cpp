@@ -5,7 +5,8 @@
  *      Author: ezra
  */
 
-#include <ScannerSM.h>
+#include "ScannerSM.h"
+#include "ListGenerator.h"
 #include "loguru.hpp"
 
 //TODO temporary
@@ -83,6 +84,9 @@ void ScannerSM::manualEntry(uint32_t* freq){
 void ScannerSM::ST_Load(EventData* data){
 	DLOG_F(9, "ST_Load");
 	//file read and system tree population
+	ListFileIO* generator = new SentinelFile();
+	generator->generateSystemList(_systems);
+	LOG_F(INFO, "Loaded %u systems", _systems.size());
 
 	_currentSystem = _systems[0];
 
@@ -91,14 +95,20 @@ void ScannerSM::ST_Load(EventData* data){
 	Message* message = new ControllerMessage(SCANNER_SM, ControllerMessage::NOTIFY_READY);
 	_centralQueue.giveMessage(*message);
 	LOG_F(1, "ScannerSM ready");
+
+	delete generator;
 }
 
 void ScannerSM::ST_Scan(EventData* data){
 	DLOG_F(9, "ST_Scan");
 	_enableAudioOut(false);
+	_currentContext._state = ScannerContext::SCAN;
 
 	// incremental scan pattern
 	_entryCounter = (_entryCounter + 1) % _currentSystem->size();
+
+	if(currentState != lastState && _entryCounter != 0 && _currentEntry != nullptr)
+		_broadcastContextUpdate();
 
 	if(_entryCounter == 0){
 		//assert(_systems != NULL);
@@ -107,14 +117,16 @@ void ScannerSM::ST_Scan(EventData* data){
 		_currentSystem = _systems[_sysCounter];
 		assert(_currentSystem != NULL);
 
-		_broadcastSystemContext(_currentSystem);
+		_broadcastContextUpdate();
 	}
 
+	CHECK_F(_currentSystem->size() > 0);
 	_currentEntry = _currentSystem->operator[](_entryCounter);
-	assert(_currentEntry != NULL);
+	CHECK_F(_currentEntry != NULL);
+
 
 	if(_currentEntry->hasSignal()){
-		LOG_F(1, "Signal found: %s", _currentEntry->getTag().c_str());
+		LOG_F(1, "Signal found: %s", _currentEntry->tag().c_str());
 		InternalEvent(ST_RECEIVE);
 	}
 	else{
@@ -126,7 +138,9 @@ void ScannerSM::ST_Scan(EventData* data){
 void ScannerSM::ST_Hold(EventData* data){
 	DLOG_F(9, "ST_Hold");
 	_enableAudioOut(false);
-	_broadcastEntryContext(_currentSystem, _currentEntry);
+	_currentContext._state = ScannerContext::HOLD;
+	if(currentState != lastState)
+		_broadcastContextUpdate();
 
 	/* start receive if signal active */
 	if (_currentEntry->hasSignal()) {
@@ -160,7 +174,9 @@ void ScannerSM::ST_Hold(EventData* data){
 void ScannerSM::ST_Receive(EventData* data){
 	DLOG_F(9, "ST_Receive");
 	_enableAudioOut(true);
-	_broadcastEntryContext(_currentSystem, _currentEntry);
+	_currentContext._state = ScannerContext::RECEIVE;
+	if(currentState != lastState)
+		_broadcastContextUpdate();
 
 	if (_currentEntry->hasSignal()) {
 		InternalEvent(ST_RECEIVE);
@@ -208,25 +224,17 @@ void ScannerSM::ST_Stopped(EventData* data){
 	LOG_F(1, "ScannerSM stopped");
 }
 
-void ScannerSM::_broadcastSystemContext(RadioSystem* sys){
-	/*assert(sys != NULL);
-	//TODO not thread safe
-	_currentContext.state = static_cast<States>(currentState);
-	_currentContext.system = sys;
-	_currentContext.entry = nullptr;
-	Message* message = new ServerMessage(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, &_currentContext);
-	_centralQueue.giveMessage(*message);*/
-}
+void ScannerSM::_broadcastContextUpdate() {
+	DLOG_F(7, "Broadcasting context");
+	std::lock_guard<std::mutex> lock(_contextMutex);
+	_currentContext._systemTag = _currentSystem->tag();
+	_currentContext._entryTag = _currentEntry->tag();
+	_currentContext._frequency = _currentEntry->freq();
+	_currentContext._modulation = _currentEntry->modulation();
+	_currentContext._entryIndex = std::to_string(_sysCounter) + "-" + std::to_string(_entryCounter);
+	Message* message = new ServerMessage(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new ScannerContext(_currentContext));
 
-void ScannerSM::_broadcastEntryContext(RadioSystem* sys, Entry* entry){
-	/*assert(sys != NULL);
-	assert(entry != NULL);
-	//TODO not thread safe
-	_currentContext.state = static_cast<States>(currentState);
-	_currentContext.system = sys;
-	_currentContext.entry = entry;
-	Message* message = new ServerMessage(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, &_currentContext);
-	_centralQueue.giveMessage(*message);*/
+	_centralQueue.giveMessage(*message);
 }
 
 void ScannerSM::_enableAudioOut(bool en){
@@ -277,20 +285,28 @@ void ScannerSM::giveMessage(Message& message) {
 }
 
 void ScannerSM::_handleRequest(ClientRequest& request) {
-	DCHECK_F(request.rqInfo.type == SCANNER_FUNCTION);
-	switch(request.rqInfo.subType){
-	case SCANNER_STATE_SCAN:
-		startScan();
-		break;
-	case SCANNER_STATE_HOLD:
-		holdScan();
-		break;
-	case SCANNER_STATE_MANUAL:
-		manualEntry(reinterpret_cast<uint32_t*>(request.pData));
-		break;
-	default:
-		break;
+	ClientRequest* rq = &request;
+	if (rq->rqInfo.type == SCANNER_FUNCTION) {
+		switch (rq->rqInfo.subType) {
+		case SCANNER_STATE_SCAN:
+			startScan();
+			break;
+		case SCANNER_STATE_HOLD:
+			holdScan();
+			break;
+		case SCANNER_STATE_MANUAL:
+			manualEntry(reinterpret_cast<uint32_t*>(rq->pData));
+			break;
+		default:
+			break;
+		}
+	}
+	else if (rq->rqInfo.type == GET_CONTEXT){
+		std::unique_lock<std::mutex> lock(_contextMutex);
+		ScannerContext* context = new ScannerContext(_currentContext);
+		lock.unlock();
+		rq->connection->contextRequestCallback(rq->rqHandle, context);
 	}
 
-	delete &request;
+	delete rq;
 }

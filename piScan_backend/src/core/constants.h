@@ -16,6 +16,8 @@
 #define CONFIG_PATH	"~/piscan.config"
 #endif
 
+#define DATABASE_PATH	"../data"
+
 #define AUTO_GAIN	-10
 
 enum ConnectionLevel {
@@ -31,6 +33,7 @@ enum RequestType {
 	CONFIG_RETRIEVE,
 	CONFIG_MODIFY,
 	DEMOD_CONFIGURE,
+	GET_CONTEXT,
 };
 
 /* system functions */
@@ -40,6 +43,7 @@ enum {
 
 /* scanner functions */
 enum {
+	SCANNER_GET_CONTEXT,
 	SCANNER_STATE_SCAN,
 	SCANNER_STATE_HOLD,
 	SCANNER_STATE_MANUAL,
