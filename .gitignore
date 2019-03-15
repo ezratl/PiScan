@@ -242,3 +242,7 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /Unit Test/
+
+*.vscode
+
+[Dd]ata/

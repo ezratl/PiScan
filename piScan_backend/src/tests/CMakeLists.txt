@@ -1,3 +1,0 @@
-project(piScan_backend_tests)
-
-add_executable(piScan_backend_tests test_ScannerStateMachine.cpp)

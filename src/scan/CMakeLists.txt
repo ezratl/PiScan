@@ -1,0 +1,9 @@
+add_library(scan
+	Entry.cpp
+	Entry.h
+	RadioSystem.cpp
+	RadioSystem.h
+	SentinelFile.cpp
+	SystemList.cpp
+	SystemList.h
+	)

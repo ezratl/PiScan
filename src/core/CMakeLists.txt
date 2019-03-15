@@ -1,0 +1,10 @@
+add_library(core
+	Configuration.cpp
+	Configuration.h
+	constants.h
+	messages.h
+	ScannerSM.cpp
+	ScannerSM.h
+	StateMachine.cpp
+	StateMachine.h
+	)
