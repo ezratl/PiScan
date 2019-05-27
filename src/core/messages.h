@@ -15,6 +15,8 @@
 
 #define MESSAGE_RECEIVERS	5
 
+namespace piscan {
+
 enum {
 	SYSTEM_CONTROL = 0,
 	SCANNER_SM,
@@ -128,5 +130,5 @@ public:
 	virtual ~MessageReceiver() {};
 	virtual void giveMessage(Message& msg) = 0;
 };
-
+}
 #endif /* MESSAGES_H_ */

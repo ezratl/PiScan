@@ -10,6 +10,8 @@
 #ifndef CORE_CLIENTMESSAGE_H_
 #define CORE_CLIENTMESSAGE_H_
 
+namespace piscan {
+
 struct ScannerContext {
 	enum ScannerState {
 		OTHER_STATE,
@@ -62,5 +64,7 @@ struct DemodContext {
 	float gain;
 	int squelch;
 };
+
+}
 
 #endif /* CORE_CLIENTMESSAGE_H_ */

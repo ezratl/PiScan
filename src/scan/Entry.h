@@ -12,6 +12,8 @@
 
 #define TAG_LENGTH	20
 
+namespace piscan {
+
 class Entry {
 public:
 	Entry(std::string tag, bool lo, bool del) : _tag(tag), _lockedOut(lo), _scanDelay(del){};
@@ -87,5 +89,5 @@ public:
 
 	bool hasSignal() { return false; };
 };
-
+}
 #endif /*Channel_ */

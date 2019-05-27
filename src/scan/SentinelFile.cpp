@@ -34,6 +34,8 @@
 #define C_FREQ_TONE_POS		5
 #define C_FREQ_DELAY_POS	8
 
+using namespace piscan;
+
 void SentinelFile::generateSystemList(SystemList& list) {
 	_list = &list;
 

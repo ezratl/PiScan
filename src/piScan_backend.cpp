@@ -3,6 +3,7 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
+#include <boost/asio.hpp>
 using namespace std;
 
 #include "constants.h"
@@ -30,6 +31,9 @@ using namespace std;
 
 //#define ALL_FLAG		0x0F
 #define ALL_FLAG		0x07
+
+//using namespace piscan;
+namespace piscan {
 
 static bool sysRun;
 
@@ -269,10 +273,11 @@ private:
 	}
 };
 
+static boost::asio::io_service io_service;
 static MessageManager messageManager;
 static SystemList scanSystems;
 static ScannerSM scanner(messageManager, scanSystems);
-static ServerManager connectionManager(messageManager);
+static ServerManager connectionManager(io_service, messageManager);
 static Demodulator demod(messageManager);
 static SystemController sysControl(messageManager, scanSystems, scanner, connectionManager, demod);
 
@@ -286,6 +291,15 @@ void setDemodulator(DemodInterface* demod) {
 	Entry::demod = demod;
 }
 
+void runIO(){
+	DLOG_F(2, "Starting IO service");
+	io_service.run();
+}
+
+}
+
+using namespace piscan;
+
 int main(int argc, char **argv) {
 	loguru::init(argc, argv);
 	loguru::add_file(LOG_PATH, loguru::Truncate, loguru::Verbosity_2);
@@ -293,6 +307,8 @@ int main(int argc, char **argv) {
 
 	signal(SIGINT, sigHandler);
 	signal(SIGTERM, sigHandler);
+
+
 
 	LOG_F(INFO, "Starting PiScan");
 
@@ -304,19 +320,39 @@ int main(int argc, char **argv) {
 
 	setDemodulator(&demod);
 
-	messageManager.start();
-	sysControl.start();
+	std::thread ioThread;
+
+	try {
+		messageManager.start();
+		sysControl.start();
+		ioThread = std::thread(runIO);
+		//ioThread(runIO);
+	} catch (std::exception& e) {
+		LOG_F(ERROR, e.what());
+		goto sysexit;
+	}
+
+
 
 	while(sysRun)
 		usleep(100000);
 
-	sysControl.stop();
-	messageManager.stop(true);
+	sysexit:
+	try {
+		sysControl.stop();
+		messageManager.stop(true);
+	} catch (std::exception& e) {
+		LOG_F(ERROR, e.what());
+	}
 
 	LOG_F(INFO, "PiScan stopped, exiting");
+
+	io_service.stop();
+	ioThread.join();
 
 	if(activeMessages > 0)
 		DLOG_F(WARNING, "Memory leak: %i messages not deleted!", activeMessages);
 
 	return 0;
 }
+

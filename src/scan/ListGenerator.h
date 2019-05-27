@@ -13,6 +13,8 @@
 
 #include "SystemList.h"
 
+namespace piscan {
+
 class SystemList;
 
 class ListFileIO {
@@ -38,6 +40,6 @@ private:
 	void _newAnalogEntry(std::vector<std::string>& tokens);
 };
 
-
+}
 
 #endif /* SCAN_SENTINELFILE_H_ */

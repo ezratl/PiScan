@@ -7,6 +7,8 @@
 
 #include "SystemList.h"
 
+using namespace piscan;
+
 SystemList::SystemList() {
 	// TODO Auto-generated constructor stub
 

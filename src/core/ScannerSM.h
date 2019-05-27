@@ -16,6 +16,7 @@
 #include "messages.h"
 #include "clientmessage.h"
 
+namespace piscan {
 
 class ScannerSM: public MessageReceiver, public StateMachine {
 public:
@@ -78,5 +79,7 @@ private:
 	void _handleRequest(ClientRequest& request);
 
 };
+
+}
 
 #endif /* SERVER_SCANNERSTATEMACHINE_H_ */

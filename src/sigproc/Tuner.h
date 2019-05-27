@@ -17,6 +17,8 @@
 #define RTL_DEMOD_WAIT	50000
 #define RTL_GAIN	-100
 
+namespace piscan {
+
 enum TunerStatus {
 	TUNER_ERROR = -1,
 	TUNER_SUCCESS,
@@ -89,5 +91,5 @@ public:
 	float rssi() { return rtl_fm_get_rssi(); }
 private:
 };
-
+}
 #endif /* DRIVERS_TUNER_H_ */

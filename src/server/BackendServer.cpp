@@ -7,6 +7,6 @@
 
 #include "BackendServer.h"
 
-
+using namespace piscan;
 
 

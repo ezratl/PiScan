@@ -9,9 +9,12 @@
 #define SERVERDEBUGOUTPUT_H_
 
 #include <thread>
+#include <boost/shared_ptr.hpp>
 
 #include "BackendServer.h"
 #include "connection.h"
+
+namespace piscan {
 
 class DebugServer;
 
@@ -29,6 +32,10 @@ public:
 	void contextUpdate(DemodContext context);
 	void systemMessage(GeneralMessage message);
 
+	const std::string identifier() {
+		return "Debug Console";
+	}
+
 	friend DebugServer;
 
 private:
@@ -42,14 +49,14 @@ private:
 
 class DebugServer : public BackendServer {
 public:
-	DebugServer(ServerInterface& host) : BackendServer(host), _connection(nullptr) {}
+	DebugServer(ServerInterface& host) : BackendServer(host), _connection(new DebugConsole()) {}
 	~DebugServer() {};
 
 	void start();
 	void stop();
 	void giveMessage(Message& message);
 private:
-	DebugConsole* _connection;
+	boost::shared_ptr<DebugConsole> _connection;
 };
-
+}
 #endif /* SERVERDEBUGOUTPUT_H_ */

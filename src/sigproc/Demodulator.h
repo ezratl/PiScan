@@ -15,6 +15,8 @@
 
 #define DEFAULT_SQUELCH		70.0
 
+namespace piscan {
+
 class DemodInterface {
 public:
 	virtual ~DemodInterface() {};
@@ -57,4 +59,5 @@ private:
 	void _contextUpdate();
 };
 
+}
 #endif /* SIGPROC_DEMODULATOR_H_ */

@@ -3,6 +3,8 @@
 #include "messages.h"
 #include "RtAudio.h"
 
+namespace piscan {
+
 class AudioManager : public MessageReceiver {
 public:
     AudioManager();
@@ -18,3 +20,4 @@ private:
     void _muteAudio();
     void _unmuteAudio();
 };
+}

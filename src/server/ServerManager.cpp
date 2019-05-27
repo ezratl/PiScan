@@ -7,12 +7,17 @@
 
 //#include <unistd.h>
 
+#include <boost/asio.hpp>
+
 #include "ServerManager.h"
 #include "loguru.hpp"
 #include "DebugServer.h"
+#include "SocketServer.h"
 
-#define MAX_CONNECTIONS	5
+
 #define QUEUE_SIZE		64
+
+using namespace piscan;
 
 static ConnectionLevel const permissionMap[] = {
 		static_cast<ConnectionLevel>(0), //NOTIFY_DISCONNECTED
@@ -26,10 +31,11 @@ static ConnectionLevel const permissionMap[] = {
 		RECEIVE_ONLY, //GET_CONTEXT
 };
 
-ServerManager::ServerManager(MessageReceiver& central) :
-		_centralQueue(central), _queue(QUEUE_SIZE), _activeConnections(0), _connections(
-				MAX_CONNECTIONS) {
+ServerManager::ServerManager(boost::asio::io_service& io_service, MessageReceiver& central) : _io_service(io_service),
+		_centralQueue(central), _queue(QUEUE_SIZE), _activeConnections(0)/*, _connections(
+				MAX_CONNECTIONS)*/ {
 	_servers.push_back(new DebugServer(*this));
+	_servers.push_back(new SocketServer(*this, _io_service));
 }
 
 void ServerManager::start(){
@@ -54,7 +60,7 @@ void ServerManager::disconnectClients(){
 	//TODO might need locks for array
 	_allowConnections = false;
 	for(int i = 0; i < MAX_CONNECTIONS; ++i){
-		Connection* con = _connections[i];
+		Connection* con = _connections[i].get();
 		if(con != nullptr){
 			con->disconnect();
 		}
@@ -79,9 +85,9 @@ void ServerManager::_queueThreadFunc(void){
 			_msgAvailable = false;
 		}
 
-		Connection* newCon = nullptr;
+		boost::shared_ptr<Connection> newCon;
 		while(_allowConnections && _connectionQueue.try_dequeue(newCon)){
-			_addConnection(*newCon);
+			_addConnection(newCon);
 			_msgAvailable = false;
 		}
 
@@ -111,10 +117,10 @@ void ServerManager::giveMessage(Message& message){
 	}
 }
 
-int ServerManager::requestConnection(void* client){
+int ServerManager::requestConnection(boost::shared_ptr<Connection> client){
 	if(_activeConnections < MAX_CONNECTIONS){
 		DLOG_F(8, "New connection request");
-		_connectionQueue.enqueue(static_cast<Connection*>(client));
+		_connectionQueue.enqueue(client);
 		std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
 		if(lock.try_lock()){
 			_msgAvailable = true;
@@ -124,7 +130,6 @@ int ServerManager::requestConnection(void* client){
 		return RQ_ACCEPTED;
 	}
 	else{
-		delete &client;
 		return RQ_DENIED;
 	}
 }
@@ -137,7 +142,7 @@ int ServerManager::giveRequest(void* request){
 		return RQ_INVALID_HANDLE;
 	}
 	else */
-	int clientLevel = _connections[rq->source]->_level;
+	int clientLevel = _connections[rq->source].get()->_level;
 	int requestLevel = static_cast<int>(permissionMap[rq->rqInfo.type]);
 	if(clientLevel < requestLevel){
 		delete rq;
@@ -149,8 +154,9 @@ int ServerManager::giveRequest(void* request){
 	switch(rq->rqInfo.type){
 	case NOTIFY_DISCONNECTED:
 		LOG_F(INFO, "Connection %i disconnected", rq->source);
-		delete _connections[rq->source];
-		_connections.erase(_connections.begin() + (rq->source));
+		//delete _connections[rq->source];
+		//_connections.erase(_connections.begin() + (rq->source));
+		_connections[rq->source] = nullptr;
 		delete rq;
 		break;
 	case SYSTEM_FUNCTION:
@@ -224,22 +230,23 @@ void ServerManager::_handleMessage(Message& message){
 	delete &message;
 }
 
-void ServerManager::_addConnection(Connection& client){
+void ServerManager::_addConnection(boost::shared_ptr<Connection> client){
 	//TODO
-	for(int i = 0; i < MAX_CONNECTIONS; ++i){
+	for(unsigned int i = 0; i < MAX_CONNECTIONS; ++i){
 		if(_connections[i] == nullptr){
-			LOG_F(1, "Initiating connection with handle %i", i);
+			LOG_F(1, "Initiating connection with %s", client.get()->identifier().c_str());
 
 
-			client._handle = i;
-			client._serverManager = this;
-			if(client.connect()){
-				_connections[i] = &client;
-				LOG_F(INFO, "Client %i connected, permission level %i", i, client._level);
+			client.get()->_handle = i;
+			client.get()->_serverManager = this;
+			if(client.get()->connect()){
+				_connections[i] = client;
+				//_connections.assign(i, client);
+				LOG_F(INFO, "Client %s connected with handle %i", client.get()->identifier().c_str(), i);
 			}
 			else{
-				LOG_F(INFO, "Connection attempt failed");
-				delete &client;
+				LOG_F(1, "Connection attempt failed");
+				//delete &client;
 			}
 			break;
 		}
@@ -248,7 +255,7 @@ void ServerManager::_addConnection(Connection& client){
 
 template <class T>
 void ServerManager::_broadcastContextUpdate(T& context){
-	for(size_t i = 0; i < _connections.size(); i++)
+	for(size_t i = 0; i < MAX_CONNECTIONS; i++)
 		if(_connections[i] != nullptr)
 			_connections[i]->contextUpdate(T(context));
 
@@ -271,10 +278,12 @@ void ServerManager::_broadcastGeneralMessage(unsigned char group, GeneralMessage
 		connectionLevel = VIEWER;
 	}
 
-	for(size_t i = 0; i < _connections.size(); i++){
-		Connection* con = _connections[i];
-		if(con->_level >= connectionLevel)
-			con->systemMessage(GeneralMessage(message));
+	for (size_t i = 0; i < MAX_CONNECTIONS; i++) {
+		if (_connections[i] != nullptr) {
+			Connection* con = _connections[i].get();
+			if (con->_level >= connectionLevel)
+				con->systemMessage(GeneralMessage(message));
+		}
 	}
 
 	delete &message;

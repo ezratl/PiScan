@@ -14,6 +14,8 @@
 #include "DebugServer.h"
 #include "loguru.hpp"
 
+using namespace piscan;
+
 bool DebugConsole::connect(){
 	std::cerr << "\nConnecting...\n";
 	_run = true;
@@ -164,7 +166,7 @@ void DebugConsole::contextUpdate(DemodContext context) {
 }
 
 void DebugServer::start(){
-	this->_connection = new DebugConsole();
+	//this->_connection(new DebugConsole());
 	this->_host.requestConnection(_connection);
 	if(_connection == nullptr)
 		DLOG_F(WARNING, "Debug connection failed");

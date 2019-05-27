@@ -8,6 +8,8 @@
 #include <assert.h>
 #include "StateMachine.h"
 
+using namespace piscan;
+
 StateMachine::StateMachine(int maxStates) :
     _maxStates(maxStates),
     currentState(0),

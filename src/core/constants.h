@@ -20,6 +20,11 @@
 
 #define AUTO_GAIN	-10
 
+#define DEFAULT_TCP_PORT	1234
+#define MAX_TCP_CONNECTIONS	5
+
+namespace piscan {
+
 enum ConnectionLevel {
 	RECEIVE_ONLY = 0, VIEWER, FULL_CONTROL,
 };
@@ -60,5 +65,5 @@ enum {
 	SCANNER_CONTEXT,
 	DEMOD_CONTEXT,
 };
-
+}
 #endif /* CORE_CONSTANTS_H_ */

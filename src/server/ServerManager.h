@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <thread>
 #include <vector>
+#include <boost/asio.hpp>
 
 #include "messages.h"
 #include "request.h"
@@ -18,11 +19,15 @@
 #include "clientmessage.h"
 #include "BackendServer.h"
 
+#define MAX_CONNECTIONS	5
+
+namespace piscan {
+
 class Connection;
 
 class ServerManager : public MessageReceiver, public ServerInterface {
 public:
-	ServerManager(MessageReceiver& central);
+	ServerManager(boost::asio::io_service& io_service, MessageReceiver& central);
 	~ServerManager() {
 		for(unsigned int i = 0; i < _servers.size(); i++)
 			delete _servers[i];
@@ -35,11 +40,13 @@ public:
 protected:
 
 private:
+	boost::asio::io_service& _io_service;
 	MessageReceiver& _centralQueue;
 	moodycamel::ConcurrentQueue<Message*> _queue;
-	moodycamel::ReaderWriterQueue<Connection*> _connectionQueue;
+	moodycamel::ReaderWriterQueue<boost::shared_ptr<Connection>> _connectionQueue;
 	int _activeConnections;
-	std::vector<Connection*> _connections;
+	//std::vector<boost::shared_ptr<Connection>> _connections;
+	boost::shared_ptr<Connection> _connections[MAX_CONNECTIONS];
 	std::vector<BackendServer*> _servers;
 	std::thread _queueThread;
 	std::mutex _msgMutex;
@@ -51,8 +58,8 @@ private:
 
 	void _queueThreadFunc(void);
 	void _handleMessage(Message& message);
-	void _addConnection(Connection& client);
-	int requestConnection(void* client);
+	void _addConnection(boost::shared_ptr<Connection> client);
+	int requestConnection(boost::shared_ptr<Connection> client);
 	int giveRequest(void* request);
 
 	template <class T>
@@ -62,5 +69,5 @@ private:
 	Message* _makeContextRequest(ClientRequest* rq);
 
 };
-
+}
 #endif /* SERVER_SERVERMANAGER_H_ */

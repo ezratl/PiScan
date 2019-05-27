@@ -14,6 +14,8 @@
 
 #define DELAY_TIMEOUT	2.0
 
+using namespace piscan;
+
 ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
 		StateMachine(7), _centralQueue(central), _systems(dataSource), _currentSystem(nullptr), _currentEntry(nullptr) {
 }
@@ -256,6 +258,8 @@ void ScannerSM::_enableAudioOut(bool en){
 void ScannerSM::giveMessage(Message& message) {
 	auto msg = dynamic_cast<ScannerMessage&>(message);
 
+	DLOG_F(7, "Message rcv - src:%i | type:%i", msg.source, msg.type);
+
 	switch (msg.type) {
 	/* stop call */
 	case ScannerMessage::STOP:
@@ -277,6 +281,7 @@ void ScannerSM::giveMessage(Message& message) {
 			holdScan();
 			break;
 		default:
+			DLOG_F(WARNING, "Invalid state request");
 			break;
 		}
 		break;
@@ -308,6 +313,9 @@ void ScannerSM::_handleRequest(ClientRequest& request) {
 		ScannerContext* context = new ScannerContext(_currentContext);
 		lock.unlock();
 		rq->connection->scannerContextRequestCallback(rq->rqHandle, context);
+	}
+	else{
+		DLOG_F(WARNING, "Invalid scanner request type: %i", rq->rqInfo.type);
 	}
 
 	delete rq;

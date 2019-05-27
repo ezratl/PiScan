@@ -11,6 +11,8 @@
 #include "messages.h"
 #include "constants.h"
 
+namespace piscan {
+
 class ServerManager;
 class ClientRequest;
 
@@ -46,5 +48,5 @@ private:
 	friend class ServerManager;
 };
 
-
+}
 #endif /* SERVER_REQUEST_H_ */

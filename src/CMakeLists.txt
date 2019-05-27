@@ -9,7 +9,7 @@ set(CMAKE_BUILD_TYPE Debug)
 add_executable(piScan_backend piScan_backend.cpp)
 
 
-include_directories(core drivers external scan server sigproc)
+include_directories(core drivers external scan server sigproc external/PiScan-protobuf/cpp)
 
 add_subdirectory(core)
 add_subdirectory(drivers)
@@ -19,6 +19,6 @@ add_subdirectory(server)
 add_subdirectory(sigproc)
 add_subdirectory(tests)
 
-target_link_libraries(piScan_backend core drivers external scan server sigproc pthread dl rtlsdr)
+target_link_libraries(piScan_backend core drivers external scan server sigproc pthread dl rtlsdr boost_system protobuf)
 
 

@@ -12,6 +12,8 @@
 
 #include "RadioSystem.h"
 
+namespace piscan {
+
 class SystemList {
 public:
 	SystemList();
@@ -31,5 +33,5 @@ private:
 	std::vector<RadioSystem*> _systems;
 	//size_t _size = 0;
 };
-
+}
 #endif /* SYSTEMLIST_H_ */

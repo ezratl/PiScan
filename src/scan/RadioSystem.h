@@ -15,6 +15,8 @@
 #include "Entry.h"
 #include "loguru.hpp"
 
+namespace piscan {
+
 typedef enum {
 	SYSTEM_ANALOG
 } RadioSystemType;
@@ -61,5 +63,5 @@ public:
 protected:
 	std::vector<Entry*> entries;
 };
-
+}
 #endif /* RADIOSYSTEM_H_ */

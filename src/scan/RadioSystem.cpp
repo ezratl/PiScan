@@ -7,4 +7,4 @@
 
 #include "RadioSystem.h"
 
-
+using namespace piscan;

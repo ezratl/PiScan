@@ -8,6 +8,8 @@
 #ifndef SERVER_CONFIGURATION_H_
 #define SERVER_CONFIGURATION_H_
 
+namespace piscan {
+
 class SocketServerConfig {
 
 };
@@ -25,5 +27,5 @@ public:
 	Configuration();
 	~Configuration();
 };
-
+}
 #endif /* SERVER_CONFIGURATION_H_ */

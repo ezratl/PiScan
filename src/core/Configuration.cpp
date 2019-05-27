@@ -7,6 +7,8 @@
 
 #include "Configuration.h"
 
+using namespace piscan;
+
 Configuration::Configuration() {
 	// TODO Auto-generated constructor stub
 

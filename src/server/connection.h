@@ -8,6 +8,9 @@
 #ifndef SERVER_CONNECTION_H_
 #define SERVER_CONNECTION_H_
 
+#include <memory>
+#include <boost/shared_ptr.hpp>
+
 #include "constants.h"
 #include "clientmessage.h"
 #include "messages.h"
@@ -15,6 +18,9 @@
 
 #define HANDLE_NULL	-1
 
+namespace piscan {
+
+class Connection;
 
 class ServerInterface {
 public:
@@ -27,7 +33,7 @@ public:
 		RQ_INVALID_HANDLE,
 	};
 
-	virtual int requestConnection(void* client) = 0;
+	virtual int requestConnection(boost::shared_ptr<Connection> client) = 0;
 	virtual int giveRequest(void* request) = 0;
 };
 
@@ -40,7 +46,7 @@ public:
 		AUDIO_RECEIVE,
 	};
 
-	Connection(ConnectionLevel lvl, AudioReceive aud) :
+	Connection(ConnectionLevel lvl, AudioReceive aud = AUDIO_NONE) :
 		_level(lvl), _audio(aud), _serverManager(nullptr), _handle(HANDLE_NULL) {}
 	virtual ~Connection() {};
 
@@ -51,9 +57,12 @@ public:
 	virtual void contextUpdate(DemodContext context) = 0;
 	virtual void systemMessage(GeneralMessage message) = 0;
 
+	virtual const std::string identifier() = 0;
+
 private:
 	friend class ServerManager;
 	friend class ClientRequest;
+	friend class TestClient;
 
 	ConnectionLevel _level;
 	AudioReceive _audio;
@@ -95,5 +104,5 @@ protected:
 	int getDemodContext();
 
 };
-
+}
 #endif /* SERVER_CONNECTION_H_ */

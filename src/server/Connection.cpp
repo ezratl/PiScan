@@ -8,6 +8,8 @@
 #include "connection.h"
 //#include "request.h"
 
+using namespace piscan;
+
 void Connection::notifyDisconnected() {
 	ClientRequest::RequestParams params = { .type = NOTIFY_DISCONNECTED };
 	issueRequest(params);

@@ -8,6 +8,8 @@
 #include "Demodulator.h"
 #include "loguru.hpp"
 
+using namespace piscan;
+
 void Demodulator::start(){
 	DCHECK_F(_tuner.init() == TUNER_SUCCESS);
 

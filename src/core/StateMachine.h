@@ -14,6 +14,8 @@
 #include <mutex>
 //#include "EventData.h"
 
+namespace piscan {
+
 class EventData
 {
 public:
@@ -84,5 +86,5 @@ const StateStruct* GetStateMap() {\
     0 };\
     ExternalEvent(TRANSITIONS[currentState], data);
 
-
+}
 #endif /* SERVER_STATEMACHINE_H_ */

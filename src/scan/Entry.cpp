@@ -10,6 +10,8 @@
 
 #include "Entry.h"
 
+using namespace piscan;
+
 DemodInterface* Entry::demod = nullptr;
 
 bool FMChannel::hasSignal(void){

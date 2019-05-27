@@ -1,0 +1,3 @@
+[submodule "src/external/PiScan-protobuf"]
+	path = src/external/PiScan-protobuf
+	url = https://github.com/ezratl/PiScan-protobuf
