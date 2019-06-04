@@ -59,7 +59,7 @@ void SocketConnection::contextUpdate(ScannerContext context){
 	msg.set_allocated_scannercontext(ctx);
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
-	_startWrite(_writeBuffer, WRITE_BUFFER_LENGTH);
+	_startWrite(_writeBuffer, msg.ByteSize());
 }
 
 void SocketConnection::contextUpdate(DemodContext context){
@@ -73,7 +73,7 @@ void SocketConnection::contextUpdate(DemodContext context){
 	msg.set_allocated_demodcontext(ctx);
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
-	_startWrite(_writeBuffer, WRITE_BUFFER_LENGTH);
+	_startWrite(_writeBuffer, msg.ByteSize());
 }
 
 void SocketConnection::systemMessage(GeneralMessage message) {
@@ -101,7 +101,7 @@ void SocketConnection::systemMessage(GeneralMessage message) {
 	msg.set_allocated_generalmessage(ctx);
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
-	_startWrite(_writeBuffer, WRITE_BUFFER_LENGTH);
+	_startWrite(_writeBuffer, msg.ByteSize());
 }
 
 void SocketConnection::_startRead() {
@@ -125,19 +125,14 @@ void SocketConnection::_handleRead(const boost::system::error_code& err,
 		piscan_pb::ClientToServer msg;
 		msg.ParseFromArray(_readBuffer, bytes_transferred);
 
-		std::cerr << msg.DebugString();
-
 		switch(msg.type()){
 		case piscan_pb::ClientToServer_Type_GENERAL_REQUEST:
-			std::cerr << "general" << std::endl;
 			_handleGeneralRequest(msg.generalrequest());
 			break;
 		case piscan_pb::ClientToServer_Type_SCANNER_STATE_REQUEST:
-			std::cerr << "scanner" << std::endl;
 			_handleScanStateRequest(msg.scanstaterequest());
 			break;
 		case piscan_pb::ClientToServer_Type_DEMOD_REQUEST:
-			std::cerr << "demod" << std::endl;
 			_handleDemodRequest(msg.demodrequest());
 			break;
 		default:
