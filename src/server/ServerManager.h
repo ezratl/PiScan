@@ -36,13 +36,13 @@ public:
 	void start();
 	void allowConnections();
 	void disconnectClients();
-	void giveMessage(Message& message);
+	void giveMessage(std::shared_ptr<Message> message);
 protected:
 
 private:
 	boost::asio::io_service& _io_service;
 	MessageReceiver& _centralQueue;
-	moodycamel::ConcurrentQueue<Message*> _queue;
+	moodycamel::ConcurrentQueue<std::shared_ptr<Message>> _queue;
 	moodycamel::ReaderWriterQueue<boost::shared_ptr<Connection>> _connectionQueue;
 	int _activeConnections;
 	//std::vector<boost::shared_ptr<Connection>> _connections;
@@ -57,7 +57,7 @@ private:
 
 
 	void _queueThreadFunc(void);
-	void _handleMessage(Message& message);
+	void _handleMessage(std::shared_ptr<Message> message);
 	void _addConnection(boost::shared_ptr<Connection> client);
 	int requestConnection(boost::shared_ptr<Connection> client);
 	int giveRequest(void* request);
@@ -66,7 +66,7 @@ private:
 	void _broadcastContextUpdate(T& context);
 
 	void _broadcastGeneralMessage(unsigned char group, GeneralMessage& message);
-	Message* _makeContextRequest(ClientRequest* rq);
+	std::shared_ptr<Message> _makeContextRequest(ClientRequest* rq);
 
 };
 }

@@ -4,7 +4,7 @@
 #include <thread>
 #include <unistd.h>
 #include <boost/asio.hpp>
-using namespace std;
+//using namespace std;
 
 #include "constants.h"
 #include "Demodulator.h"
@@ -68,7 +68,7 @@ public:
 			_workThread.join();
 	}
 private:
-	moodycamel::ConcurrentQueue<Message*> _queue;
+	moodycamel::ConcurrentQueue<std::shared_ptr<Message>> _queue;
 	std::thread _workThread;
 	std::mutex _msgMutex;
 	std::condition_variable _cv;
@@ -77,13 +77,14 @@ private:
 	MessageReceiver* _receivers[MESSAGE_RECEIVERS];
 
 	void _handlerThreadFunc(void){
+		loguru::set_thread_name("MessageManager");
 		LOG_F(2, "MessageManager started");
 
 		while(_run){
 			std::unique_lock<std::mutex> lock(_msgMutex);
 			_cv.wait(lock, [this]{return this->_msgAvailable;});
 
-			Message* message;
+			std::shared_ptr<Message> message;
 			while(_queue.try_dequeue(message)){
 				DCHECK_F(message != nullptr);
 				DCHECK_F(message->destination != message->source);
@@ -93,15 +94,15 @@ private:
 					MessageReceiver* receiver = _receivers[message->destination];
 					if(receiver == nullptr){
 						DLOG_F(ERROR, "Message bound for null receiver | dst:%d | src:%d", message->destination, message->source);
-						delete &message;
+						
 					}
 					else{
-						receiver->giveMessage(*message);
+						receiver->giveMessage(message);
 					}
 				}
 				else{
 					DLOG_F(ERROR, "Message has invalid destination | dst:%d | src:%d", message->destination, message->source);
-					delete &message;
+					
 				}
 
 				_msgAvailable = false;
@@ -113,14 +114,14 @@ private:
 		LOG_F(2, "MessageManager stopped");
 	}
 
-	void giveMessage(Message& message){
+	void giveMessage(std::shared_ptr<Message> message){
 		DLOG_F(7, "Queueing message");
-		if(message.destination > MESSAGE_RECEIVERS){
-			DLOG_F(ERROR, "Message has invalid destination | dst:%d | src:%d", message.destination, message.source);
-			delete &message;
+		if(message->destination > MESSAGE_RECEIVERS){
+			DLOG_F(ERROR, "Message has invalid destination | dst:%d | src:%d", message->destination, message->source);
+			
 			return;
 		}
-		_queue.enqueue(&message);
+		_queue.enqueue(message);
 		std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
 		if (lock.try_lock()) {
 			_msgAvailable = true;
@@ -168,7 +169,7 @@ public:
 	void stop(){
 		LOG_F(INFO, "Stopping system");
 		_scanner.stopScanner();
-		_centralQueue.giveMessage(*(new ServerMessage(SYSTEM_CONTROL, ServerMessage::STOP, nullptr)));
+		_centralQueue.giveMessage(std::make_shared<ServerMessage>(SYSTEM_CONTROL, ServerMessage::STOP, nullptr));
 		_demod.stop();
 
 		while(1){
@@ -194,18 +195,18 @@ private:
 	std::unique_lock<std::mutex> _flagLock;
 	unsigned char _activeModules = 0;
 
-	void giveMessage(Message& message){
-		auto msg = dynamic_cast<ControllerMessage&>(message);
+	void giveMessage(std::shared_ptr<Message> message){
+		auto msg = std::dynamic_pointer_cast<ControllerMessage>(message);
 
 		ClientRequest* request;
-		switch(msg.type){
+		switch(msg->type){
 		case ControllerMessage::CLIENT_REQUEST:
-			request = reinterpret_cast<ClientRequest*>(message.pData);
+			request = reinterpret_cast<ClientRequest*>(message->pData);
 			processRequest(*request);
 			break;
 
 		case ControllerMessage::NOTIFY_READY:
-			switch(msg.source){
+			switch(msg->source){
 			case SCANNER_SM:
 				_activeModules |= SCANNER_FLAG;
 				DLOG_F(8, "scanner started");
@@ -227,7 +228,7 @@ private:
 			break;
 
 		case ControllerMessage::NOTIFY_STOPPED:
-			switch (msg.source) {
+			switch (msg->source) {
 			case SCANNER_SM:
 				DLOG_F(8, "scanner stopped");
 				_activeModules &= ~SCANNER_FLAG;
@@ -248,7 +249,7 @@ private:
 			}
 			break;
 		}
-		delete &message;
+
 	}
 
 	void processRequest(ClientRequest& request){
@@ -274,6 +275,7 @@ private:
 };
 
 static boost::asio::io_service io_service;
+static std::thread ioThread;
 static MessageManager messageManager;
 static SystemList scanSystems;
 static ScannerSM scanner(messageManager, scanSystems);
@@ -281,9 +283,15 @@ static ServerManager connectionManager(io_service, messageManager);
 static Demodulator demod(messageManager);
 static SystemController sysControl(messageManager, scanSystems, scanner, connectionManager, demod);
 
-void sigHandler(int signal){
+void sigIntHandler(int signal){
 	LOG_F(INFO, "Stop triggered by interrupt");
 	sysRun = false;
+}
+
+void sigTermHandler(int signal){
+	LOG_F(WARNING, "Terminating - resources may not be properly released");
+	sysRun = false;
+	exit(1);
 }
 
 void setDemodulator(DemodInterface* demod) {
@@ -292,8 +300,21 @@ void setDemodulator(DemodInterface* demod) {
 }
 
 void runIO(){
+	loguru::set_thread_name("IO Service");
 	DLOG_F(2, "Starting IO service");
 	io_service.run();
+}
+
+void exit(int code){
+	LOG_F(INFO, "PiScan stopped, exiting");
+
+	io_service.stop();
+	ioThread.join();
+
+	if(activeMessages > 0)
+		DLOG_F(WARNING, "Memory leak: %i messages not deleted!", activeMessages);
+
+	std::exit(code);
 }
 
 }
@@ -302,13 +323,12 @@ using namespace piscan;
 
 int main(int argc, char **argv) {
 	loguru::init(argc, argv);
-	loguru::add_file(LOG_PATH, loguru::Truncate, loguru::Verbosity_2);
+	loguru::add_file(LOG_PATH, loguru::Truncate, LOG_VERBOSITY);
 	//loguru::g_stderr_verbosity = loguru::Verbosity_MAX;
+	loguru::g_preamble_file = false;
 
-	signal(SIGINT, sigHandler);
-	signal(SIGTERM, sigHandler);
-
-
+	signal(SIGINT, sigIntHandler);
+	signal(SIGTERM, sigTermHandler);
 
 	LOG_F(INFO, "Starting PiScan");
 
@@ -320,13 +340,12 @@ int main(int argc, char **argv) {
 
 	setDemodulator(&demod);
 
-	std::thread ioThread;
+	
 
 	try {
 		messageManager.start();
 		sysControl.start();
 		ioThread = std::thread(runIO);
-		//ioThread(runIO);
 	} catch (std::exception& e) {
 		LOG_F(ERROR, e.what());
 		goto sysexit;
@@ -345,13 +364,7 @@ int main(int argc, char **argv) {
 		LOG_F(ERROR, e.what());
 	}
 
-	LOG_F(INFO, "PiScan stopped, exiting");
-
-	io_service.stop();
-	ioThread.join();
-
-	if(activeMessages > 0)
-		DLOG_F(WARNING, "Memory leak: %i messages not deleted!", activeMessages);
+	piscan::exit(0);
 
 	return 0;
 }

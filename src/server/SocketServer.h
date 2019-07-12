@@ -31,7 +31,7 @@ public:
 	SocketConnection(boost::asio::io_service& io_service, ConnectionLevel lvl) : Connection(lvl), _socket(io_service) {};
 	~SocketConnection() {};
 
-	void giveMessage(Message& message);
+	void giveMessage(std::shared_ptr<Message> message);
 	bool connect();
 	void disconnect();
 	void contextUpdate(ScannerContext context);
@@ -45,7 +45,7 @@ public:
 	}
 
 	const std::string identifier() {
-		return _socket.local_endpoint().address().to_string();
+		return _socket.remote_endpoint().address().to_string();
 	}
 private:
 	tcp::socket _socket;
@@ -75,7 +75,7 @@ public:
 	void start();
 	void stop();
 
-	void giveMessage(Message& message);
+	void giveMessage(std::shared_ptr<Message> message);
 private:
 	tcp::acceptor _acceptor;
 	uint16_t _listenPort = DEFAULT_TCP_PORT;

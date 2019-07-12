@@ -45,8 +45,8 @@ void ServerManager::start(){
 	for(unsigned int i = 0; i < _servers.size(); i++)
 		_servers[i]->start();
 
-	Message* message = new ControllerMessage(SERVER_MAN, ControllerMessage::NOTIFY_READY);
-	_centralQueue.giveMessage(*message);
+	auto message = std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_READY);
+	_centralQueue.giveMessage(message);
 	LOG_F(1, "Connection Manager started");
 }
 
@@ -68,19 +68,21 @@ void ServerManager::disconnectClients(){
 }
 
 void ServerManager::_queueThreadFunc(void){
+	loguru::set_thread_name("ServerManager");
+
 	while(_run){
 		std::unique_lock<std::mutex> lock(_msgMutex);
 		_cv.wait(lock, [this]{return this->_msgAvailable;});
 
-		Message* message;
+		std::shared_ptr<Message> message;
 		while(_queue.try_dequeue(message)){
 			assert(message != nullptr);
 			DLOG_F(7, "Message receive | dst:%d | src:%d", message->destination, message->source);
 			if(message->destination != SERVER_MAN){
-				_centralQueue.giveMessage(*message);
+				_centralQueue.giveMessage(message);
 			}
 			else{
-				_handleMessage(*message);
+				_handleMessage(message);
 			}
 			_msgAvailable = false;
 		}
@@ -98,17 +100,16 @@ void ServerManager::_queueThreadFunc(void){
 		_servers[i]->stop();
 
 	// empty queue
-	Message* m;
-	while(_queue.try_dequeue(m))
-		delete m;
+	std::shared_ptr<Message> m;
+	while(_queue.try_dequeue(m));
 
-	_centralQueue.giveMessage(*(new ControllerMessage(SERVER_MAN, ControllerMessage::NOTIFY_STOPPED)));
+	_centralQueue.giveMessage(std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_STOPPED));
 	LOG_F(1, "Connection Manager stopped");
 }
 
-void ServerManager::giveMessage(Message& message){
-	DLOG_F(7, "Message queue | dst:%d | src:%d", message.destination, message.source);
-	_queue.enqueue(&message);
+void ServerManager::giveMessage(std::shared_ptr<Message> message){
+	DLOG_F(7, "Message queue | dst:%d | src:%d", message->destination, message->source);
+	_queue.enqueue(message);
 	std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
 	if (lock.try_lock()) {
 		_msgAvailable = true;
@@ -150,7 +151,7 @@ int ServerManager::giveRequest(void* request){
 		return RQ_INSUFFICIENT_PERMISSION;
 	}
 
-	Message* message = nullptr;
+	std::shared_ptr<Message> message;
 	switch(rq->rqInfo.type){
 	case NOTIFY_DISCONNECTED:
 		LOG_F(INFO, "Connection %i disconnected", rq->source);
@@ -161,11 +162,11 @@ int ServerManager::giveRequest(void* request){
 		break;
 	case SYSTEM_FUNCTION:
 		//dest = SYSTEM_CONTROL;
-		message = new ControllerMessage(CLIENT, ControllerMessage::CLIENT_REQUEST, rq);
+		message = std::make_shared<ControllerMessage>(CLIENT, ControllerMessage::CLIENT_REQUEST, rq);
 		break;
 	case SCANNER_FUNCTION:
 		//dest = SCANNER_SM;
-		message = new ScannerMessage(CLIENT, ScannerMessage::CLIENT_REQUEST, rq);
+		message = std::make_shared<ScannerMessage>(CLIENT, ScannerMessage::CLIENT_REQUEST, rq);
 		break;
 	case DATABASE_RETRIEVE:
 		//dest = SYSTEM_CONTROL;
@@ -184,7 +185,7 @@ int ServerManager::giveRequest(void* request){
 		delete rq;
 		break;
 	case DEMOD_CONFIGURE:
-		message = new DemodMessage(CLIENT, DemodMessage::CLIENT_REQUEST, rq);
+		message = std::make_shared<DemodMessage>(CLIENT, DemodMessage::CLIENT_REQUEST, rq);
 		break;
 	case GET_CONTEXT:
 		message = _makeContextRequest(rq);
@@ -194,21 +195,21 @@ int ServerManager::giveRequest(void* request){
 	}
 
 	if(message != nullptr)
-		this->giveMessage(*message);
+		this->giveMessage(message);
 	return rq->rqHandle;
 }
 
-void ServerManager::_handleMessage(Message& message){
-	assert(message.destination == SERVER_MAN);
-	auto msg = dynamic_cast<ServerMessage&>(message);
-	switch (msg.type) {
+void ServerManager::_handleMessage(std::shared_ptr<Message> message){
+	assert(message->destination == SERVER_MAN);
+	auto msg = std::dynamic_pointer_cast<ServerMessage>(message);
+	switch (msg->type) {
 	case ServerMessage::CONTEXT_UPDATE:
-		switch(message.source){
+		switch(message->source){
 		case SCANNER_SM:
-			_broadcastContextUpdate(*(reinterpret_cast<ScannerContext*>(msg.pData)));
+			_broadcastContextUpdate(*(reinterpret_cast<ScannerContext*>(msg->pData)));
 			break;
 		case DEMOD:
-			_broadcastContextUpdate(*(reinterpret_cast<DemodContext*>(msg.pData)));
+			_broadcastContextUpdate(*(reinterpret_cast<DemodContext*>(msg->pData)));
 			break;
 		default:
 			break;
@@ -217,7 +218,7 @@ void ServerManager::_handleMessage(Message& message){
 	case ServerMessage::NOTIFY_ALL_CLIENTS:
 	case ServerMessage::NOTIFY_USERS:
 	case ServerMessage::NOTIFY_VIEWERS:
-		_broadcastGeneralMessage(msg.type, *(reinterpret_cast<GeneralMessage*>(msg.pData)));
+		_broadcastGeneralMessage(msg->type, *(reinterpret_cast<GeneralMessage*>(msg->pData)));
 		break;
 	case ServerMessage::STOP:
 		disconnectClients();
@@ -227,7 +228,6 @@ void ServerManager::_handleMessage(Message& message){
 		break;
 	}
 
-	delete &message;
 }
 
 void ServerManager::_addConnection(boost::shared_ptr<Connection> client){
@@ -289,15 +289,15 @@ void ServerManager::_broadcastGeneralMessage(unsigned char group, GeneralMessage
 	delete &message;
 }
 
-Message* ServerManager::_makeContextRequest(ClientRequest* rq){
+std::shared_ptr<Message> ServerManager::_makeContextRequest(ClientRequest* rq){
 	CHECK_F(rq->rqInfo.type == GET_CONTEXT);
 
 	switch(rq->rqInfo.subType){
 	case SCANNER_CONTEXT:
-		return new ScannerMessage(CLIENT, ScannerMessage::CLIENT_REQUEST, rq);
+		return std::make_shared<ScannerMessage>(CLIENT, ScannerMessage::CLIENT_REQUEST, rq);
 		break;
 	case DEMOD_CONTEXT:
-		return new DemodMessage(CLIENT, DemodMessage::CLIENT_REQUEST, rq);
+		return std::make_shared<DemodMessage>(CLIENT, DemodMessage::CLIENT_REQUEST, rq);
 		break;
 	default:
 		return nullptr;

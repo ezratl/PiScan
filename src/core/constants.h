@@ -9,11 +9,13 @@
 #define CORE_CONSTANTS_H_
 
 #ifndef NDEBUG
-#define LOG_PATH	"log.txt"
-#define CONFIG_PATH	"piscan.config"
+#define LOG_VERBOSITY	7
+#define LOG_PATH		"log.txt"
+#define CONFIG_PATH		"piscan.config"
 #else
-#define LOG_PATH	"~/piscan.log"
-#define CONFIG_PATH	"~/piscan.config"
+#define LOG_VERBOSITY	0
+#define LOG_PATH		"~/piscan.log"
+#define CONFIG_PATH		"~/piscan.config"
 #endif
 
 #define DATABASE_PATH	"../data"

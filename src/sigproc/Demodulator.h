@@ -47,14 +47,14 @@ private:
 	uint32_t _currentFreq = 0;
 	float _gain = AUTO_GAIN;
 
-	void giveMessage(Message& message);
+	void giveMessage(std::shared_ptr<Message> message);
 	bool setFrequency(uint32_t freq);
 	float getRssi();
 	float getDecodedPL();
 	unsigned int getDecodedDC();
 	bool squelchThresholdMet();
 
-	void _handleMessage(DemodMessage& message);
+	void _handleMessage(std::shared_ptr<DemodMessage> message);
 	void _handleRequest(ClientRequest& request);
 	void _contextUpdate();
 };

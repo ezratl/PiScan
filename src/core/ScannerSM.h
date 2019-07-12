@@ -27,7 +27,7 @@ public:
 	void holdScan();
 	void stopScanner();
 	void manualEntry(uint32_t* freq);
-	void giveMessage(Message& message);
+	void giveMessage(std::shared_ptr<Message> message);
 private:
 	void ST_Load(EventData* data);
 	void ST_Scan(EventData* data);

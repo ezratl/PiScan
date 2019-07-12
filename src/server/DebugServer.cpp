@@ -31,11 +31,13 @@ void DebugConsole::disconnect(){
 	notifyDisconnected();
 }
 
-void DebugConsole::giveMessage(Message& message){
-	delete &message;
+void DebugConsole::giveMessage(std::shared_ptr<Message> message){
+
 }
 
 void DebugConsole::_consoleInputFunc() {
+	loguru::set_thread_name("DebugConsole");
+
 	std::string input = "";
 	std::vector<std::string> tokens(5);
 	std::stringstream sstream;
@@ -177,7 +179,7 @@ void DebugServer::stop(){
 		_connection->disconnect();
 }
 
-void DebugServer::giveMessage(Message& message){
+void DebugServer::giveMessage(std::shared_ptr<Message> message){
 	delete &message;
 }
 

@@ -27,7 +27,7 @@ public:
 
 	bool connect();
 	void disconnect();
-	void giveMessage(Message& message);
+	void giveMessage(std::shared_ptr<Message> message);
 	void contextUpdate(ScannerContext context);
 	void contextUpdate(DemodContext context);
 	void systemMessage(GeneralMessage message);
@@ -54,7 +54,7 @@ public:
 
 	void start();
 	void stop();
-	void giveMessage(Message& message);
+	void giveMessage(std::shared_ptr<Message> message);
 private:
 	boost::shared_ptr<DebugConsole> _connection;
 };

@@ -1744,13 +1744,15 @@ int rtl_fm_init(void* audioBuffer, size_t bufferSize, int sampleRate, int gain)
 	}
 
 	if (dongle.dev_index < 0) {
-		exit(1);
+		//exit(1);
+		return 1;
 	}
 
 	r = rtlsdr_open(&dongle.dev, (uint32_t)dongle.dev_index);
 	if (r < 0) {
 		fprintf(stderr, "Failed to open rtlsdr device #%d.\n", dongle.dev_index);
-		exit(1);
+		//exit(1);
+		return 1;
 	}
 /*#ifndef _WIN32
 	sigact.sa_handler = sighandler;
@@ -1794,7 +1796,8 @@ int rtl_fm_init(void* audioBuffer, size_t bufferSize, int sampleRate, int gain)
 		output.file = fmemopen(audioBuffer, bufferSize, "wb");
 		if (!output.file) {
 			fprintf(stderr, "Failed to open %s\n", output.filename);
-			exit(1);
+			//exit(1);
+			return 1;
 		}
 	}
 

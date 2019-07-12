@@ -75,6 +75,7 @@ void ScannerSM::manualEntry(uint32_t* freq){
 }
 
 void ScannerSM::ST_Load(EventData* data){
+	loguru::set_thread_name("Scanner");
 	DLOG_F(9, "ST_Load");
 	//file read and system tree population
 	ListFileIO* generator = new SentinelFile();
@@ -85,8 +86,8 @@ void ScannerSM::ST_Load(EventData* data){
 
 	// do not issue event - SM will wait until an event is generated before proceeding
 	//InternalEvent(ST_SCAN);
-	Message* message = new ControllerMessage(SCANNER_SM, ControllerMessage::NOTIFY_READY);
-	_centralQueue.giveMessage(*message);
+	auto message = std::make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_READY);
+	_centralQueue.giveMessage(message);
 	LOG_F(1, "ScannerSM ready");
 
 	delete generator;
@@ -94,6 +95,9 @@ void ScannerSM::ST_Load(EventData* data){
 
 void ScannerSM::ST_Scan(EventData* data){
 	DLOG_F(9, "ST_Scan");
+	if(currentState != lastState)
+		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
+
 	_enableAudioOut(false);
 	_currentContext.state = ScannerContext::SCAN;
 	_manualMode = false;
@@ -108,7 +112,7 @@ void ScannerSM::ST_Scan(EventData* data){
 		_sysCounter = (_sysCounter + 1) % _systems.size();
 
 		_currentSystem = _systems[_sysCounter];
-		assert(_currentSystem != NULL);
+		assert(_currentSystem != nullptr);
 
 		_broadcastContextUpdate();
 	}
@@ -130,6 +134,9 @@ void ScannerSM::ST_Scan(EventData* data){
 
 void ScannerSM::ST_Hold(EventData* data){
 	DLOG_F(9, "ST_Hold");
+	if(currentState != lastState)
+		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
+
 	_enableAudioOut(false);
 	_currentContext.state = ScannerContext::HOLD;
 	if(currentState != lastState)
@@ -166,6 +173,9 @@ void ScannerSM::ST_Hold(EventData* data){
 
 void ScannerSM::ST_Receive(EventData* data){
 	DLOG_F(9, "ST_Receive");
+	if(currentState != lastState)
+		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
+
 	_enableAudioOut(true);
 	_currentContext.state = ScannerContext::RECEIVE;
 	if(currentState != lastState)
@@ -187,6 +197,9 @@ void ScannerSM::ST_Receive(EventData* data){
 
 void ScannerSM::ST_Manual(EventData* data){
 	DLOG_F(9, "ST_Manual");
+	if(currentState != lastState)
+		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
+
 	uint32_t* freq = reinterpret_cast<uint32_t*>(data->data);
 
 	LOG_F(1, "Setting manual frequency to %.4lfMHz", (*freq / 1E6));
@@ -215,8 +228,8 @@ void ScannerSM::ST_SaveAll(EventData* data){
 void ScannerSM::ST_Stopped(EventData* data){
 	DLOG_F(9, "ST_Stopped");
 	stop(false);
-	Message* message = new ControllerMessage(SCANNER_SM, ControllerMessage::NOTIFY_STOPPED);
-	_centralQueue.giveMessage(*message);
+	auto message = std::make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_STOPPED);
+	_centralQueue.giveMessage(message);
 	LOG_F(1, "ScannerSM stopped");
 }
 
@@ -236,9 +249,9 @@ void ScannerSM::_broadcastContextUpdate() {
 	_currentContext.frequency = _currentEntry->freq();
 	_currentContext.modulation = _currentEntry->modulation();
 
-	Message* message = new ServerMessage(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new ScannerContext(_currentContext));
+	auto message = std::make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new ScannerContext(_currentContext));
 
-	_centralQueue.giveMessage(*message);
+	_centralQueue.giveMessage(message);
 }
 
 void ScannerSM::_enableAudioOut(bool en){
@@ -255,12 +268,12 @@ void ScannerSM::_enableAudioOut(bool en){
 	rtl_fm_mute((int)(!en));
 }
 
-void ScannerSM::giveMessage(Message& message) {
-	auto msg = dynamic_cast<ScannerMessage&>(message);
+void ScannerSM::giveMessage(std::shared_ptr<Message> message) {
+	auto msg = std::dynamic_pointer_cast<ScannerMessage>(message);
 
-	DLOG_F(7, "Message rcv - src:%i | type:%i", msg.source, msg.type);
+	DLOG_F(7, "Message rcv - src:%i | type:%i", msg->source, msg->type);
 
-	switch (msg.type) {
+	switch (msg->type) {
 	/* stop call */
 	case ScannerMessage::STOP:
 		stopScanner();
@@ -268,11 +281,11 @@ void ScannerSM::giveMessage(Message& message) {
 
 	/* handle client request */
 	case ScannerMessage::CLIENT_REQUEST:
-		_handleRequest(*(static_cast<ClientRequest*>(msg.pData)));
+		_handleRequest(*(static_cast<ClientRequest*>(msg->pData)));
 		break;
 	/* handle external state trigger */
 	case ScannerMessage::STATE_CHANGE:
-		auto newState = static_cast<States>(reinterpret_cast<size_t>(msg.pData) & 0xFF);
+		auto newState = static_cast<States>(reinterpret_cast<size_t>(msg->pData) & 0xFF);
 		switch (newState) {
 		case ScannerMessage::STATE_SCAN:
 			startScan();
@@ -288,7 +301,6 @@ void ScannerSM::giveMessage(Message& message) {
 
 	}
 
-	delete &message;
 }
 
 void ScannerSM::_handleRequest(ClientRequest& request) {

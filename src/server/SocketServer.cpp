@@ -5,6 +5,9 @@
  *      Author: ezra
  */
 
+#include <boost/asio.hpp>
+#include <boost/asio/error.hpp>
+
 #include "SocketServer.h"
 #include "loguru.hpp"
 
@@ -13,7 +16,7 @@
 
 using namespace piscan;
 
-void SocketConnection::giveMessage(Message& message){
+void SocketConnection::giveMessage(std::shared_ptr<Message> message){
 
 }
 
@@ -141,8 +144,10 @@ void SocketConnection::_handleRead(const boost::system::error_code& err,
 		}
 
 		_startRead();
+	} else if (err == boost::asio::error::eof || err == boost::asio::error::connection_reset || err == boost::asio::error::broken_pipe){
+		disconnect();
 	} else {
-		LOG_F(ERROR, "SocketConnection error: %s", err.message().c_str());
+		LOG_F(WARNING, "SocketConnection error: %s", err.message().c_str());
 		disconnect();
 	}
 }
@@ -151,8 +156,10 @@ void SocketConnection::_handleWrite(const boost::system::error_code& err,
 		size_t bytes_transferred) {
 	if (!err) {
 
+	} else if (err == boost::asio::error::eof || err == boost::asio::error::connection_reset || err == boost::asio::error::broken_pipe){
+		disconnect();
 	} else {
-		LOG_F(ERROR, "SocketConnection error: %s", err.message().c_str());
+		LOG_F(WARNING, "SocketConnection error: %s", err.message().c_str());
 		disconnect();
 	}
 }
@@ -236,7 +243,7 @@ void SocketServer::stop(){
 	}
 }
 
-void SocketServer::giveMessage(Message& message){
+void SocketServer::giveMessage(std::shared_ptr<Message> message){
 
 }
 

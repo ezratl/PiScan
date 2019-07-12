@@ -128,7 +128,7 @@ struct ServerMessage : public Message {
 class MessageReceiver {
 public:
 	virtual ~MessageReceiver() {};
-	virtual void giveMessage(Message& msg) = 0;
+	virtual void giveMessage(std::shared_ptr<Message> message) = 0;
 };
 }
 #endif /* MESSAGES_H_ */
