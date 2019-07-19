@@ -2,7 +2,7 @@ project(piScan_backend_tests)
 
 add_executable(piScan_backend_tests EXCLUDE_FROM_ALL test_ScannerStateMachine.cpp)
 add_executable(test_RtlFm EXCLUDE_FROM_ALL test_RtlFm.cpp)
-add_executable(testclient testclient.cpp)
+add_executable(testclient EXCLUDE_FROM_ALL testclient.cpp)
 
 option(DETACH_KERNEL_DRIVER "Detach kernel driver if loaded" OFF)
 if (DETACH_KERNEL_DRIVER)

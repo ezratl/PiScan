@@ -23,7 +23,7 @@ public:
 	virtual std::string	modulation() = 0;
 	bool	isLockedOut() { return _lockedOut; }
 	bool	useDelay() { return _scanDelay; }
-	void	lockout(bool val) { _lockedOut = val; }
+	void	lockout(bool val = true) { _lockedOut = val; }
 	virtual bool	hasSignal() = 0;
 	virtual unsigned long freq() = 0;
 
@@ -52,7 +52,7 @@ public:
 	~FMChannel() {};
 
 	std::string modulation() {
-		return "FM";
+		return "NFM";
 	}
 
 	bool hasSignal();

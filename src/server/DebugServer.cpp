@@ -122,7 +122,7 @@ void DebugConsole::contextUpdate(ScannerContext context){
 	/*std::thread([context]{*/
 		switch(context.state){
 		case ScannerContext::SCAN:
-			std::cerr << "\rScanning: " << context.systemTag << "\n";
+			std::cerr << "\rScanning..." << std::endl;
 			break;
 		case ScannerContext::HOLD:
 			std::cerr << "\rHold: " << context.entryIndex << " | "

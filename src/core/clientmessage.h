@@ -34,6 +34,14 @@ struct ScannerContext {
 					freq), modulation(mod), entryIndex(index) {
 	};
 
+	void clearFields(){
+		systemTag.clear();
+		entryTag.clear();
+		frequency = 0;
+		modulation.clear();
+		entryIndex.clear();
+	};
+
 	ScannerState state = OTHER_STATE;
 	std::string systemTag;
 	std::string entryTag;

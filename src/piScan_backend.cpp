@@ -283,15 +283,25 @@ static ServerManager connectionManager(io_service, messageManager);
 static Demodulator demod(messageManager);
 static SystemController sysControl(messageManager, scanSystems, scanner, connectionManager, demod);
 
-void sigIntHandler(int signal){
-	LOG_F(INFO, "Stop triggered by interrupt");
-	sysRun = false;
+void terminate(){
+	LOG_F(WARNING, "Terminating - resources may not be properly released");
+	std::terminate();
 }
 
 void sigTermHandler(int signal){
-	LOG_F(WARNING, "Terminating - resources may not be properly released");
+
 	sysRun = false;
-	exit(1);
+	//exit(1);
+	piscan::terminate();
+}
+
+void sigIntHandler(int signal){
+	LOG_F(INFO, "Stop triggered by interrupt");
+
+	if(!sysRun)
+		piscan::terminate();
+
+	sysRun = false;
 }
 
 void setDemodulator(DemodInterface* demod) {
@@ -311,9 +321,7 @@ void exit(int code){
 	io_service.stop();
 	ioThread.join();
 
-	if(activeMessages > 0)
-		DLOG_F(WARNING, "Memory leak: %i messages not deleted!", activeMessages);
-
+	
 	std::exit(code);
 }
 

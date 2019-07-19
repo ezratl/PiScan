@@ -9,7 +9,7 @@
 #define CORE_CONSTANTS_H_
 
 #ifndef NDEBUG
-#define LOG_VERBOSITY	7
+#define LOG_VERBOSITY	3
 #define LOG_PATH		"log.txt"
 #define CONFIG_PATH		"piscan.config"
 #else
@@ -67,5 +67,9 @@ enum {
 	SCANNER_CONTEXT,
 	DEMOD_CONTEXT,
 };
+
+
+void terminate();
+
 }
 #endif /* CORE_CONSTANTS_H_ */

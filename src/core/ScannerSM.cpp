@@ -5,12 +5,12 @@
  *      Author: ezra
  */
 
+#include <unistd.h>
+
 #include "ScannerSM.h"
 #include "ListGenerator.h"
 #include "loguru.hpp"
 
-//TODO temporary
-#include "rtl_fm.h"
 
 #define DELAY_TIMEOUT	2.0
 
@@ -105,7 +105,7 @@ void ScannerSM::ST_Scan(EventData* data){
 	// incremental scan pattern
 	_entryCounter = (_entryCounter + 1) % _currentSystem->size();
 
-	if(currentState != lastState && _entryCounter != 0 && _currentEntry != nullptr)
+	if(currentState != lastState)
 		_broadcastContextUpdate();
 
 	if(_entryCounter == 0){
@@ -114,7 +114,7 @@ void ScannerSM::ST_Scan(EventData* data){
 		_currentSystem = _systems[_sysCounter];
 		assert(_currentSystem != nullptr);
 
-		_broadcastContextUpdate();
+		//_broadcastContextUpdate();
 	}
 
 	CHECK_F(_currentSystem->size() > 0);
@@ -236,18 +236,26 @@ void ScannerSM::ST_Stopped(EventData* data){
 void ScannerSM::_broadcastContextUpdate() {
 	DLOG_F(7, "Broadcasting context");
 	std::lock_guard<std::mutex> lock(_contextMutex);
-	if(_manualMode){
-		_currentContext.systemTag = "Manual";
-		_currentContext.entryTag = "Manual entry";
-		_currentContext.entryIndex = "MAN";
+	if (_currentContext.state != ScannerContext::SCAN)
+	{
+		if (_manualMode)
+		{
+			_currentContext.systemTag = "Manual";
+			_currentContext.entryTag = "Manual entry";
+			_currentContext.entryIndex = "MAN";
+		}
+		else
+		{
+			_currentContext.systemTag = _currentSystem->tag();
+			_currentContext.entryTag = _currentEntry->tag();
+			_currentContext.entryIndex = std::to_string(_sysCounter) + "-" + std::to_string(_entryCounter);
+		}
+		_currentContext.frequency = _currentEntry->freq();
+		_currentContext.modulation = _currentEntry->modulation();
 	}
-	else{
-		_currentContext.systemTag = _currentSystem->tag();
-		_currentContext.entryTag = _currentEntry->tag();
-		_currentContext.entryIndex = std::to_string(_sysCounter) + "-" + std::to_string(_entryCounter);
+	else {
+		_currentContext.clearFields();
 	}
-	_currentContext.frequency = _currentEntry->freq();
-	_currentContext.modulation = _currentEntry->modulation();
 
 	auto message = std::make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new ScannerContext(_currentContext));
 
@@ -265,7 +273,10 @@ void ScannerSM::_enableAudioOut(bool en){
 	_centralQueue.giveMessage(*message);*/
 
 	//TODO temporary
-	rtl_fm_mute((int)(!en));
+	//rtl_fm_mute((int)(!en));
+	auto message = std::make_shared<DemodMessage>(SCANNER_SM, DemodMessage::OPEN_AUDIO, (void*) !en);
+	_centralQueue.giveMessage(message);
+
 }
 
 void ScannerSM::giveMessage(std::shared_ptr<Message> message) {

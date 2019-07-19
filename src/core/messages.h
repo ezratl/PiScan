@@ -87,6 +87,7 @@ struct DemodMessage : public Message {
 		CLIENT_REQUEST = 0,
 		SET_SQUELCH,
 		SET_GAIN,
+		OPEN_AUDIO,
 
 		STOP = 0xFF
 	};
