@@ -102,11 +102,14 @@ void ScannerSM::ST_Scan(EventData* data){
 	_currentContext.state = ScannerContext::SCAN;
 	_manualMode = false;
 
-	// incremental scan pattern
-	_entryCounter = (_entryCounter + 1) % _currentSystem->size();
-
 	if(currentState != lastState)
 		_broadcastContextUpdate();
+
+	// incremental scan pattern
+	if(!_squelchHits || (currentState != lastState)){
+	_entryCounter = (_entryCounter + 1) % _currentSystem->size();
+
+	
 
 	if(_entryCounter == 0){
 		_sysCounter = (_sysCounter + 1) % _systems.size();
@@ -121,12 +124,20 @@ void ScannerSM::ST_Scan(EventData* data){
 	_currentEntry = _currentSystem->operator[](_entryCounter);
 	CHECK_F(_currentEntry != NULL);
 
+	}
 
 	if(_currentEntry->hasSignal()){
-		LOG_F(2, "Signal found: %s", _currentEntry->tag().c_str());
-		InternalEvent(ST_RECEIVE);
+		_squelchHits++;
+		if(_squelchHits >= SQUELCH_TRIGGER_HITS){
+			LOG_F(2, "Signal found: %s", _currentEntry->tag().c_str());
+			InternalEvent(ST_RECEIVE);
+		}
+		else{
+			InternalEvent(ST_SCAN);
+		}
 	}
 	else{
+		_squelchHits = 0;
 		InternalEvent(ST_SCAN);
 	}
 

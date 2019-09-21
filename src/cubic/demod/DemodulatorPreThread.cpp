@@ -88,12 +88,12 @@ void DemodulatorPreThread::run() {
             currentFrequency.store(newFrequency);
             frequencyChanged.store(false);
 
-            /*std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
+            std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
         if(lock.try_lock()){
 		_msgAvailable = true;
 		lock.unlock();
         }
-		_cv.notify_one();*/
+		_cv.notify_one();
         }
         
         if (inp->sampleRate != currentSampleRate) {
@@ -312,10 +312,10 @@ void DemodulatorPreThread::setFrequency(long long freq) {
     frequencyChanged.store(true);
     newFrequency = freq;
 
-    /*if(!stopping.load()){
+    if(!stopping.load()){
         std::unique_lock<std::mutex> lock(_msgMutex);
 	    _cv.wait(lock, [this]{return this->_msgAvailable;});
-    }*/
+    }
 }
 
 long long DemodulatorPreThread::getFrequency() {

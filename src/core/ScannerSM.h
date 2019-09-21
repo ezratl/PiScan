@@ -16,6 +16,8 @@
 #include "messages.h"
 #include "clientmessage.h"
 
+#define SQUELCH_TRIGGER_HITS	10
+
 namespace piscan {
 
 class ScannerSM: public MessageReceiver, public StateMachine {
@@ -73,6 +75,8 @@ private:
 	bool _externalHold = false;
 	bool _manualMode = false;
 	std::time_t timeoutStart = 0;
+
+	int _squelchHits = 0;
 
 	void _broadcastContextUpdate();
 	void _enableAudioOut(bool en);

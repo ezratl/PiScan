@@ -383,8 +383,9 @@ int SDRThread::readStream(SDRThreadIQDataQueuePtr iqDataOutQueue) {
         readStreamCode = -31;
         //std::cout << "SDRThread::readStream(): 3.1 iqDataOutQueue output queue is full, discard processing of the batch..." << std::endl;
         if(!stopping.load()){
-        	if(++blocked_attempts >= 50)
-        		throw new std::runtime_error("SDRPostThread is blocked - deadlock");
+        	if(++blocked_attempts >= 50){
+        		ABORT_F("SDRPostThread is blocked - deadlock");
+            }
         	LOG_F(WARNING, "SDRThread::readStream(): 3.1 iqDataOutQueue output queue is full, discard processing of the batch...");
         }
         //saturation, let a chance to the other threads to consume the existing samples

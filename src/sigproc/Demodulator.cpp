@@ -104,8 +104,8 @@ void Demodulator::start(){
 	newDemod->setSquelchLevel(-100);
 	newDemod->setMuted(true);
 	newDemod->setOutputDevice(audiodev);
-	newDemod->setFrequency(INIT_FREQUENCY);
 	newDemod->run();
+	newDemod->setFrequency(INIT_FREQUENCY);
 	_demods[NFM] = newDemod;
 	LOG_F(INFO, "Added modem NFM");
 
@@ -153,20 +153,27 @@ void Demodulator::stop(){
 }
 
 bool Demodulator::setFrequency(uint32_t freq) {
-	if(freq == _demodMgr.getActiveContextModem()->getFrequency()){
+	/*if(freq == _demodMgr.getCurrentModem()->getFrequency()){
 		DLOG_F(9, "Frequency already set");
 		return true;
+	}*/
+
+	_demodMgr.getCurrentModem()->setFrequency(freq);
+
+	//TODO account for bandwidth
+	if(std::abs(_cubic->getFrequency() - freq) >= (_cubic->getSampleRate() / 2)){
+        _cubic->setFrequency(freq);
+        //also arbitrary
+        usleep(200000);
 	}
 
-	_demodMgr.getActiveContextModem()->setFrequency(freq);
-	//TODO account for bandwidth
-	if(std::abs(_cubic->getFrequency() - _demodMgr.getActiveContextModem()->getFrequency()) >= (_cubic->getSampleRate() / 2))
-        _cubic->setFrequency(freq);
+	_demodMgr.getCurrentModem()->setFrequency(freq);
+	//this is totally arbitrary
+	usleep(1000);
 
 	_currentFreq = freq;
 
-	//this is totally arbitrary
-	usleep(1000);
+
 
 	return true;
 }
@@ -236,11 +243,17 @@ void Demodulator::_handleRequest(ClientRequest& request){
 			break;
 		case DEMOD_SET_GAIN:
 			DCHECK_F(data != nullptr);
-			//_tuner.setGain(*data);
-			if (*data == AUTO_GAIN)
+			
+			if (*data == AUTO_GAIN){
+				_cubic->setAGCMode(true);
+
 				LOG_F(1, "Gain set to auto");
-			else
+			}
+			else{
+				_cubic->setAGCMode(false);
+				_cubic->setGain("TUNER", *data);
 				LOG_F(1, "Gain set to %i", *data);
+			}
 			_gain = *data;
 			delete data;
 			break;
@@ -251,7 +264,6 @@ void Demodulator::_handleRequest(ClientRequest& request){
 		_contextUpdate();
 	}
 	else if(request.rqInfo.type == GET_CONTEXT){
-		_gain = _cubic->getGain("TUNER");
 		DemodContext* context = new DemodContext(_gain, _squelchLevel);
 		request.connection->demodContextRequestCallback(request.rqHandle, context);
 	}

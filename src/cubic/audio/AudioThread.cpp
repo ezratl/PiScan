@@ -129,15 +129,12 @@ static int audioCallback(void *outputBuffer, void * /* inputBuffer */, unsigned 
         //lock every single boundThread srcmix in succession the time we process 
         //its audio samples.
         //std::lock_guard<std::recursive_mutex> lock(srcmix->getMutex());
-        std::unique_lock<std::recursive_mutex> lock2(srcmix->getMutex(), std::defer_lock);
-
-        //this is hacky AF but whatever
-        while(!lock2.try_lock())
-        	std::this_thread::yield();
 
         if (srcmix->isTerminated() || !srcmix->inputQueue || srcmix->inputQueue->empty() || !srcmix->isActive()) {
             continue;
         }
+
+        std::lock_guard<std::recursive_mutex> lock2(srcmix->getMutex());
 
         if (!srcmix->currentInput) {
             srcmix->audioQueuePtr = 0;

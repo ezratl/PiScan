@@ -103,7 +103,7 @@ void SentinelFile::_newAnalogEntry(std::vector<std::string>& tokens){
 
 	if(!mode.compare(SENTINEL_NFM) || !mode.compare(SENTINEL_FM) || !mode.compare(SENTINEL_AUTO)) {
 		Entry* entry = new FMChannel(std::stoul(freq), tag,
-				(!lockout.compare(SENTINEL_TRUE)), (!delay.compare(SENTINEL_TRUE)));
+				(!lockout.compare(SENTINEL_TRUE)), (delay.compare("0")));
 		_system->addEntry(entry);
 	}
 }
