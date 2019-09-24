@@ -17,7 +17,7 @@
 using namespace piscan;
 
 ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
-		StateMachine(7), _centralQueue(central), _systems(dataSource), _currentSystem(nullptr), _currentEntry(nullptr) {
+		StateMachine(7), _centralQueue(central), _systems(dataSource) {
 }
 
 void ScannerSM::startScan(){
@@ -82,7 +82,8 @@ void ScannerSM::ST_Load(EventData* data){
 	generator->generateSystemList(_systems);
 	LOG_F(INFO, "Loaded %u systems", _systems.size());
 
-	_currentSystem = _systems[0];
+	//_currentSystem = _systems[0];
+	_systems.sortBins(2000000);
 
 	// do not issue event - SM will wait until an event is generated before proceeding
 	//InternalEvent(ST_SCAN);
@@ -107,22 +108,24 @@ void ScannerSM::ST_Scan(EventData* data){
 
 	// incremental scan pattern
 	if(!_squelchHits || (currentState != lastState)){
-	_entryCounter = (_entryCounter + 1) % _currentSystem->size();
+	//_entryCounter = (_entryCounter + 1) % _currentSystem->size();
 
 	
 
-	if(_entryCounter == 0){
-		_sysCounter = (_sysCounter + 1) % _systems.size();
+//	if(_entryCounter == 0){
+//		_sysCounter = (_sysCounter + 1) % _systems.size();
+//
+//		_currentSystem = _systems[_sysCounter];
+//		assert(_currentSystem != nullptr);
+//
+//		//_broadcastContextUpdate();
+//	}
 
-		_currentSystem = _systems[_sysCounter];
-		assert(_currentSystem != nullptr);
+	//CHECK_F(_currentSystem->size() > 0);
+	//_currentEntry = _currentSystem->operator[](_entryCounter);
+	//CHECK_F(_currentEntry != NULL);
 
-		//_broadcastContextUpdate();
-	}
-
-	CHECK_F(_currentSystem->size() > 0);
-	_currentEntry = _currentSystem->operator[](_entryCounter);
-	CHECK_F(_currentEntry != NULL);
+	_currentEntry = _systems.getNextEntry();
 
 	}
 
@@ -216,15 +219,16 @@ void ScannerSM::ST_Manual(EventData* data){
 	LOG_F(1, "Setting manual frequency to %.4lfMHz", (*freq / 1E6));
 
 	/* delete old manual entry */
-	if(_manualEntry != nullptr)
-		delete _manualEntry;
+	//if(_manualEntry != nullptr)
+		//delete _manualEntry;
 
-	_manualEntry = new FMChannel(*freq, "", false, false);
+	_manualEntry = std::make_shared<FMChannel>(*freq, "", false, false);
 	delete freq;
 	_currentEntry = _manualEntry;
 	_externalHold = true;
 	_manualMode = true;
 	InternalEvent(ST_HOLD);
+	
 }
 
 void ScannerSM::ST_SaveAll(EventData* data){
@@ -257,9 +261,10 @@ void ScannerSM::_broadcastContextUpdate() {
 		}
 		else
 		{
-			_currentContext.systemTag = _currentSystem->tag();
+			//_currentContext.systemTag = _currentSystem->tag();
+			_currentContext.systemTag = _systems[_currentEntry->getSysIndex()]->tag();
 			_currentContext.entryTag = _currentEntry->tag();
-			_currentContext.entryIndex = std::to_string(_sysCounter) + "-" + std::to_string(_entryCounter);
+			_currentContext.entryIndex = std::to_string(_currentEntry->getSysIndex()) + "-" + std::to_string(_currentEntry->getEntryIndex());
 		}
 		_currentContext.frequency = _currentEntry->freq();
 		_currentContext.modulation = _currentEntry->modulation();

@@ -45,13 +45,14 @@ protected:
     void ExternalEvent(unsigned char, EventData* = NULL);
     void InternalEvent(unsigned char, EventData* = NULL);
     virtual const StateStruct* GetStateMap() = 0;
+    std::thread _stateMachineThread;
 private:
     const int _maxStates;
     bool _eventGenerated;
     EventData* _pEventData;
     void StateEngine(void);
     void StateThreadFunc(void);
-    std::thread _stateMachineThread;
+    
     std::mutex _eventMutex;
     std::condition_variable _cv;
     bool _run = false;

@@ -33,8 +33,8 @@ public:
 	void generateSystemList(SystemList& list);
 
 private:
-	SystemList* _list;
-	RadioSystem* _system;
+	SystemList* _list = nullptr;
+	std::shared_ptr<RadioSystem> _system;
 
 	void _newAnalogSys(std::vector<std::string>& tokens);
 	void _newAnalogEntry(std::vector<std::string>& tokens);

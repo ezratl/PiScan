@@ -72,7 +72,7 @@ void SentinelFile::generateSystemList(SystemList& list) {
 		std::string& type = tokens[0];
 		if(!type.compare(C_GROUP))
 			_newAnalogSys(tokens);
-		else if(!type.compare(C_FREQ))
+		else if(!type.compare(C_FREQ) && _system != nullptr)
 			_newAnalogEntry(tokens);
 
 
@@ -84,7 +84,7 @@ void SentinelFile::generateSystemList(SystemList& list) {
 
 void SentinelFile::_newAnalogSys(std::vector<std::string>& tokens){
 	LOG_F(4, "New AnalogSystem: %s", tokens[C_GROUP_TAG_POS].c_str());
-	_system = new AnalogSystem(tokens[C_GROUP_TAG_POS], (!tokens[C_GROUP_LO_POS].compare(SENTINEL_TRUE)));
+	_system = std::make_shared<AnalogSystem>(tokens[C_GROUP_TAG_POS], (!tokens[C_GROUP_LO_POS].compare(SENTINEL_TRUE)));
 	_list->addSystem(_system);
 }
 
@@ -102,8 +102,12 @@ void SentinelFile::_newAnalogEntry(std::vector<std::string>& tokens){
 	LOG_F(4, "Entry: %s - Freq: %s", tag.c_str(), freq.c_str());
 
 	if(!mode.compare(SENTINEL_NFM) || !mode.compare(SENTINEL_FM) || !mode.compare(SENTINEL_AUTO)) {
-		Entry* entry = new FMChannel(std::stoul(freq), tag,
+		auto entry = std::make_shared<FMChannel>(std::stoul(freq), tag,
 				(!lockout.compare(SENTINEL_TRUE)), (delay.compare("0")));
+
+		entry->setSysIndex(_list->size() - 1);
+		entry->setEntryIndex(_system->size());
+
 		_system->addEntry(entry);
 	}
 }

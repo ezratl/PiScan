@@ -26,13 +26,13 @@ public:
 	RadioSystem(std::string tag, bool lo) : _tag(tag), _lockout(lo) {};
 	virtual ~RadioSystem() {};
 
-	virtual Entry* operator[](size_t pos) = 0;
+	virtual std::shared_ptr<Entry> operator[](size_t pos) = 0;
 
 	virtual size_t size() { return numEntries; }
 
 	std::string tag() { return _tag; };
 
-	virtual void addEntry(Entry* entry) = 0;
+	virtual void addEntry(std::shared_ptr<Entry> entry) = 0;
 private:
 	//const RadioSystemType type;
 	const std::string _tag;
@@ -47,13 +47,13 @@ public:
 	AnalogSystem(std::string tag, bool lo) : RadioSystem(tag, lo) {};
 	~AnalogSystem() {};
 
-	virtual Entry* operator[](size_t pos) { return entries[pos]; };
+	virtual std::shared_ptr<Entry> operator[](size_t pos) { return entries[pos]; };
 
 	/*virtual size_t size() {
 		return entries.size();
 	}*/
 
-	virtual void addEntry(Entry* entry){
+	virtual void addEntry(std::shared_ptr<Entry> entry){
 		if(entry != nullptr){
 			entries.push_back(entry);
 			numEntries++;
@@ -61,7 +61,7 @@ public:
 	}
 
 protected:
-	std::vector<Entry*> entries;
+	std::vector<std::shared_ptr<Entry>> entries;
 };
 }
 #endif /* RADIOSYSTEM_H_ */

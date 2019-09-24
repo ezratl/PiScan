@@ -14,6 +14,13 @@ using namespace piscan;
 
 DemodInterface* Entry::demod = nullptr;
 
+bool DummyChannel::hasSignal(){
+	if(!demod->setFrequency(this->frequency))
+		return false;
+
+	return false;
+}
+
 bool FMChannel::hasSignal(void){
 	assert(demod != nullptr);
 

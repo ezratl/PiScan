@@ -65,10 +65,10 @@ private:
 	MessageReceiver& _centralQueue;
 	//moodycamel::ReaderWriterQueue<Message> _msgQueue;
 	SystemList& _systems;
-	RadioSystem* _currentSystem;
-	Entry* _currentEntry;
-	Entry* _manualEntry = nullptr;
-	size_t _sysCounter = 0, _entryCounter = 0;
+	//RadioSystem* _currentSystem;
+	std::shared_ptr<Entry> _currentEntry;
+	std::shared_ptr<Entry> _manualEntry;
+	//size_t _sysCounter = 0, _entryCounter = 0;
 	ScannerContext _currentContext;
 	std::mutex _contextMutex;
 
