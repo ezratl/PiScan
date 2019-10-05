@@ -95,7 +95,9 @@ void StateMachine::StateEngine(void)
         	//lock.unlock();
     }
 
-    // TBD - unlock semaphore here
+    // yield to let waiting threads generate external events
+    lock.unlock();
+    std::this_thread::yield();
 }
 
 void StateMachine::StateThreadFunc(void){

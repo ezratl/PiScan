@@ -15,7 +15,7 @@ using namespace piscan;
 DemodInterface* Entry::demod = nullptr;
 
 bool DummyChannel::hasSignal(){
-	if(!demod->setFrequency(this->frequency))
+	if(!demod->setTunerFrequency(this->frequency))
 		return false;
 
 	return false;

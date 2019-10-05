@@ -27,6 +27,8 @@ public:
 		_systems.push_back(system);
 	}
 
+	std::shared_ptr<Entry> getEntryByIndex(std::vector<int> index);
+
 	std::shared_ptr<Entry> getNextEntry();
 
 	void sortBins(int bandwidth);

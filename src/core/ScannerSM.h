@@ -16,7 +16,7 @@
 #include "messages.h"
 #include "clientmessage.h"
 
-#define SQUELCH_TRIGGER_HITS	10
+#define SQUELCH_TRIGGER_HITS	25
 
 namespace piscan {
 
@@ -26,7 +26,7 @@ public:
 	~ScannerSM() {};
 
 	void startScan();
-	void holdScan();
+	void holdScan(std::vector<int> index = std::vector<int>());
 	void stopScanner();
 	void manualEntry(uint32_t* freq);
 	void giveMessage(std::shared_ptr<Message> message);
@@ -72,8 +72,10 @@ private:
 	ScannerContext _currentContext;
 	std::mutex _contextMutex;
 
-	bool _externalHold = false;
-	bool _manualMode = false;
+	std::atomic_bool _externalHold;
+	std::atomic_bool _manualMode;
+	std::mutex _holdMutex;
+	std::vector<int> _holdIndex;
 	std::time_t timeoutStart = 0;
 
 	int _squelchHits = 0;

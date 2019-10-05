@@ -152,7 +152,7 @@ void Demodulator::stop(){
 	LOG_F(1, "Demodulator stopped");
 }
 
-bool Demodulator::setFrequency(uint32_t freq) {
+bool Demodulator::setFrequency(long long freq) {
 	/*if(freq == _demodMgr.getCurrentModem()->getFrequency()){
 		DLOG_F(9, "Frequency already set");
 		return true;
@@ -169,12 +169,19 @@ bool Demodulator::setFrequency(uint32_t freq) {
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 	//this is totally arbitrary
-	usleep(1000);
+	usleep(7000);
 
 	_currentFreq = freq;
 
 
 
+	return true;
+}
+
+bool Demodulator::setTunerFrequency(long long freq){
+    _cubic->setFrequency(freq);
+	_demodMgr.getCurrentModem()->setFrequency(freq);
+    usleep(200000);
 	return true;
 }
 

@@ -15,7 +15,7 @@
 #include "DemodulatorMgr.h"
 #include "SDRDeviceInfo.h"
 
-#define DEFAULT_SQUELCH		-60
+#define DEFAULT_SQUELCH		0
 
 namespace piscan {
 
@@ -29,7 +29,8 @@ class DemodInterface {
 public:
 	virtual ~DemodInterface() {};
 
-	virtual bool setFrequency(uint32_t freq) = 0;
+	virtual bool setFrequency(long long freq) = 0;
+	virtual bool setTunerFrequency(long long freq) = 0;
 	virtual float getSignalLevel() = 0;
 	virtual float getDecodedPL() = 0;
 	virtual unsigned int getDecodedDC() = 0;
@@ -53,7 +54,7 @@ private:
 	MessageReceiver& _centralQueue;
 	Modulation _currentModem = NFM;
 	float _squelchLevel = DEFAULT_SQUELCH;
-	uint32_t _currentFreq = 0;
+	long long _currentFreq = 0;
 	float _gain = AUTO_GAIN;
 
 	std::shared_ptr<CubicSDR> _cubic;
@@ -62,7 +63,8 @@ private:
 	std::map<Modulation, DemodulatorInstancePtr> _demods;
 
 	void giveMessage(std::shared_ptr<Message> message);
-	bool setFrequency(uint32_t freq);
+	bool setFrequency(long long freq);
+	bool setTunerFrequency(long long freq);
 	float getSignalLevel();
 	float getDecodedPL();
 	unsigned int getDecodedDC();

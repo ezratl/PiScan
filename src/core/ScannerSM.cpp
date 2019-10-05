@@ -6,6 +6,7 @@
  */
 
 #include <unistd.h>
+#include <mutex>
 
 #include "ScannerSM.h"
 #include "ListGenerator.h"
@@ -17,7 +18,7 @@
 using namespace piscan;
 
 ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
-		StateMachine(7), _centralQueue(central), _systems(dataSource) {
+		StateMachine(7), _centralQueue(central), _systems(dataSource), _externalHold(false), _manualMode(false) {
 }
 
 void ScannerSM::startScan(){
@@ -34,8 +35,12 @@ void ScannerSM::startScan(){
 	END_TRANSITION_MAP(NULL)
 }
 
-void ScannerSM::holdScan(){
+void ScannerSM::holdScan(std::vector<int> index){
 	_externalHold = true;
+	{
+		std::lock_guard<std::mutex> lock(_holdMutex);
+		_holdIndex = index;
+	}
 	LOG_F(1, "ExtEvent: holdScan");
 	BEGIN_TRANSITION_MAP
 		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
@@ -96,8 +101,10 @@ void ScannerSM::ST_Load(EventData* data){
 
 void ScannerSM::ST_Scan(EventData* data){
 	DLOG_F(9, "ST_Scan");
-	if(currentState != lastState)
+	if(currentState != lastState){
+		_squelchHits = 0;
 		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
+	}
 
 	_enableAudioOut(false);
 	_currentContext.state = ScannerContext::SCAN;
@@ -106,40 +113,22 @@ void ScannerSM::ST_Scan(EventData* data){
 	if(currentState != lastState)
 		_broadcastContextUpdate();
 
-	// incremental scan pattern
-	if(!_squelchHits || (currentState != lastState)){
-	//_entryCounter = (_entryCounter + 1) % _currentSystem->size();
+	if (!_squelchHits || (currentState != lastState)) {
 
-	
-
-//	if(_entryCounter == 0){
-//		_sysCounter = (_sysCounter + 1) % _systems.size();
-//
-//		_currentSystem = _systems[_sysCounter];
-//		assert(_currentSystem != nullptr);
-//
-//		//_broadcastContextUpdate();
-//	}
-
-	//CHECK_F(_currentSystem->size() > 0);
-	//_currentEntry = _currentSystem->operator[](_entryCounter);
-	//CHECK_F(_currentEntry != NULL);
-
-	_currentEntry = _systems.getNextEntry();
+		
+		_currentEntry = _systems.getNextEntry();
 
 	}
 
-	if(_currentEntry->hasSignal()){
+	if (_currentEntry->hasSignal()) {
 		_squelchHits++;
-		if(_squelchHits >= SQUELCH_TRIGGER_HITS){
+		if (_squelchHits >= SQUELCH_TRIGGER_HITS) {
 			LOG_F(2, "Signal found: %s", _currentEntry->tag().c_str());
 			InternalEvent(ST_RECEIVE);
-		}
-		else{
+		} else {
 			InternalEvent(ST_SCAN);
 		}
-	}
-	else{
+	} else {
 		_squelchHits = 0;
 		InternalEvent(ST_SCAN);
 	}
@@ -151,9 +140,27 @@ void ScannerSM::ST_Hold(EventData* data){
 	if(currentState != lastState)
 		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
 
+	bool indexHold = false;
+
+	{
+		std::lock_guard < std::mutex > lock(_holdMutex);
+		if (_externalHold && _holdIndex.size() > 0) {
+			_currentEntry = _systems.getEntryByIndex(_holdIndex);
+			LOG_F(1, "Index hold");
+			_holdIndex.clear();
+			indexHold = true;
+		}
+	}
+
+	/* don't hold on dummy channels */
+	while(_currentEntry->isDummy()){
+		_currentEntry->hasSignal();
+		_currentEntry = _systems.getNextEntry();
+	}
+
 	_enableAudioOut(false);
 	_currentContext.state = ScannerContext::HOLD;
-	if(currentState != lastState)
+	if(currentState != lastState || indexHold)
 		_broadcastContextUpdate();
 
 	/* start receive if signal active */
@@ -249,7 +256,7 @@ void ScannerSM::ST_Stopped(EventData* data){
 }
 
 void ScannerSM::_broadcastContextUpdate() {
-	DLOG_F(7, "Broadcasting context");
+	DLOG_F(6, "Broadcasting context");
 	std::lock_guard<std::mutex> lock(_contextMutex);
 	if (_currentContext.state != ScannerContext::SCAN)
 	{
@@ -338,7 +345,13 @@ void ScannerSM::_handleRequest(ClientRequest& request) {
 			startScan();
 			break;
 		case SCANNER_STATE_HOLD:
-			holdScan();
+			if(request.pData != nullptr){
+				std::vector<int>* indexData = reinterpret_cast<std::vector<int>*>(request.pData);
+				holdScan(*indexData);
+				delete indexData;
+			}
+			else
+				holdScan();
 			break;
 		case SCANNER_STATE_MANUAL:
 			manualEntry(reinterpret_cast<uint32_t*>(rq->pData));

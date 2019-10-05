@@ -72,9 +72,16 @@ void DebugConsole::_consoleInputFunc() {
 				else
 					getDemodContext();
 			} else if (!tokens[0].compare("scan"))
-				scannerFunction(ScannerFunction::SCAN);
+				scanStart();
 			else if (!tokens[0].compare("hold")) {
-				scannerFunction(ScannerFunction::HOLD);
+				if (tokens.size() > 2) {
+					std::vector<int> entryIndex;
+					for(size_t i = 1; i < tokens.size(); i++)
+						entryIndex.push_back(std::stoi(tokens[i]));
+					scanHoldEntry(entryIndex);
+				}
+				else
+					scanHold();
 			} else if (!tokens[0].compare("gain")) {
 				if (tokens.size() > 1) {
 					int gain = 0;
@@ -87,7 +94,7 @@ void DebugConsole::_consoleInputFunc() {
 				else
 					getDemodContext();
 			} else if (!tokens[0].compare("manual")) {
-				scannerFunction(ScannerFunction::MANUAL, std::stof(tokens[1]));
+				scanManualEntry(std::stof(tokens[1]));
 			}
 			else if (!tokens[0].compare("get")){
 				if(!tokens[1].compare("context"))

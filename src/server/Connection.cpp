@@ -52,7 +52,7 @@ int Connection::systemFunction(SystemFunction function) {
 	return issueRequest(params);
 }
 
-int Connection::scannerFunction(ScannerFunction function, uint32_t freq) {
+/*int Connection::scannerFunction(ScannerFunction function, uint32_t freq) {
 	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION };
 	switch (function) {
 	case SCAN:
@@ -69,6 +69,26 @@ int Connection::scannerFunction(ScannerFunction function, uint32_t freq) {
 		return -1;
 	}
 	return issueRequest(params);
+}*/
+
+int Connection::scanStart() {
+	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_SCAN };
+	return issueRequest(params);
+}
+
+int Connection::scanHold() {
+	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
+	return issueRequest(params);
+}
+
+int Connection::scanHoldEntry(std::vector<int> index) {
+	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
+	return issueRequest(params, new std::vector<int>(index));
+}
+
+int Connection::scanManualEntry(long freq, Modulation mode) {
+	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_MANUAL };
+	return issueRequest(params, new uint32_t(freq));
 }
 
 int Connection::setDemodSquelch(int level) {

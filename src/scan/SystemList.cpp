@@ -18,14 +18,21 @@ SystemList::~SystemList() {
 	// TODO Auto-generated destructor stub
 }
 
+std::shared_ptr<Entry> SystemList::getEntryByIndex(std::vector<int> index){
+	if(index.size() < 2 || index[0] < 0 || index[1] < 0 || index[0] >= _systems.size() || index[1] >= _systems[index[0]]->size())
+		return getNextEntry();
+
+	return _systems[index[0]]->operator [](index[1]);
+}
 
 std::shared_ptr<Entry> SystemList::getNextEntry(){
 	if(_entryNum == 0 && _retune){
 		_retune = false;
-		return std::make_shared<DummyChannel>(_bins[_binNum]->getCenterFreq());
+		//if(_bins[_binNum]->size() > 1)
+			return std::make_shared<DummyChannel>(_bins[_binNum]->getCenterFreq());
 	}
 
-	auto entry = _bins[_binNum]->operator [](_entryNum);
+	auto entry = _bins[_binNum]->at(_entryNum);
 
 	_entryNum = (_entryNum + 1) % _bins[_binNum]->size();
 
@@ -39,6 +46,8 @@ std::shared_ptr<Entry> SystemList::getNextEntry(){
 }
 
 void SystemList::sortBins(int bandwidth){
+	LOG_F(1, "Sorting bandwidth chunks...");
+
 	size_t numEntries = 0;
 	for(size_t i = 0; i < _systems.size(); i++)
 		for(size_t k = 0; k < _systems[i]->size(); k++)
@@ -69,6 +78,16 @@ void SystemList::sortBins(int bandwidth){
 			LOG_F(WARNING, "Entries not sorted properly!");
 		lastFreq = entries[i]->freq();
 		newBin->push_back(entries[i]);
+	}
+
+	std::string binPrint = "";
+	for(size_t i = 0; i < _bins.size(); i++){
+		binPrint += (std::string("\tCenter: ") + std::to_string(_bins[i]->getCenterFreq()) + std::string(" | "));
+		for(size_t j = 0; j < _bins[i]->size(); j++)
+			binPrint += (std::to_string(_bins[i]->at(j)->freq()) + std::string(" "));
+
+		RAW_LOG_F(1, binPrint.c_str());
+		binPrint = "";
 	}
 }
 

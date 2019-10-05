@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <boost/shared_ptr.hpp>
+#include <vector>
 
 #include "constants.h"
 #include "clientmessage.h"
@@ -97,7 +98,17 @@ protected:
 		HOLD,
 		MANUAL,
 	};
-	int scannerFunction(ScannerFunction function, uint32_t freq = 0);
+
+	enum Modulation {
+		FM,
+		AM,
+	};
+
+	//int scannerFunction(ScannerFunction function, uint32_t freq = 0);
+	int scanStart();
+	int scanHold();
+	int scanHoldEntry(std::vector<int> index);
+	int scanManualEntry(long freq, Modulation mode = FM);
 	int setDemodSquelch(int level);
 	int setDemodGain(int level);
 	int getScannerContext();
