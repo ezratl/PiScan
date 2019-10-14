@@ -7,6 +7,7 @@
 //using namespace std;
 
 #include "constants.h"
+#include "Configuration.h"
 #include "Demodulator.h"
 #include "Entry.h"
 #include "loguru.hpp"
@@ -331,14 +332,35 @@ using namespace piscan;
 
 int main(int argc, char **argv) {
 	loguru::init(argc, argv);
-	loguru::add_file(LOG_PATH, loguru::Truncate, LOG_VERBOSITY);
-	//loguru::g_stderr_verbosity = loguru::Verbosity_MAX;
+
 	loguru::g_preamble_file = false;
 
 	signal(SIGINT, sigIntHandler);
 	signal(SIGTERM, sigTermHandler);
 
 	LOG_F(INFO, "Starting PiScan");
+
+	Configuration& config = Configuration::getConfig();
+	bool useDebugConsole = false;
+
+	int c;
+	while((c = getopt(argc,argv,"d:p:")) != -1){
+		switch(c){
+			case 'd':
+				useDebugConsole = true;
+				break;
+			case 'p':
+				if(optarg)
+					config.setWorkingPath(std::string(optarg));
+				break;
+		}
+	}
+
+	
+	config.loadConfig();
+	config.loadState();
+
+	loguru::add_file(config.getLogfilePath().c_str(), loguru::Truncate, config.getGeneralConfig().logfileVerbosity);
 
 	messageManager.setReceiver(SYSTEM_CONTROL, &sysControl);
 	messageManager.setReceiver(SCANNER_SM, &scanner);
@@ -371,6 +393,9 @@ int main(int argc, char **argv) {
 	} catch (std::exception& e) {
 		LOG_F(ERROR, e.what());
 	}
+
+	config.saveState();
+	config.saveConfig();
 
 	piscan::exit(0);
 

@@ -9,8 +9,13 @@
 #define SYSTEMLIST_H_
 
 #include <vector>
+#include <unordered_map>
+#include <boost/property_tree/ptree.hpp>
 
 #include "RadioSystem.h"
+#include "Entry.h"
+
+#define SYSTEMS_KEY	"systems"
 
 namespace piscan {
 
@@ -19,22 +24,25 @@ public:
 	SystemList();
 	~SystemList();
 
-	std::shared_ptr<RadioSystem> operator[](size_t pos) { return _systems[pos]; };
+	void populateFromFile();
+	bool writeToFile();
+
+	RadioSystemPtr operator[](size_t pos) { return _systems[pos]; };
 
 	size_t size(){ return _systems.size(); }
 
-	void addSystem(std::shared_ptr<RadioSystem> system) {
+	void addSystem(RadioSystemPtr system) {
 		_systems.push_back(system);
 	}
 
-	std::shared_ptr<Entry> getEntryByIndex(std::vector<int> index);
+	EntryPtr getEntryByIndex(std::vector<int> index);
 
-	std::shared_ptr<Entry> getNextEntry();
+	EntryPtr getNextEntry();
 
 	void sortBins(int bandwidth);
 private:
 
-	class EntryBin: public std::vector<std::shared_ptr<Entry>>{
+	class EntryBin: public std::vector<EntryPtr>{
 	public:
 		EntryBin(){};
 		~EntryBin(){};
@@ -43,8 +51,10 @@ private:
 		long getCenterFreq();
 	};
 
+	ptree _jsonTree;
+	static std::unordered_map<std::string, std::function<RadioSystemPtr(ptree&, size_t)>> _makeSystem;
 
-	std::vector<std::shared_ptr<RadioSystem>> _systems;
+	std::vector<RadioSystemPtr> _systems;
 	//size_t _size = 0;
 
 	std::vector<std::shared_ptr<EntryBin>> _bins;
@@ -52,8 +62,10 @@ private:
 	size_t _binNum = 0, _entryNum = 0;
 	bool _retune = true;
 
-	void merge(std::shared_ptr<Entry> arr[], int l, int m, int r);
-	void mergeSort(std::shared_ptr<Entry> arr[], int l, int r);
+	void merge(EntryPtr arr[], int l, int m, int r);
+	void mergeSort(EntryPtr arr[], int l, int r);
+
+	static RadioSystemPtr makeAnalogSystem(ptree& pt, size_t index);
 };
 }
 #endif /* SYSTEMLIST_H_ */

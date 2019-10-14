@@ -8,22 +8,7 @@
 #ifndef CORE_CONSTANTS_H_
 #define CORE_CONSTANTS_H_
 
-#ifndef NDEBUG
-#define LOG_VERBOSITY	3
-#define LOG_PATH		"log.txt"
-#define CONFIG_PATH		"piscan.config"
-#else
-#define LOG_VERBOSITY	0
-#define LOG_PATH		"~/piscan.log"
-#define CONFIG_PATH		"~/piscan.config"
-#endif
-
-#define DATABASE_PATH	"../data"
-
 #define AUTO_GAIN	-10
-
-#define DEFAULT_TCP_PORT	1234
-#define MAX_TCP_CONNECTIONS	5
 
 namespace piscan {
 

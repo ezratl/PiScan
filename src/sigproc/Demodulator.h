@@ -14,8 +14,8 @@
 #include "CubicSDR.h"
 #include "DemodulatorMgr.h"
 #include "SDRDeviceInfo.h"
+#include "Configuration.h"
 
-#define DEFAULT_SQUELCH		0
 
 namespace piscan {
 

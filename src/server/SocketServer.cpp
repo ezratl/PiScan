@@ -223,6 +223,9 @@ void SocketConnection::_handleDemodRequest(const piscan_pb::DemodRequest& rq) {
 /*****************************************/
 
 void SocketServer::start() {
+	SocketServerConfig& config = Configuration::getConfig().getSocketConfig();
+	_listenPort = config.tcpPort;
+
 	LOG_F(INFO, "Starting TCP server on port %i", _listenPort);
 
 	// exception thrown when binding TCP port fails

@@ -19,6 +19,10 @@ using namespace piscan;
 Demodulator::Demodulator(MessageReceiver& central) : _centralQueue(central), _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
 
 void Demodulator::start(){
+	DemodState& state = Configuration::getConfig().getDemodState();
+	_squelchLevel = state.squelch;
+	_gain = state.gain;
+
 	CHECK_F(_cubic->OnInit());
 
 	while(_cubic->areDevicesEnumerating());
@@ -147,6 +151,10 @@ void Demodulator::stop(){
 	_cubic->stopDevice(false, 2000);
 	_cubic->OnExit();
 	
+	DemodState& state = Configuration::getConfig().getDemodState();
+	state.gain = _gain;
+	state.squelch = _squelchLevel;
+
 	auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_STOPPED);
 	_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator stopped");
@@ -164,7 +172,7 @@ bool Demodulator::setFrequency(long long freq) {
 	if(std::abs(_cubic->getFrequency() - freq) >= (_cubic->getSampleRate() / 2)){
         _cubic->setFrequency(freq);
         //also arbitrary
-        usleep(200000);
+        usleep(225000);
 	}
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);

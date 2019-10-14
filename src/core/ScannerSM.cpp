@@ -82,9 +82,7 @@ void ScannerSM::manualEntry(uint32_t* freq){
 void ScannerSM::ST_Load(EventData* data){
 	loguru::set_thread_name("Scanner");
 	DLOG_F(9, "ST_Load");
-	//file read and system tree population
-	ListFileIO* generator = new SentinelFile();
-	generator->generateSystemList(_systems);
+	_systems.populateFromFile();
 	LOG_F(INFO, "Loaded %u systems", _systems.size());
 
 	//_currentSystem = _systems[0];
@@ -95,8 +93,6 @@ void ScannerSM::ST_Load(EventData* data){
 	auto message = std::make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_READY);
 	_centralQueue.giveMessage(message);
 	LOG_F(1, "ScannerSM ready");
-
-	delete generator;
 }
 
 void ScannerSM::ST_Scan(EventData* data){
@@ -173,8 +169,8 @@ void ScannerSM::ST_Hold(EventData* data){
 		InternalEvent(ST_HOLD);
 	}
 	/* check timeout counter if entry has resume delay enabled */
-	else if(_currentEntry->useDelay() && timeoutStart != 0){
-		if(std::difftime(std::time(nullptr), timeoutStart) < DELAY_TIMEOUT){
+	else if(_currentEntry->delay() && timeoutStart != 0){
+		if(std::difftime(std::time(nullptr), timeoutStart) < _currentEntry->delay()){
 			InternalEvent(ST_HOLD);
 		}
 		else {
@@ -243,6 +239,8 @@ void ScannerSM::ST_SaveAll(EventData* data){
 	LOG_F(1, "Saving database");
 
 	//TODO scan list isn't modifiable yet
+
+	_systems.writeToFile();
 
 	InternalEvent(ST_STOPPED);
 }

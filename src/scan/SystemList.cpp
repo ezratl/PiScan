@@ -5,9 +5,20 @@
  *      Author: ezra
  */
 
+#include <experimental/filesystem>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/foreach.hpp>
+
 #include "SystemList.h"
+#include "Configuration.h"
+#include "loguru.hpp"
 
 using namespace piscan;
+using namespace std::experimental;
+
+std::unordered_map<std::string, std::function<RadioSystemPtr(ptree&, size_t)>> SystemList::_makeSystem = {
+		{ANALOG_SYSTEM_HASH, makeAnalogSystem}
+};
 
 SystemList::SystemList() {
 	// TODO Auto-generated constructor stub
@@ -18,14 +29,75 @@ SystemList::~SystemList() {
 	// TODO Auto-generated destructor stub
 }
 
-std::shared_ptr<Entry> SystemList::getEntryByIndex(std::vector<int> index){
+void SystemList::populateFromFile(){
+	filesystem::path path(Configuration::getConfig().getWorkingPath());
+	path += filesystem::path::preferred_separator;
+	path += SYSTEMS_FILE;
+	if(!filesystem::exists(path)){
+		LOG_F(INFO, "No system list file found");
+		return;
+	}
+	
+	LOG_F(1, "Systems file path %s", path.c_str());
+	LOG_F(INFO, "Loading systems file");
+
+	try{
+		read_json(path, _jsonTree);
+	} catch(boost::property_tree::json_parser_error& e){
+		LOG_F(WARNING, "Error parsing file: %s", e.message().c_str());
+	}
+
+	BOOST_FOREACH(ptree::value_type& v, _jsonTree.get_child(std::string(SYSTEMS_KEY).append("."))){
+		LOG_F(1, "%s", v.first.c_str());
+		ptree newSystem = v.second;
+
+		std::string sysType = newSystem.get(SYS_TYPE_KEY, "unspecified");
+
+		RadioSystemPtr system;
+
+		try{
+			system = _makeSystem[sysType](newSystem, size());
+			LOG_F(1, "Added %s system %s", sysType.c_str(), system->tag());
+		} catch (std::exception& e) {
+			LOG_F(WARNING, "Unrecognized or unsupported system type: %s", sysType.c_str());
+			continue;
+		}
+
+		if(system != nullptr)
+			addSystem(system);
+	}
+
+}
+
+bool SystemList::writeToFile(){
+	filesystem::path path(Configuration::getConfig().getWorkingPath());
+	path += filesystem::path::preferred_separator;
+	path += SYSTEMS_FILE;
+
+	LOG_F(1, "Systems file path", path.c_str());
+	LOG_F(INFO, "Saving systems file");
+
+	ptree pt, systems;
+
+	BOOST_FOREACH(RadioSystemPtr p, _systems){
+		systems.push_back(std::make_pair("", p->getPropertyTree()));
+	}
+
+	pt.add_child(SYSTEMS_KEY, systems);
+
+	write_json(path, pt);
+
+	return true;
+}
+
+EntryPtr SystemList::getEntryByIndex(std::vector<int> index){
 	if(index.size() < 2 || index[0] < 0 || index[1] < 0 || index[0] >= _systems.size() || index[1] >= _systems[index[0]]->size())
 		return getNextEntry();
 
 	return _systems[index[0]]->operator [](index[1]);
 }
 
-std::shared_ptr<Entry> SystemList::getNextEntry(){
+EntryPtr SystemList::getNextEntry(){
 	if(_entryNum == 0 && _retune){
 		_retune = false;
 		//if(_bins[_binNum]->size() > 1)
@@ -52,7 +124,7 @@ void SystemList::sortBins(int bandwidth){
 	for(size_t i = 0; i < _systems.size(); i++)
 		for(size_t k = 0; k < _systems[i]->size(); k++)
 			numEntries++;
-	std::shared_ptr<Entry> entries[numEntries];
+	EntryPtr entries[numEntries];
 
 	numEntries = 0;
 
@@ -91,14 +163,14 @@ void SystemList::sortBins(int bandwidth){
 	}
 }
 
-void SystemList::merge(std::shared_ptr<Entry> arr[], int l, int m, int r)
+void SystemList::merge(EntryPtr arr[], int l, int m, int r)
 {
     int i, j, k;
     int n1 = m - l + 1;
     int n2 =  r - m;
 
     /* create temp arrays */
-    std::shared_ptr<Entry> L[n1], R[n2];
+    EntryPtr L[n1], R[n2];
 
     /* Copy data to temp arrays L[] and R[] */
     for (i = 0; i < n1; i++)
@@ -148,7 +220,7 @@ void SystemList::merge(std::shared_ptr<Entry> arr[], int l, int m, int r)
 
 /* l is for left index and r is right index of the
    sub-array of arr to be sorted */
-void SystemList::mergeSort(std::shared_ptr<Entry> arr[], int l, int r)
+void SystemList::mergeSort(EntryPtr arr[], int l, int r)
 {
     if (l < r)
     {
@@ -171,4 +243,9 @@ long SystemList::EntryBin::getCenterFreq(){
 	}
 	else
 		return this->front()->freq();
+}
+
+RadioSystemPtr SystemList::makeAnalogSystem(ptree& pt, size_t index){
+	auto system = std::make_shared<AnalogSystem>(pt, index);
+	return system;
 }

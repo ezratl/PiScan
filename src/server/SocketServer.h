@@ -12,6 +12,7 @@
 #include "constants.h"
 #include "ServerManager.h"
 #include "request.pb.h"
+#include "Configuration.h"
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
