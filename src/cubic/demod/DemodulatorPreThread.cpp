@@ -312,10 +312,10 @@ void DemodulatorPreThread::setFrequency(long long freq) {
     frequencyChanged.store(true);
     newFrequency = freq;
 
-    if(!stopping.load()){
+    /*if(!stopping.load()){
         std::unique_lock<std::mutex> lock(_msgMutex);
 	    _cv.wait(lock, [this]{return this->_msgAvailable;});
-    }
+    }*/
 }
 
 long long DemodulatorPreThread::getFrequency() {

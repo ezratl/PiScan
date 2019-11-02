@@ -6,6 +6,7 @@
 #include <boost/asio.hpp>
 //using namespace std;
 
+#include "PiScan.h"
 #include "constants.h"
 #include "Configuration.h"
 #include "Demodulator.h"
@@ -146,7 +147,7 @@ public:
 	void start(){
 		LOG_F(1, "System Control start");
 		_scanner.start();
-		_connectionManager.start();
+		//_connectionManager.start();
 		_demod.start();
 
 		/* let a stop call break the loop */
@@ -284,6 +285,8 @@ static ServerManager connectionManager(io_service, messageManager);
 static Demodulator demod(messageManager);
 static SystemController sysControl(messageManager, scanSystems, scanner, connectionManager, demod);
 
+static std::atomic_bool steadyState(false);
+
 void terminate(){
 	LOG_F(WARNING, "Terminating - resources may not be properly released");
 	std::terminate();
@@ -326,6 +329,53 @@ void exit(int code){
 	std::exit(code);
 }
 
+bool stopSystem(){
+	if(steadyState.load()){
+		return true;
+	}
+	return false;
+}
+
+void startScan(){
+	scanner.startScan();
+}
+
+void holdScan(std::vector<int> index){
+	scanner.holdScan(index);
+}
+
+void stopScanner(){
+	scanner.stopScanner();
+}
+
+void manualEntry(uint32_t* freq){
+	scanner.manualEntry(freq);
+}
+
+ScannerContext getScannerContext(){
+	return scanner.getCurrentContext();
+}
+
+void setTunerGain(float gain){
+	demod.setTunerGain(gain);
+}
+
+void setDemodSquelch(float level){
+	demod.setSquelch(level);
+}
+
+DemodContext getDemodContext(){
+	return DemodContext(demod.getTunerGain(), demod.getSquelch());
+}
+
+void audioMute(bool mute){
+	demod.audioMute(mute);
+}
+
+long long getTunerSampleRate() {
+	return demod.getTunerSampleRate();
+}
+
 }
 
 using namespace piscan;
@@ -343,8 +393,10 @@ int main(int argc, char **argv) {
 	Configuration& config = Configuration::getConfig();
 	bool useDebugConsole = false;
 
+	int logVerbosity = config.getGeneralConfig().logfileVerbosity;
+
 	int c;
-	while((c = getopt(argc,argv,"d:p:")) != -1){
+	while((c = getopt(argc,argv,"dp:f:")) != -1){
 		switch(c){
 			case 'd':
 				useDebugConsole = true;
@@ -353,6 +405,10 @@ int main(int argc, char **argv) {
 				if(optarg)
 					config.setWorkingPath(std::string(optarg));
 				break;
+			case 'f':
+				if(optarg)
+					logVerbosity = std::atoi(optarg);
+				break;
 		}
 	}
 
@@ -360,7 +416,7 @@ int main(int argc, char **argv) {
 	config.loadConfig();
 	config.loadState();
 
-	loguru::add_file(config.getLogfilePath().c_str(), loguru::Truncate, config.getGeneralConfig().logfileVerbosity);
+	loguru::add_file(config.getLogfilePath().c_str(), loguru::Truncate, logVerbosity);
 
 	messageManager.setReceiver(SYSTEM_CONTROL, &sysControl);
 	messageManager.setReceiver(SCANNER_SM, &scanner);
@@ -370,25 +426,82 @@ int main(int argc, char **argv) {
 
 	setDemodulator(&demod);
 
-	
+	//connectionManager.useDebugServer(useDebugConsole);
 
 	try {
 		messageManager.start();
-		sysControl.start();
+		//sysControl.start();
+
+		{
+			scanner.start();
+			connectionManager.start(useDebugConsole);
+			demod.start();
+
+			/*while(sysRun){
+			//_flagLock.lock();
+				if(_activeModules == ALL_FLAG){
+					//_flagLock.unlock();
+					break;
+				}
+			//_flagLock.unlock();
+			}*/
+
+			LOG_F(4, "scanner wait");
+			scanner.waitReady();
+			LOG_F(4, "server wait");
+			connectionManager.waitReady();
+			LOG_F(4, "demod wait");
+			demod.waitReady();
+
+			connectionManager.allowConnections();
+			scanner.startScan();
+
+			sysRun = true;
+		}
+
 		ioThread = std::thread(runIO);
 	} catch (std::exception& e) {
 		LOG_F(ERROR, e.what());
 		goto sysexit;
 	}
 
-
+	steadyState.store(true);
+	LOG_F(INFO, "System initialized");
 
 	while(sysRun)
 		usleep(100000);
 
 	sysexit:
+	steadyState.store(false);
 	try {
-		sysControl.stop();
+		//sysControl.stop();
+
+		{
+			LOG_F(INFO, "Stopping system");
+		scanner.stopScanner();
+		//_centralQueue.giveMessage(std::make_shared<ServerMessage>(SYSTEM_CONTROL, ServerMessage::STOP, nullptr));
+		connectionManager.stop();
+		demod.stop();
+
+		/*while(1){
+			//_flagLock.lock();
+			if(_activeModules == 0){
+				//_flagLock.unlock();
+				break;
+			}
+			//_flagLock.unlock();
+		}*/
+
+		LOG_F(4, "scanner wait");
+		scanner.waitDeinit();
+		LOG_F(4, "server wait");
+		connectionManager.waitDeinit();
+		LOG_F(4, "demod wait");
+		demod.waitDeinit();
+
+		LOG_F(2, "All modules stopped");
+		}
+
 		messageManager.stop(true);
 	} catch (std::exception& e) {
 		LOG_F(ERROR, e.what());

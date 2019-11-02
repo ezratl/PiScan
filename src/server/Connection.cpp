@@ -5,6 +5,7 @@
  *      Author: ezra
  */
 
+#include "PiScan.h"
 #include "connection.h"
 //#include "request.h"
 
@@ -72,40 +73,54 @@ int Connection::systemFunction(SystemFunction function) {
 }*/
 
 int Connection::scanStart() {
-	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_SCAN };
-	return issueRequest(params);
+	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_SCAN };
+	//return issueRequest(params);
+	startScan();
+	return 0;
 }
 
 int Connection::scanHold() {
-	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
-	return issueRequest(params);
+	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
+	//return issueRequest(params);
+	holdScan();
+	return 0;
 }
 
 int Connection::scanHoldEntry(std::vector<int> index) {
-	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
-	return issueRequest(params, new std::vector<int>(index));
+	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
+	//return issueRequest(params, new std::vector<int>(index));
+	holdScan(index);
+	return 0;
 }
 
 int Connection::scanManualEntry(long freq, Modulation mode) {
-	ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_MANUAL };
-	return issueRequest(params, new uint32_t(freq));
+	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_MANUAL };
+	//return issueRequest(params, new uint32_t(freq));
+	manualEntry(new uint32_t(freq));
+	return 0;
 }
 
 int Connection::setDemodSquelch(int level) {
-	ClientRequest::RequestParams params = { .type = DEMOD_CONFIGURE, .subType =
-			DEMOD_SET_SQUELCH };
-	return issueRequest(params, new int(level));
+	//ClientRequest::RequestParams params = { .type = DEMOD_CONFIGURE, .subType =
+	//		DEMOD_SET_SQUELCH };
+	//return issueRequest(params, new int(level));
+	piscan::setDemodSquelch(level);
+	return 0;
 }
 
-int Connection::setDemodGain(int level) {
-	ClientRequest::RequestParams params = { .type = DEMOD_CONFIGURE, .subType =
-			DEMOD_SET_GAIN };
-	return issueRequest(params, new int(level));
+int Connection::setDemodGain(float level) {
+	//ClientRequest::RequestParams params = { .type = DEMOD_CONFIGURE, .subType =
+	//		DEMOD_SET_GAIN };
+	//return issueRequest(params, new int(level));
+	setTunerGain(level);
+	return 0;
 }
 
 int Connection::getScannerContext() {
 	ClientRequest::RequestParams params = { .type = GET_CONTEXT, .subType = SCANNER_CONTEXT };
 	return issueRequest(params);
+	//piscan::getScannerContext();
+	//return 0;
 }
 
 int Connection::getDemodContext(){

@@ -34,12 +34,14 @@ struct GeneralConfig {
 	int logfileVerbosity = DEFAULT_LOGFILE_VERBOSITY;
 };
 
-#define DEFAULT_TCP_PORT	1234
-#define MAX_TCP_CONNECTIONS	5
+#define DEFAULT_TCP_PORT		1234
+#define MAX_TCP_CONNECTIONS		5
+#define DEFAULT_SPAWN_CLIENT	false
 
 struct SocketServerConfig {
 	int tcpPort = DEFAULT_TCP_PORT;
 	int maxConnections = MAX_TCP_CONNECTIONS;
+	bool spawnLocalClient = DEFAULT_SPAWN_CLIENT;
 };
 
 #define DEFAULT_SQUELCH	0

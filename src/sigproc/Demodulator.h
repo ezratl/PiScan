@@ -15,6 +15,7 @@
 #include "DemodulatorMgr.h"
 #include "SDRDeviceInfo.h"
 #include "Configuration.h"
+#include "synchronize.h"
 
 
 namespace piscan {
@@ -41,7 +42,7 @@ public:
 	virtual int getSignalStrength() = 0;
 };
 
-class Demodulator : public MessageReceiver, public DemodInterface {
+class Demodulator : public MessageReceiver, public DemodInterface, public Synchronizable {
 public:
 	Demodulator(MessageReceiver& central);
 	~Demodulator() {
@@ -49,18 +50,6 @@ public:
 
 	void start();
 	void stop();
-
-private:
-	MessageReceiver& _centralQueue;
-	Modulation _currentModem = NFM;
-	float _squelchLevel = DEFAULT_SQUELCH;
-	long long _currentFreq = 0;
-	float _gain = AUTO_GAIN;
-
-	std::shared_ptr<CubicSDR> _cubic;
-	DemodulatorMgr& _demodMgr;
-
-	std::map<Modulation, DemodulatorInstancePtr> _demods;
 
 	void giveMessage(std::shared_ptr<Message> message);
 	bool setFrequency(long long freq);
@@ -73,6 +62,25 @@ private:
 	void setSquelch(float level);
 	float getSNR();
 	int getSignalStrength();
+	void setTunerGain(float gain);
+	float getTunerGain();
+	float getSquelch();
+	void audioMute(bool mute);
+	long long getTunerSampleRate();
+
+private:
+	MessageReceiver& _centralQueue;
+	Modulation _currentModem = NFM;
+	float _squelchLevel = DEFAULT_SQUELCH;
+	long long _currentFreq = 0;
+	std::atomic<float> _gain;
+
+	std::shared_ptr<CubicSDR> _cubic;
+	DemodulatorMgr& _demodMgr;
+
+	std::map<Modulation, DemodulatorInstancePtr> _demods;
+
+	
 
 	void _handleMessage(std::shared_ptr<DemodMessage> message);
 	void _handleRequest(ClientRequest& request);

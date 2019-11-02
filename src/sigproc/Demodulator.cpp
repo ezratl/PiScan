@@ -142,9 +142,10 @@ void Demodulator::start(){
 	//setModem(NFM);
 	_demodMgr.setActiveDemodulator(_demods[NFM], false);
 
-	auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_READY);
-	_centralQueue.giveMessage(message);
+	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_READY);
+	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator started");
+	notifyReady();
 }
 
 void Demodulator::stop(){
@@ -155,9 +156,10 @@ void Demodulator::stop(){
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 
-	auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_STOPPED);
-	_centralQueue.giveMessage(message);
+	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_STOPPED);
+	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator stopped");
+	notifyDeinit();
 }
 
 bool Demodulator::setFrequency(long long freq) {
@@ -216,6 +218,8 @@ bool Demodulator::setModem(Modulation mode) {
 
 void Demodulator::setSquelch(float level) {
 	_squelchLevel = level;
+	LOG_F(1, "Squelch set to %.1lf", level);
+	_contextUpdate();
 }
 
 float Demodulator::getSNR() {
@@ -289,4 +293,37 @@ void Demodulator::_handleRequest(ClientRequest& request){
 void Demodulator::_contextUpdate(){
 	DemodContext* context = new DemodContext(_gain, _squelchLevel);
 	_centralQueue.giveMessage(std::make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, context));
+}
+
+void Demodulator::setTunerGain(float gain){
+	if (gain < 0)
+	{
+		_cubic->setAGCMode(true);
+		_gain = AUTO_GAIN;
+		LOG_F(1, "Gain set to auto");
+	}
+	else
+	{
+		_cubic->setAGCMode(false);
+		_cubic->setGain("TUNER", gain);
+		_gain = _cubic->getGain("TUNER");
+		LOG_F(1, "Gain set to %.1lf", _cubic->getGain("TUNER"));
+	}
+	_contextUpdate();
+}
+
+float Demodulator::getTunerGain(){
+	return _gain;
+}
+
+float Demodulator::getSquelch(){
+	return _squelchLevel;
+}
+
+void Demodulator::audioMute(bool mute){
+	_demodMgr.getCurrentModem()->setMuted(!mute);
+}
+
+long long Demodulator::getTunerSampleRate(){
+	return _cubic->getSampleRate();
 }

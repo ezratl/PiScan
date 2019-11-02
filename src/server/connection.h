@@ -110,10 +110,13 @@ protected:
 	int scanHoldEntry(std::vector<int> index);
 	int scanManualEntry(long freq, Modulation mode = FM);
 	int setDemodSquelch(int level);
-	int setDemodGain(int level);
+	int setDemodGain(float level);
 	int getScannerContext();
 	int getDemodContext();
 
 };
+
+typedef boost::shared_ptr<Connection> ConnectionPtr;
+
 }
 #endif /* SERVER_CONNECTION_H_ */

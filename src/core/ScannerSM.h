@@ -15,12 +15,13 @@
 #include "Entry.h"
 #include "messages.h"
 #include "clientmessage.h"
+#include "synchronize.h"
 
 #define SQUELCH_TRIGGER_HITS	25
 
 namespace piscan {
 
-class ScannerSM: public MessageReceiver, public StateMachine {
+class ScannerSM: public MessageReceiver, public StateMachine, public Synchronizable {
 public:
 	ScannerSM(MessageReceiver& central, SystemList& dataSource);
 	~ScannerSM() {};
@@ -30,6 +31,8 @@ public:
 	void stopScanner();
 	void manualEntry(uint32_t* freq);
 	void giveMessage(std::shared_ptr<Message> message);
+
+	ScannerContext getCurrentContext();
 private:
 	void ST_Load(EventData* data);
 	void ST_Scan(EventData* data);

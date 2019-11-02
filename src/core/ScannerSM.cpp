@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <mutex>
 
+#include "PiScan.h"
 #include "ScannerSM.h"
 #include "ListGenerator.h"
 #include "loguru.hpp"
@@ -90,9 +91,10 @@ void ScannerSM::ST_Load(EventData* data){
 
 	// do not issue event - SM will wait until an event is generated before proceeding
 	//InternalEvent(ST_SCAN);
-	auto message = std::make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_READY);
-	_centralQueue.giveMessage(message);
+	//auto message = std::make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_READY);
+	//_centralQueue.giveMessage(message);
 	LOG_F(1, "ScannerSM ready");
+	notifyReady();
 }
 
 void ScannerSM::ST_Scan(EventData* data){
@@ -238,8 +240,6 @@ void ScannerSM::ST_SaveAll(EventData* data){
 	DLOG_F(9, "ST_SaveAll");
 	LOG_F(1, "Saving database");
 
-	//TODO scan list isn't modifiable yet
-
 	_systems.writeToFile();
 
 	InternalEvent(ST_STOPPED);
@@ -248,9 +248,10 @@ void ScannerSM::ST_SaveAll(EventData* data){
 void ScannerSM::ST_Stopped(EventData* data){
 	DLOG_F(9, "ST_Stopped");
 	stop(false);
-	auto message = std::make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_STOPPED);
-	_centralQueue.giveMessage(message);
+	//auto message = std::make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_STOPPED);
+	//_centralQueue.giveMessage(message);
 	LOG_F(1, "ScannerSM stopped");
+	notifyDeinit();
 }
 
 void ScannerSM::_broadcastContextUpdate() {
@@ -295,9 +296,9 @@ void ScannerSM::_enableAudioOut(bool en){
 
 	//TODO temporary
 	//rtl_fm_mute((int)(!en));
-	auto message = std::make_shared<DemodMessage>(SCANNER_SM, DemodMessage::OPEN_AUDIO, (void*) !en);
-	_centralQueue.giveMessage(message);
-
+	//auto message = std::make_shared<DemodMessage>(SCANNER_SM, DemodMessage::OPEN_AUDIO, (void*) !en);
+	//_centralQueue.giveMessage(message);
+	piscan::audioMute(en);
 }
 
 void ScannerSM::giveMessage(std::shared_ptr<Message> message) {
@@ -369,4 +370,9 @@ void ScannerSM::_handleRequest(ClientRequest& request) {
 	}
 
 	delete rq;
+}
+
+ScannerContext ScannerSM::getCurrentContext(){
+	std::unique_lock<std::mutex> lock(_contextMutex);
+	return ScannerContext(_currentContext);
 }

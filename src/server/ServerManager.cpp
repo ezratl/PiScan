@@ -34,20 +34,35 @@ static ConnectionLevel const permissionMap[] = {
 ServerManager::ServerManager(boost::asio::io_service& io_service, MessageReceiver& central) : _io_service(io_service),
 		_centralQueue(central), _queue(QUEUE_SIZE), _activeConnections(0)/*, _connections(
 				MAX_CONNECTIONS)*/ {
-	_servers.push_back(new DebugServer(*this));
-	_servers.push_back(new SocketServer(*this, _io_service));
+
 }
 
-void ServerManager::start(){
+void ServerManager::start(bool useDebugServer){
+	if(useDebugServer)
+		_servers.push_back(new DebugServer(*this));
+	_servers.push_back(new SocketServer(*this, _io_service));
+
 	_run = true;
 	_queueThread = std::thread(&ServerManager::_queueThreadFunc, this);
 
 	for(unsigned int i = 0; i < _servers.size(); i++)
 		_servers[i]->start();
 
-	auto message = std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_READY);
-	_centralQueue.giveMessage(message);
+	//auto message = std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_READY);
+	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Connection Manager started");
+	notifyReady();
+}
+
+void ServerManager::stop() {
+	disconnectClients();
+	_run = false;
+	std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
+	if (lock.try_lock()) {
+		_msgAvailable = true;
+		lock.unlock();
+		_cv.notify_one();
+	}
 }
 
 void ServerManager::allowConnections(){
@@ -103,8 +118,9 @@ void ServerManager::_queueThreadFunc(void){
 	std::shared_ptr<Message> m;
 	while(_queue.try_dequeue(m));
 
-	_centralQueue.giveMessage(std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_STOPPED));
+	//_centralQueue.giveMessage(std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_STOPPED));
 	LOG_F(1, "Connection Manager stopped");
+	notifyDeinit();
 }
 
 void ServerManager::giveMessage(std::shared_ptr<Message> message){
@@ -234,7 +250,7 @@ void ServerManager::_addConnection(boost::shared_ptr<Connection> client){
 	//TODO
 	for(unsigned int i = 0; i < MAX_CONNECTIONS; ++i){
 		if(_connections[i] == nullptr){
-			LOG_F(1, "Initiating connection with %s", client.get()->identifier().c_str());
+			LOG_F(1, "Initiating connection with %s", client->identifier().c_str());
 
 
 			client.get()->_handle = i;
@@ -242,7 +258,7 @@ void ServerManager::_addConnection(boost::shared_ptr<Connection> client){
 			if(client.get()->connect()){
 				_connections[i] = client;
 				//_connections.assign(i, client);
-				LOG_F(INFO, "Client %s connected with handle %i", client.get()->identifier().c_str(), i);
+				LOG_F(INFO, "Client %s connected with handle %i", client->identifier().c_str(), i);
 			}
 			else{
 				LOG_F(1, "Connection attempt failed");

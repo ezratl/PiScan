@@ -18,6 +18,7 @@
 #include "connection.h"
 #include "clientmessage.h"
 #include "BackendServer.h"
+#include "synchronize.h"
 
 #define MAX_CONNECTIONS	5
 
@@ -25,7 +26,7 @@ namespace piscan {
 
 class Connection;
 
-class ServerManager : public MessageReceiver, public ServerInterface {
+class ServerManager : public MessageReceiver, public ServerInterface, public Synchronizable {
 public:
 	ServerManager(boost::asio::io_service& io_service, MessageReceiver& central);
 	~ServerManager() {
@@ -33,7 +34,8 @@ public:
 			delete _servers[i];
 		_queueThread.join(); };
 
-	void start();
+	void start(bool useDebugServer);
+	void stop();
 	void allowConnections();
 	void disconnectClients();
 	void giveMessage(std::shared_ptr<Message> message);
