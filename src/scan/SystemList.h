@@ -39,7 +39,7 @@ public:
 
 	EntryPtr getNextEntry();
 
-	void sortBins(int bandwidth);
+	void sortBins(long long bandwidth);
 private:
 
 	class EntryBin: public std::vector<EntryPtr>{

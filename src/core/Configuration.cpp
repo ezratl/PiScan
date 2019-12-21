@@ -76,6 +76,9 @@ void Configuration::loadConfig(){
 
 	_socketConfig.maxConnections = pt.get("config.socket.max_connections", MAX_TCP_CONNECTIONS);
 	_socketConfig.tcpPort = pt.get("config.socket.port", DEFAULT_TCP_PORT);
+	_socketConfig.spawnLocalClient = pt.get("config.socket.use_gui", DEFAULT_SPAWN_CLIENT);
+	_socketConfig.pythonClient = pt.get("config.socket.client_path", DEFAULT_PY_CLIENT_LOCATION);
+	_socketConfig.pythonBinary = pt.get("config.socket.python_path", DEFAULT_PY_ENV_LOCATION);
 
 }
 
@@ -115,6 +118,9 @@ void Configuration::saveConfig(){
 
 	pt.put("config.socket.port", _socketConfig.tcpPort);
 	pt.put("config.socket.max_connections", _socketConfig.maxConnections);
+	pt.put("config.socket.use_gui", _socketConfig.spawnLocalClient);
+	pt.put("config.socket.client_path", _socketConfig.pythonClient);
+	pt.put("config.socket.python_path", _socketConfig.pythonBinary);
 
 	write_json(path.c_str(), pt);
 }

@@ -37,10 +37,13 @@ ServerManager::ServerManager(boost::asio::io_service& io_service, MessageReceive
 
 }
 
-void ServerManager::start(bool useDebugServer){
-	if(useDebugServer)
-		_servers.push_back(new DebugServer(*this));
-	_servers.push_back(new SocketServer(*this, _io_service));
+void ServerManager::start(bool useDebugServer, bool spawnLocalClient){
+	if(useDebugServer){
+		_debugServer = new DebugServer(*this);
+		_servers.push_back(_debugServer);
+	}
+	_sockServer = new SocketServer(*this, _io_service);
+	_servers.push_back(_sockServer);
 
 	_run = true;
 	_queueThread = std::thread(&ServerManager::_queueThreadFunc, this);
@@ -48,8 +51,9 @@ void ServerManager::start(bool useDebugServer){
 	for(unsigned int i = 0; i < _servers.size(); i++)
 		_servers[i]->start();
 
-	//auto message = std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_READY);
-	//_centralQueue.giveMessage(message);
+	if(spawnLocalClient)
+		_sockServer->spawnLocalClient();
+
 	LOG_F(1, "Connection Manager started");
 	notifyReady();
 }

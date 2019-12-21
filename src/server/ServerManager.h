@@ -17,14 +17,18 @@
 #include "request.h"
 #include "connection.h"
 #include "clientmessage.h"
+#include "SocketServer.h"
+#include "DebugServer.h"
 #include "BackendServer.h"
 #include "synchronize.h"
+
 
 #define MAX_CONNECTIONS	5
 
 namespace piscan {
 
 class Connection;
+class SocketServer;
 
 class ServerManager : public MessageReceiver, public ServerInterface, public Synchronizable {
 public:
@@ -34,7 +38,7 @@ public:
 			delete _servers[i];
 		_queueThread.join(); };
 
-	void start(bool useDebugServer);
+	void start(bool useDebugServer, bool spawnLocalClient);
 	void stop();
 	void allowConnections();
 	void disconnectClients();
@@ -57,6 +61,8 @@ private:
 	bool _allowConnections = false;
 	bool _run = false;
 
+	DebugServer* _debugServer = nullptr;
+	SocketServer* _sockServer = nullptr;
 
 	void _queueThreadFunc(void);
 	void _handleMessage(std::shared_ptr<Message> message);

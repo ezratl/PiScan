@@ -10,7 +10,7 @@
 #include "Demodulator.h"
 #include "loguru.hpp"
 
-#define DEFAULT_SDR_SAMPLE_RATE	2048000
+#define DEFAULT_SDR_SAMPLE_RATE	1024000
 #define INIT_FREQUENCY			100000000
 #define NUM_RATES_DEFAULT	4
 
@@ -174,12 +174,12 @@ bool Demodulator::setFrequency(long long freq) {
 	if(std::abs(_cubic->getFrequency() - freq) >= (_cubic->getSampleRate() / 2)){
         _cubic->setFrequency(freq);
         //also arbitrary
-        usleep(225000);
+        usleep(TUNER_RETUNE_TIME);
 	}
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 	//this is totally arbitrary
-	usleep(7000);
+	usleep(DEMOD_BUFFER_TIME);
 
 	_currentFreq = freq;
 

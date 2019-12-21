@@ -12,6 +12,7 @@
 #include "SystemList.h"
 #include "Configuration.h"
 #include "loguru.hpp"
+#include "constants.h"
 
 using namespace piscan;
 using namespace std::experimental;
@@ -117,7 +118,7 @@ EntryPtr SystemList::getNextEntry(){
 
 }
 
-void SystemList::sortBins(int bandwidth){
+void SystemList::sortBins(long long bandwidth){
 	LOG_F(1, "Sorting bandwidth chunks...");
 
 	size_t numEntries = 0;
@@ -161,6 +162,11 @@ void SystemList::sortBins(int bandwidth){
 		RAW_LOG_F(1, binPrint.c_str());
 		binPrint = "";
 	}
+
+	double totalTimeS = ((numEntries * DEMOD_BUFFER_TIME) + (_bins.size() * (TUNER_RETUNE_TIME + DEMOD_BUFFER_TIME))) / 1000000;
+	double totalChannels = numEntries + _bins.size();
+	double avgScanRate = totalChannels / totalTimeS;
+	LOG_F(1, "Max average scan rate: %.1lf channels per second", avgScanRate);
 }
 
 void SystemList::merge(EntryPtr arr[], int l, int m, int r)

@@ -68,7 +68,6 @@ EntryPtr RadioSystem::makeDCChannel(ptree& pt) {
 
 AnalogSystem::AnalogSystem(ptree pt, size_t index) : RadioSystem(pt.get(TAG_KEY, ""), pt.get(LOCKOUT_KEY, false)) {
 	setSysIndex(index);
-	RAW_LOG_F(1, "New analog system\n\tTag: %s\n\tLockout: %i", tag().c_str(), lockedOut());
 
 	BOOST_FOREACH(ptree::value_type& v, pt.get_child(CHANNELS_KEY)){
 		ptree entryPT = v.second;
@@ -83,12 +82,6 @@ AnalogSystem::AnalogSystem(ptree pt, size_t index) : RadioSystem(pt.get(TAG_KEY,
 
 		if(entry == nullptr)
 			continue;
-
-		RAW_LOG_F(1, "\t\tNew %s entry", type.c_str());
-		RAW_LOG_F(1, "\t\tTag: %s", entry->tag().c_str());
-		RAW_LOG_F(1, "\t\tFreq: %li", entry->freq());
-		RAW_LOG_F(1, "\t\tLockout: %i", entry->isLockedOut());
-		RAW_LOG_F(1, "\t\tDelay: %i", entry->delay());
 
 		addEntry(entry);
 	}

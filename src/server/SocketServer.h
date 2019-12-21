@@ -8,15 +8,17 @@
 #ifndef SERVER_SOCKETSERVER_H_
 #define SERVER_SOCKETSERVER_H_
 
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <unistd.h>
+
 #include "BackendServer.h"
 #include "constants.h"
 #include "ServerManager.h"
 #include "request.pb.h"
 #include "Configuration.h"
 
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/enable_shared_from_this.hpp>
 using namespace boost::asio;
 using ip::tcp;
 
@@ -75,16 +77,21 @@ public:
 
 	void start();
 	void stop();
+	void spawnLocalClient();
 
 	void giveMessage(std::shared_ptr<Message> message);
 private:
 	tcp::acceptor _acceptor;
 	uint16_t _listenPort = DEFAULT_TCP_PORT;
 	int _activeConnections = 0;
+	pid_t _clientPid = 0;
 
 	void start_accept();
 	void handle_accept(SocketConnection::pointer connection,
 	                     const boost::system::error_code& err);
+
+	void _spawnPythonClient();
+	void _stopPythonClient();
 };
 }
 #endif /* SERVER_SOCKETSERVER_H_ */

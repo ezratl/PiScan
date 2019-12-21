@@ -87,7 +87,7 @@ void ScannerSM::ST_Load(EventData* data){
 	LOG_F(INFO, "Loaded %u systems", _systems.size());
 
 	//_currentSystem = _systems[0];
-	_systems.sortBins(2000000);
+	_systems.sortBins(getTunerSampleRate());
 
 	// do not issue event - SM will wait until an event is generated before proceeding
 	//InternalEvent(ST_SCAN);

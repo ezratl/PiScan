@@ -392,11 +392,12 @@ int main(int argc, char **argv) {
 
 	Configuration& config = Configuration::getConfig();
 	bool useDebugConsole = false;
+	bool spawnClient = false;
 
 	int logVerbosity = config.getGeneralConfig().logfileVerbosity;
 
 	int c;
-	while((c = getopt(argc,argv,"dp:f:")) != -1){
+	while((c = getopt(argc,argv,"dp:f:l")) != -1){
 		switch(c){
 			case 'd':
 				useDebugConsole = true;
@@ -408,6 +409,9 @@ int main(int argc, char **argv) {
 			case 'f':
 				if(optarg)
 					logVerbosity = std::atoi(optarg);
+				break;
+			case 'l':
+				spawnClient = true;
 				break;
 		}
 	}
@@ -434,7 +438,7 @@ int main(int argc, char **argv) {
 
 		{
 			scanner.start();
-			connectionManager.start(useDebugConsole);
+			connectionManager.start(useDebugConsole, spawnClient);
 			demod.start();
 
 			/*while(sysRun){
