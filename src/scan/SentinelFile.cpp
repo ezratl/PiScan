@@ -36,23 +36,23 @@
 
 using namespace piscan;
 
-void SentinelFile::generateSystemList(SystemList& list) {
+bool SentinelFile::generateSystemList(SystemList& list) {
 	_list = &list;
 
 	std::ifstream file;
 	try{
-		std::string path = std::string(DATABASE_PATH) + "/" + SENTINEL_FILE;
-		LOG_F(2, "Opening list file: %s", path.c_str());
-		file.open(path, std::ios::in);
+		//std::string path = std::string(DATABASE_PATH) + "/" + SENTINEL_FILE;
+		LOG_F(2, "Opening list file: %s", _path.c_str());
+		file.open(_path, std::ios::in);
 	}
 	catch(std::exception& e){
-		LOG_F(WARNING, "Unable to open Systems file: %s", e.what());
-		return;
+		LOG_F(WARNING, "Unable to open .hpd file: %s", e.what());
+		return false;
 	}
 
 	if(!file.is_open()){
-		LOG_F(WARNING, "Unable to open Systems file");
-		return;
+		LOG_F(WARNING, "Unable to open .hpd file");
+		return false;
 	}
 
 	std::string line;
@@ -80,6 +80,7 @@ void SentinelFile::generateSystemList(SystemList& list) {
 	}
 
 	file.close();
+	return true;
 }
 
 void SentinelFile::_newAnalogSys(std::vector<std::string>& tokens){
@@ -110,4 +111,68 @@ void SentinelFile::_newAnalogEntry(std::vector<std::string>& tokens){
 
 		_system->addEntry(entry);
 	}
+}
+
+void usage() {
+	std::cout << "Usage:\n\t";
+	std::cout << "piscan_hpdconv -i [path to .hpd file] -o [path to PiScan data folder]\n";
+	std::cout << "\tOptional flags:";
+	std::cout << "\t\t-d\tverbose mode" << std::endl;
+
+	std::exit(0);
+}
+
+int main(int argc, char** argv){
+	Configuration& config = Configuration::getConfig();
+	SystemList list;
+	std::string hpdPath;
+	bool verbose = false;
+
+	if(argc < 5)
+		usage();
+
+	int c;
+	while((c = getopt(argc,argv,"i:o:d")) != -1){
+		switch(c){
+			case 'i':
+				if(optarg)
+					hpdPath = std::string(optarg);
+				else
+					usage();
+				break;
+			case 'o':
+				if(optarg)
+					config.setWorkingPath(std::string(optarg));
+				else
+					usage();
+				break;
+			case 'd':
+				verbose = true;
+				break;
+		}
+	}
+
+	loguru::init(argc, argv);
+	loguru::g_preamble_file = false;
+
+	if(verbose)
+		loguru::g_stderr_verbosity = loguru::Verbosity_MAX;
+	else
+		loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
+
+	SentinelFile generator(hpdPath);
+
+	if(!generator.generateSystemList(list)){
+		LOG_F(ERROR, "File parsing failed");
+		std::exit(1);
+	}
+
+	if(!list.writeToFile()){
+		LOG_F(ERROR, "Writing data file failed");
+		std::exit(1);
+	}
+
+	LOG_F(INFO, "Success");
+
+	return 0;
 }

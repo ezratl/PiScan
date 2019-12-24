@@ -115,7 +115,7 @@ ADD_DEFINITIONS(
     -DUSE_SOAPY_SDR=1
 )    
 
-target_link_libraries(piScan_backend core cubic external scan server sigproc 
-	pthread rtlsdr boost_system protobuf liquid ${OTHER_LIBRARIES})
+target_link_libraries(piScan_backend core cubic external loguru scan server sigproc 
+	pthread boost_system protobuf liquid ${OTHER_LIBRARIES})
 
 

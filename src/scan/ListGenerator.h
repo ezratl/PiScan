@@ -22,19 +22,20 @@ public:
 	ListFileIO() {}
 	virtual ~ListFileIO() {}
 
-	virtual void generateSystemList(SystemList& list) = 0;
+	virtual bool generateSystemList(SystemList& list) = 0;
 };
 
 class SentinelFile : public ListFileIO {
 public:
-	SentinelFile() {};
+	SentinelFile(std::string path) : _path(path) {};
 	~SentinelFile() {};
 
-	void generateSystemList(SystemList& list);
+	bool generateSystemList(SystemList& list);
 
 private:
 	SystemList* _list = nullptr;
 	std::shared_ptr<RadioSystem> _system;
+	std::string _path;
 
 	void _newAnalogSys(std::vector<std::string>& tokens);
 	void _newAnalogEntry(std::vector<std::string>& tokens);

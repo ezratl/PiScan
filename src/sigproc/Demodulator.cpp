@@ -10,7 +10,7 @@
 #include "Demodulator.h"
 #include "loguru.hpp"
 
-#define DEFAULT_SDR_SAMPLE_RATE	1024000
+#define DEFAULT_SDR_SAMPLE_RATE	2048000
 #define INIT_FREQUENCY			100000000
 #define NUM_RATES_DEFAULT	4
 
