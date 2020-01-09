@@ -20,6 +20,9 @@
 #endif
 
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define DEMOD_THREAD_NAME   (std::string("Demod - " + demodInstance->getLabel()).c_str())
 
 DemodulatorInstance* DemodulatorThread::squelchLock(nullptr);
 std::mutex DemodulatorThread::squelchLockMutex;
@@ -82,7 +85,7 @@ void DemodulatorThread::run() {
 #endif
     
 //    std::cout << "Demodulator thread started.." << std::endl;
-    loguru::set_thread_name(std::string("Demod - " + demodInstance->getLabel()).c_str());
+    setThreadName(DEMOD_THREAD_NAME);
     LOG_F(INFO, "Demodulator thread started");
     
     iqInputQueue = std::static_pointer_cast<DemodulatorThreadPostInputQueue>(getInputQueue("IQDataInput"));

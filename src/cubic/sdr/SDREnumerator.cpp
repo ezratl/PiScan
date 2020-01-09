@@ -12,6 +12,9 @@
 #endif
 
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define SDRENUM_THREAD_NAME "SDR Enumerator"
 
 
 std::vector<std::string> SDREnumerator::factories;
@@ -322,7 +325,7 @@ std::vector<SDRDeviceInfo *> *SDREnumerator::enumerate_devices(std::string remot
 void SDREnumerator::run() {
 
     //std::cout << "SDR enumerator starting." << std::endl;
-    loguru::set_thread_name("SDR Enumerator");
+    setThreadName(SDRENUM_THREAD_NAME);
     LOG_F(1, "SDR enumerator starting");
     
 

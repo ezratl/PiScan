@@ -13,9 +13,12 @@
 #include "loguru.hpp"
 #include "DebugServer.h"
 #include "SocketServer.h"
+#include "threadname.h"
 
 
 #define QUEUE_SIZE		64
+
+#define SM_THREAD_NAME	"ServerManager"
 
 using namespace piscan;
 
@@ -87,7 +90,7 @@ void ServerManager::disconnectClients(){
 }
 
 void ServerManager::_queueThreadFunc(void){
-	loguru::set_thread_name("ServerManager");
+	setThreadName(SM_THREAD_NAME);
 
 	while(_run){
 		std::unique_lock<std::mutex> lock(_msgMutex);

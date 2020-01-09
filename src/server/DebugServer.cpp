@@ -13,6 +13,9 @@
 #include "constants.h"
 #include "DebugServer.h"
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define DS_THREAD_NAME	"DebugConsole"
 
 using namespace piscan;
 
@@ -36,7 +39,7 @@ void DebugConsole::giveMessage(std::shared_ptr<Message> message){
 }
 
 void DebugConsole::_consoleInputFunc() {
-	loguru::set_thread_name("DebugConsole");
+	setThreadName(DS_THREAD_NAME);
 
 	std::string input = "";
 	std::vector<std::string> tokens(5);

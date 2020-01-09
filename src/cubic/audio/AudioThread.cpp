@@ -12,6 +12,9 @@
 #include <mutex>
 
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define AUDIO_THREAD_NAME   "Audio"
 
 //50 ms
 #define HEARTBEAT_CHECK_PERIOD_MICROS (50 * 1000) 
@@ -499,7 +502,7 @@ void AudioThread::run() {
 #endif
 
     //    std::cout << "Audio thread initializing.." << std::endl;
-    loguru::set_thread_name("Audio Thread");
+    setThreadName(AUDIO_THREAD_NAME);
     LOG_F(INFO, "Audio thread initializing");
 
     if (dac.getDeviceCount() < 1) {

@@ -12,9 +12,12 @@
 #include "ScannerSM.h"
 #include "ListGenerator.h"
 #include "loguru.hpp"
+#include "threadname.h"
 
 
 #define DELAY_TIMEOUT	2.0
+
+#define SCANNER_THREAD_NAME	"Scanner"
 
 using namespace piscan;
 
@@ -81,7 +84,7 @@ void ScannerSM::manualEntry(uint32_t* freq){
 }
 
 void ScannerSM::ST_Load(EventData* data){
-	loguru::set_thread_name("Scanner");
+	setThreadName(SCANNER_THREAD_NAME);
 	DLOG_F(9, "ST_Load");
 	_systems.populateFromFile();
 	LOG_F(INFO, "Loaded %u systems", _systems.size());

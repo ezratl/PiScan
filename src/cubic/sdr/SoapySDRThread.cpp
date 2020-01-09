@@ -11,6 +11,9 @@
 #include <chrono>
 
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define SDR_THREAD_NAME   "SDR Interface"
 
 #define TARGET_DISPLAY_FPS 60
 
@@ -592,7 +595,7 @@ void SDRThread::run() {
 //#endif
 
     //std::cout << "SDR thread starting." << std::endl;
-    loguru::set_thread_name("SDR Thread");
+    setThreadName(SDR_THREAD_NAME);
     LOG_F(INFO, "SDR Thread starting");
     
     SDRDeviceInfo *activeDev = deviceInfo.load();

@@ -10,6 +10,9 @@
 #include <memory>
 
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define SDRPOST_THREAD_NAME "SDR Post Proc"
 
 //50 ms
 #define HEARTBEAT_CHECK_PERIOD_MICROS (50 * 1000) 
@@ -163,7 +166,7 @@ void SDRPostThread::run() {
 #endif
 
     //std::cout << "SDR post-processing thread started.." << std::endl;
-    loguru::set_thread_name("SDR Post Thread");
+    setThreadName(SDRPOST_THREAD_NAME);
     LOG_F(INFO, "SDR Post-processing thread started");
 
     iqDataInQueue = std::static_pointer_cast<SDRThreadIQDataQueue>(getInputQueue("IQDataInput"));
@@ -415,6 +418,7 @@ void SDRPostThread::runDemodChannels(int channelBandwidth) {
 
 void SDRPostThread::initPFBCH() {
     //    std::cout << "Initializing post-process FIR polyphase filterbank channelizer with " << numChannels << " channels." << std::endl;
+	LOG_F(1, "Initializing post-process FIR polyphase filterbank channelizer with %i channels.", numChannels);
     if (channelizer) {
         firpfbch_crcf_destroy(channelizer);
     }
@@ -426,6 +430,7 @@ void SDRPostThread::initPFBCH() {
     demodChannelActive.resize(numChannels+1);
     
     //    std::cout << "Channel bandwidth spacing: " << (chanBw) << std::endl;
+    LOG_F(1, "Channel bandwidth spacing: %lli", chanBw);
 }
 
 void SDRPostThread::runPFBCH(SDRThreadIQData *data_in) {
@@ -472,6 +477,7 @@ void SDRPostThread::runPFBCH(SDRThreadIQData *data_in) {
 
 void SDRPostThread::initPFBCH2() {
     //    std::cout << "Initializing post-process FIR polyphase filterbank channelizer with " << numChannels << " channels." << std::endl;
+	LOG_F(1, "Initializing post-process FIR polyphase filterbank channelizer 2 with %i channels.", numChannels);
     if (channelizer2) {
         firpfbch2_crcf_destroy(channelizer2);
     }
@@ -482,6 +488,7 @@ void SDRPostThread::initPFBCH2() {
     chanCenters.resize(numChannels+1);
     demodChannelActive.resize(numChannels+1);
     //    std::cout << "Channel bandwidth spacing: " << (chanBw) << std::endl;
+    LOG_F(1, "Channel bandwidth spacing: %lli", chanBw);
 }
 
 void SDRPostThread::runPFBCH2(SDRThreadIQData *data_in) {

@@ -7,6 +7,9 @@
 #include <vector>
 
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define DMDWORK_THREAD_NAME "Demod Worker"
 
 //50 ms
 #define HEARTBEAT_CHECK_PERIOD_MICROS (50 * 1000) 
@@ -21,7 +24,7 @@ DemodulatorWorkerThread::~DemodulatorWorkerThread() {
 void DemodulatorWorkerThread::run() {
 
 //    std::cout << "Demodulator worker thread started.." << std::endl;
-    loguru::set_thread_name("Demod WorkerThread");
+    setThreadName(DMDWORK_THREAD_NAME);
     LOG_F(INFO, "Demodulator worker thread started");
     
     commandQueue = std::static_pointer_cast<DemodulatorThreadWorkerCommandQueue>(getInputQueue("WorkerCommandQueue"));

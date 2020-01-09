@@ -16,6 +16,7 @@
 #include "ServerManager.h"
 #include "ScannerSM.h"
 #include "SystemList.h"
+#include "threadname.h"
 
 //enum {
 //	SYSTEM_CONTROL,
@@ -25,6 +26,8 @@
 //	AUDIO_MAN,
 //	CLIENT,
 //};
+
+#define IO_THREAD_NAME	"IO Service"
 
 #define SCANNER_FLAG	0x01
 #define CONNMGR_FLAG	0x02
@@ -79,7 +82,7 @@ private:
 	MessageReceiver* _receivers[MESSAGE_RECEIVERS];
 
 	void _handlerThreadFunc(void){
-		loguru::set_thread_name("MessageManager");
+		setThreadName("MessageManager");
 		LOG_F(2, "MessageManager started");
 
 		while(_run){
@@ -314,7 +317,7 @@ void setDemodulator(DemodInterface* demod) {
 }
 
 void runIO(){
-	loguru::set_thread_name("IO Service");
+	setThreadName(IO_THREAD_NAME);
 	DLOG_F(2, "Starting IO service");
 	io_service.run();
 }
