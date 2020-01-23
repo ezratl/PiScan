@@ -17,8 +17,6 @@
 #include "clientmessage.h"
 #include "synchronize.h"
 
-#define SQUELCH_TRIGGER_HITS	25
-
 namespace piscan {
 
 class ScannerSM: public MessageReceiver, public StateMachine, public Synchronizable {

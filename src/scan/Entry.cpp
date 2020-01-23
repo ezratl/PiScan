@@ -9,6 +9,7 @@
 #include <stddef.h>
 
 #include "Entry.h"
+#include "loguru.hpp"
 
 using namespace piscan;
 
@@ -30,6 +31,25 @@ bool FMChannel::hasSignal(void){
 		return false;
 
 	if(demod->squelchThresholdMet())
+		return true;
+	/*	LOG_F(6, "Signal checking: %lli", this->frequency);
+	for(size_t squelchHits = 0; demod->squelchThresholdMet(); squelchHits++){
+		if(squelchHits == SQUELCH_TRIGGER_HITS) return true;
+		usleep(7000);
+	}*/
+
+	return false;
+}
+
+bool AMChannel::hasSignal(void){
+	assert(demod != nullptr);
+
+	demod->setModem(AM);
+
+	if (!demod->setFrequency(this->frequency))
+		return false;
+
+	if (demod->squelchThresholdMet())
 		return true;
 
 	return false;

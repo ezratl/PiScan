@@ -54,9 +54,10 @@ public:
 	virtual void giveMessage(std::shared_ptr<Message> message) = 0;
 	virtual bool connect() = 0;
 	virtual void disconnect() = 0;
-	virtual void contextUpdate(ScannerContext context) = 0;
-	virtual void contextUpdate(DemodContext context) = 0;
-	virtual void systemMessage(GeneralMessage message) = 0;
+	virtual void contextUpdate(const ScannerContext context) = 0;
+	virtual void contextUpdate(const DemodContext context) = 0;
+	virtual void handleSystemMessage(const GeneralMessage message) = 0;
+	virtual void handleSystemInfo(const SystemInfo info) = 0;
 
 	virtual const std::string identifier() = 0;
 
@@ -113,6 +114,7 @@ protected:
 	int setDemodGain(float level);
 	int getScannerContext();
 	int getDemodContext();
+	int getSystemInfo();
 
 };
 

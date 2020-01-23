@@ -332,51 +332,61 @@ void exit(int code){
 	std::exit(code);
 }
 
-bool stopSystem(){
+bool app::stopSystem(){
 	if(steadyState.load()){
 		return true;
 	}
 	return false;
 }
 
-void startScan(){
+void app::startScan(){
 	scanner.startScan();
 }
 
-void holdScan(std::vector<int> index){
+void app::holdScan(std::vector<int> index){
 	scanner.holdScan(index);
 }
 
-void stopScanner(){
+void app::stopScanner(){
 	scanner.stopScanner();
 }
 
-void manualEntry(uint32_t* freq){
+void app::manualEntry(uint32_t* freq){
 	scanner.manualEntry(freq);
 }
 
-ScannerContext getScannerContext(){
+ScannerContext app::getScannerContext(){
 	return scanner.getCurrentContext();
 }
 
-void setTunerGain(float gain){
+void app::setTunerGain(float gain){
 	demod.setTunerGain(gain);
 }
 
-void setDemodSquelch(float level){
+void app::setDemodSquelch(float level){
 	demod.setSquelch(level);
 }
 
-DemodContext getDemodContext(){
+DemodContext app::getDemodContext(){
 	return DemodContext(demod.getTunerGain(), demod.getSquelch());
 }
 
-void audioMute(bool mute){
+void app::audioMute(bool mute){
 	demod.audioMute(mute);
 }
 
-long long getTunerSampleRate() {
+long long app::getTunerSampleRate() {
 	return demod.getTunerSampleRate();
+}
+
+const SystemInfo app::getSystemInfo(){
+	SystemInfo info = {
+			.version = "debug",
+			.buildNumber = 0,
+			.squelchRange = {-100, 0},
+			.supportedModulations = {"FM", "AM"},
+	};
+	return info;
 }
 
 }

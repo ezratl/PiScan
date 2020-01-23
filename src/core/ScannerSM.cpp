@@ -26,7 +26,6 @@ ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
 }
 
 void ScannerSM::startScan(){
-	_externalHold = false;
 	LOG_F(1, "ExtEvent: startScan");
 	BEGIN_TRANSITION_MAP
 		TRANSITION_MAP_ENTRY(ST_SCAN)
@@ -40,7 +39,7 @@ void ScannerSM::startScan(){
 }
 
 void ScannerSM::holdScan(std::vector<int> index){
-	_externalHold = true;
+	_externalHold.store(true);
 	{
 		std::lock_guard<std::mutex> lock(_holdMutex);
 		_holdIndex = index;
@@ -90,7 +89,7 @@ void ScannerSM::ST_Load(EventData* data){
 	LOG_F(INFO, "Loaded %u systems", _systems.size());
 
 	//_currentSystem = _systems[0];
-	_systems.sortBins(getTunerSampleRate());
+	_systems.sortBins(app::getTunerSampleRate());
 
 	// do not issue event - SM will wait until an event is generated before proceeding
 	//InternalEvent(ST_SCAN);
@@ -103,22 +102,22 @@ void ScannerSM::ST_Load(EventData* data){
 void ScannerSM::ST_Scan(EventData* data){
 	DLOG_F(9, "ST_Scan");
 	if(currentState != lastState){
-		_squelchHits = 0;
+		//_squelchHits = 0;
 		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
 	}
 
 	_enableAudioOut(false);
 	_currentContext.state = ScannerContext::SCAN;
 	_manualMode = false;
+	_externalHold = false;
 
-	if(currentState != lastState)
+	if(currentState != lastState){
 		_broadcastContextUpdate();
+		_currentEntry = _systems.getNextEntry();
+	}
 
 	if (!_squelchHits || (currentState != lastState)) {
-
-		
 		_currentEntry = _systems.getNextEntry();
-
 	}
 
 	if (_currentEntry->hasSignal()) {
@@ -129,7 +128,7 @@ void ScannerSM::ST_Scan(EventData* data){
 		} else {
 			InternalEvent(ST_SCAN);
 		}
-	} else {
+	} else if(!evtSrcExternal){
 		_squelchHits = 0;
 		InternalEvent(ST_SCAN);
 	}
@@ -145,7 +144,7 @@ void ScannerSM::ST_Hold(EventData* data){
 
 	{
 		std::lock_guard < std::mutex > lock(_holdMutex);
-		if (_externalHold && _holdIndex.size() > 0) {
+		if (_externalHold.load() && _holdIndex.size() > 0) {
 			_currentEntry = _systems.getEntryByIndex(_holdIndex);
 			LOG_F(1, "Index hold");
 			_holdIndex.clear();
@@ -164,13 +163,15 @@ void ScannerSM::ST_Hold(EventData* data){
 	if(currentState != lastState || indexHold)
 		_broadcastContextUpdate();
 
+	DLOG_F(6, "Ext hold: %i", _externalHold.load());
+
 	/* start receive if signal active */
 	if (_currentEntry->hasSignal()) {
 		LOG_F(5, "Receiving signal");
 		InternalEvent(ST_RECEIVE);
 	}
 	/* stay in hold if state was triggered externally */
-	else if(_externalHold){
+	else if(_externalHold.load()){
 		InternalEvent(ST_HOLD);
 	}
 	/* check timeout counter if entry has resume delay enabled */
@@ -288,20 +289,7 @@ void ScannerSM::_broadcastContextUpdate() {
 }
 
 void ScannerSM::_enableAudioOut(bool en){
-	/*Message* message;
-	if(en){
-		message = new AudioMessage(SCANNER_SM, AudioMessage::ENABLE_OUTPUT);
-	}
-	else{
-		message = new AudioMessage(SCANNER_SM, AudioMessage::DISABLE_OUTPUT);
-	}
-	_centralQueue.giveMessage(*message);*/
-
-	//TODO temporary
-	//rtl_fm_mute((int)(!en));
-	//auto message = std::make_shared<DemodMessage>(SCANNER_SM, DemodMessage::OPEN_AUDIO, (void*) !en);
-	//_centralQueue.giveMessage(message);
-	piscan::audioMute(en);
+	app::audioMute(en);
 }
 
 void ScannerSM::giveMessage(std::shared_ptr<Message> message) {

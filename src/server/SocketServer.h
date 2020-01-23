@@ -37,9 +37,10 @@ public:
 	void giveMessage(std::shared_ptr<Message> message);
 	bool connect();
 	void disconnect();
-	void contextUpdate(ScannerContext context);
-	void contextUpdate(DemodContext context);
-	void systemMessage(GeneralMessage message);
+	void contextUpdate(const ScannerContext context);
+	void contextUpdate(const DemodContext context);
+	void handleSystemMessage(const GeneralMessage message);
+	void handleSystemInfo(const SystemInfo info);
 
 	tcp::socket& socket() { return _socket; };
 

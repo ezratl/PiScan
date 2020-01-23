@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <boost/property_tree/ptree.hpp>
 
+#include "scandefs.h"
 #include "Entry.h"
 #include "loguru.hpp"
 
@@ -89,10 +90,8 @@ public:
 
 	ptree getPropertyTree();
 protected:
-	std::vector<std::shared_ptr<Entry>> entries;
+	std::vector<EntryPtr> entries;
 };
-
-typedef std::shared_ptr<RadioSystem> RadioSystemPtr;
 
 }
 #endif /* RADIOSYSTEM_H_ */

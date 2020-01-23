@@ -28,9 +28,10 @@ public:
 	bool connect();
 	void disconnect();
 	void giveMessage(std::shared_ptr<Message> message);
-	void contextUpdate(ScannerContext context);
-	void contextUpdate(DemodContext context);
-	void systemMessage(GeneralMessage message);
+	void contextUpdate(const ScannerContext context);
+	void contextUpdate(const DemodContext context);
+	void handleSystemMessage(const GeneralMessage message);
+	void handleSystemInfo(const SystemInfo info);
 
 	const std::string identifier() {
 		return "Debug Console";

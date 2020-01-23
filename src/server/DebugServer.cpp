@@ -9,6 +9,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 
 #include "constants.h"
 #include "DebugServer.h"
@@ -47,6 +48,7 @@ void DebugConsole::_consoleInputFunc() {
 	std::string intermediate;
 	std::cerr << "\nConsole connected\n";
 
+	getSystemInfo();
 	getScannerContext();
 	getDemodContext();
 
@@ -150,9 +152,15 @@ void DebugConsole::contextUpdate(ScannerContext context){
 	/*});*/
 }
 
-void DebugConsole::systemMessage(GeneralMessage message){
+void DebugConsole::handleSystemMessage(GeneralMessage message){
+	static std::map<GeneralMessage::MessageType, std::string> messageLabels = {
+			{GeneralMessage::INFO, "info"},
+			{GeneralMessage::ERROR, "error"},
+			{GeneralMessage::WARNING, "warning"}
+	};
+	std::cerr << messageLabels[message.type];
 	/*std::thread([message]{*/
-		std::cerr << "\rSystem message: ";
+		/*std::cerr << "\rSystem message: ";
 		switch(message.type){
 		case GeneralMessage::INFO:
 			std::cerr << "info";
@@ -163,18 +171,29 @@ void DebugConsole::systemMessage(GeneralMessage message){
 		case GeneralMessage::ERROR:
 			std::cerr << "error";
 			break;
-		}
+		}*/
 		std::cerr << "\n" << message.content;
 	/*});*/
 }
 
 void DebugConsole::contextUpdate(DemodContext context) {
 	std::cerr << "\rGain: ";
-	if(context.gain >= 0)
+	/*if(context.gain >= 0)
 		std::cerr << context.gain;
 	else
-		std::cerr << "auto";
+		std::cerr << "auto";*/
+	std::cerr << ((context.gain >= 0) ? std::to_string(context.gain) : "auto");
 	std::cerr << "\nSquelch: " << context.squelch << std::endl;
+}
+
+void DebugConsole::handleSystemInfo(const SystemInfo info){
+	std::cerr << "System version: " << info.version << "\n";
+	std::cerr << "Build number: " << info.buildNumber << "\n";
+	std::cerr << "Squelch range: [" << info.squelchRange.first << ", " << info.squelchRange.second << "\n";
+	std::cerr << "Modulatons:\n";
+	for(auto mod = info.supportedModulations.begin(); mod != info.supportedModulations.end(); mod++){
+		std::cerr << "\t" << *mod << "\n";
+	}
 }
 
 void DebugServer::start(){

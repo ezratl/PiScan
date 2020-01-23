@@ -97,7 +97,7 @@ void SentinelFile::_newAnalogEntry(std::vector<std::string>& tokens){
 	std::string& lockout = tokens[C_FREQ_LO_POS];
 	std::string& freq = tokens[C_FREQ_FREQ_POS];
 	std::string& mode = tokens[C_FREQ_MODE_POS];
-	std::string& tone = tokens[C_FREQ_TONE_POS];
+	//std::string& tone = tokens[C_FREQ_TONE_POS];
 	std::string& delay = tokens[C_FREQ_DELAY_POS];
 
 	LOG_F(4, "Entry: %s - Freq: %s", tag.c_str(), freq.c_str());

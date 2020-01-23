@@ -92,7 +92,7 @@ bool SystemList::writeToFile(){
 }
 
 EntryPtr SystemList::getEntryByIndex(std::vector<int> index){
-	if(index.size() < 2 || index[0] < 0 || index[1] < 0 || index[0] >= _systems.size() || index[1] >= _systems[index[0]]->size())
+	if(index.size() < 2 || index[0] < 0 || index[1] < 0 || index[0] >= (long long)_systems.size() || index[1] >= (long long)_systems[index[0]]->size())
 		return getNextEntry();
 
 	return _systems[index[0]]->operator [](index[1]);

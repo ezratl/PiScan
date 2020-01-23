@@ -171,7 +171,7 @@ bool SessionMgr::loadSession(std::string fileName) {
             //            std::cout << "\tCenter Frequency: " << center_freq << std::endl;
         }
 
-        if (header->hasAnother("view_state")) {
+        /*if (header->hasAnother("view_state")) {
             DataNode *viewState = header->getNext("view_state");
 
             if (viewState->hasAnother("center_freq") && viewState->hasAnother("bandwidth")) {
@@ -185,7 +185,7 @@ bool SessionMgr::loadSession(std::string fileName) {
             //waterfallCanvas->disableView();
             //spectrumCanvas->setCenterFrequency(wxGetApp().getFrequency());
             //waterfallCanvas->setCenterFrequency(wxGetApp().getFrequency());
-        }
+        }*/
 
         if (loadedActiveDemod || newDemod) {
             wxGetApp().getDemodMgr().setActiveDemodulator(loadedActiveDemod?loadedActiveDemod:newDemod, false);

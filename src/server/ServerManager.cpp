@@ -305,7 +305,7 @@ void ServerManager::_broadcastGeneralMessage(unsigned char group, GeneralMessage
 		if (_connections[i] != nullptr) {
 			Connection* con = _connections[i].get();
 			if (con->_level >= connectionLevel)
-				con->systemMessage(GeneralMessage(message));
+				con->handleSystemMessage(GeneralMessage(message));
 		}
 	}
 

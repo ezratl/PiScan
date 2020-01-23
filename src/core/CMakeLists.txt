@@ -7,4 +7,5 @@ add_library(core
 	ScannerSM.h
 	StateMachine.cpp
 	StateMachine.h
+	clientmessage.cpp
 	)

@@ -4,13 +4,23 @@
  *  Created on: Mar 12, 2019
  *      Author: ezra
  */
-
-#include <string>
-
 #ifndef CORE_CLIENTMESSAGE_H_
 #define CORE_CLIENTMESSAGE_H_
 
+#include <string>
+#include <vector>
+
+using namespace std;
 namespace piscan {
+
+class Entry;
+
+struct SystemInfo {
+	string version;
+	int buildNumber;
+	pair<const int, const int> squelchRange;
+	vector<string> supportedModulations;
+};
 
 struct ScannerContext {
 	enum ScannerState {
@@ -22,17 +32,12 @@ struct ScannerContext {
 
 	ScannerContext(){};
 
-	ScannerContext(const ScannerContext& copy) :
-			state(copy.state), systemTag(copy.systemTag), entryTag(
-					copy.entryTag), frequency(copy.frequency), modulation(
-					copy.modulation), entryIndex(copy.entryIndex) {
-	};
+	ScannerContext(const ScannerContext& copy);
 
 	ScannerContext(ScannerState state, std::string sysTag, std::string entryTag,
-			unsigned long freq, std::string mod, std::string index) :
-			state(state), systemTag(sysTag), entryTag(entryTag), frequency(
-					freq), modulation(mod), entryIndex(index) {
-	};
+			long long freq, std::string mod, std::string index);
+
+	ScannerContext(ScannerState state, Entry& entry);
 
 	void clearFields(){
 		systemTag.clear();
@@ -45,9 +50,11 @@ struct ScannerContext {
 	ScannerState state = OTHER_STATE;
 	std::string systemTag;
 	std::string entryTag;
-	unsigned long frequency = 0;
+	long long frequency = 0;
 	std::string modulation;
 	std::string entryIndex;
+	int delayMS = 0;
+	
 };
 
 struct GeneralMessage {

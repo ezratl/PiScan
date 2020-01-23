@@ -100,6 +100,7 @@ void Demodulator::start(){
 
 	LOG_F(INFO, "Creating modems");
 
+	/* demodulator utilized by FMChannel-derived entries */
     DemodulatorInstancePtr newDemod = _demodMgr.newThread();
     newDemod->setLabel("NFM");
 	newDemod->setDemodulatorType("NBFM");
@@ -124,8 +125,9 @@ void Demodulator::start(){
 	newDemod->setFrequency(INIT_FREQUENCY);
 	newDemod->run();
 	_demods[FM] = newDemod;
-	LOG_F(INFO, "Added modem FM");
+	LOG_F(INFO, "Added modem FM");*/
 
+	/* demodulator utilized by AMChannel-derived entries */
 	newDemod = _demodMgr.newThread();
 	newDemod->setLabel("AM");
 	newDemod->setDemodulatorType("AM");
@@ -137,7 +139,7 @@ void Demodulator::start(){
 	newDemod->setFrequency(INIT_FREQUENCY);
 	newDemod->run();
 	_demods[AM] = newDemod;
-	LOG_F(INFO, "Added modem AM");*/
+	LOG_F(INFO, "Added modem AM");
 
 	//setModem(NFM);
 	_demodMgr.setActiveDemodulator(_demods[NFM], false);

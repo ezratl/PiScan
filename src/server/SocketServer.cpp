@@ -34,8 +34,8 @@ void SocketConnection::disconnect(){
 	}
 }
 
-void SocketConnection::contextUpdate(ScannerContext context){
-	piscan_pb::ScannerContext* ctx = new piscan_pb::ScannerContext();
+void SocketConnection::contextUpdate(const ScannerContext context){
+	auto ctx = new piscan_pb::ScannerContext();
 	switch(context.state){
 	case ScannerContext::ScannerState::OTHER_STATE:
 		ctx->set_state(piscan_pb::ScannerContext_State_INVAL);
@@ -53,11 +53,15 @@ void SocketConnection::contextUpdate(ScannerContext context){
 		ctx->set_state(piscan_pb::ScannerContext_State_INVAL);
 	}
 
-	ctx->set_freq(context.frequency);
-	ctx->set_systemtag(context.systemTag);
-	ctx->set_entrytag(context.entryTag);
-	ctx->set_modulation(context.modulation);
-	ctx->set_entryindex(context.entryIndex.c_str());
+	auto entryData = new piscan_pb::Entry();
+
+	entryData->set_freq(context.frequency);
+	entryData->set_systemtag(context.systemTag);
+	entryData->set_entrytag(context.entryTag);
+	entryData->set_modulation(context.modulation);
+	entryData->set_entryindex(context.entryIndex.c_str());
+
+	ctx->set_allocated_entrydata(entryData);
 
 	piscan_pb::ServerToClient msg;
 	msg.set_type(piscan_pb::ServerToClient_Type_SCANNER_CONTEXT);
@@ -65,9 +69,10 @@ void SocketConnection::contextUpdate(ScannerContext context){
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
+	delete ctx;
 }
 
-void SocketConnection::contextUpdate(DemodContext context){
+void SocketConnection::contextUpdate(const DemodContext context){
 	piscan_pb::DemodContext* ctx = new piscan_pb::DemodContext();
 
 	ctx->set_gain(context.gain);
@@ -79,10 +84,11 @@ void SocketConnection::contextUpdate(DemodContext context){
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
+	delete ctx;
 }
 
-void SocketConnection::systemMessage(GeneralMessage message) {
-	piscan_pb::GeneralMessage* ctx = new piscan_pb::GeneralMessage();
+void SocketConnection::handleSystemMessage(const GeneralMessage message) {
+	auto ctx = new piscan_pb::GeneralMessage();
 
 	switch(message.type){
 	case GeneralMessage::INFO:
@@ -107,6 +113,25 @@ void SocketConnection::systemMessage(GeneralMessage message) {
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
+	delete ctx;
+}
+
+void SocketConnection::handleSystemInfo(const SystemInfo info){
+	auto ctx = new piscan_pb::SystemInfo();
+
+	ctx->set_version(info.version);
+	ctx->set_build(info.buildNumber);
+	ctx->set_squelchscalemin(info.squelchRange.first);
+	ctx->set_squelchscalemax(info.squelchRange.second);
+	*ctx->mutable_supportedmodulations() = {info.supportedModulations.begin(), info.supportedModulations.end()};
+
+	piscan_pb::ServerToClient msg;
+	msg.set_type(piscan_pb::ServerToClient_Type_REQUEST_RESPONSE);
+	msg.set_allocated_systeminfo(ctx);
+
+	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
+	_startWrite(_writeBuffer, msg.ByteSize());
+	delete ctx;
 }
 
 void SocketConnection::_startRead() {
@@ -167,7 +192,13 @@ void SocketConnection::_handleWrite(const boost::system::error_code& err,
 }
 
 void SocketConnection::_handleGeneralRequest(const piscan_pb::GeneralRequest& rq) {
-	switch(rq.type()){
+	static std::map<piscan_pb::GeneralRequest_RequestType, std::function<int(void)>> rqHandlers = {
+			{piscan_pb::GeneralRequest_RequestType_SCANNER_CONTEXT, [this]{return getScannerContext();}},
+			{piscan_pb::GeneralRequest_RequestType_DEMOD_CONTEXT, [this]{return getDemodContext();}},
+			{piscan_pb::GeneralRequest_RequestType_SYSTEM_INFO, [this]{return getSystemInfo();}},
+	};
+
+	/*switch(rq.type()){
 	case piscan_pb::GeneralRequest_RequestType_SCANNER_CONTEXT:
 		getScannerContext();
 		break;
@@ -175,36 +206,30 @@ void SocketConnection::_handleGeneralRequest(const piscan_pb::GeneralRequest& rq
 		getDemodContext();
 		break;
 	default:
-		LOG_F(WARNING, "Invalid GeneralRequest from %s", _socket.local_endpoint().address().to_string().c_str());
+		LOG_F(WARNING, "Invalid GeneralRequest from %s", _socket.remote_endpoint().address().to_string().c_str());
 		break;
-	}
+	}*/
+
+	rqHandlers[rq.type()]();
 }
 
 void SocketConnection::_handleScanStateRequest(
 		const piscan_pb::ScannerStateRequest& rq) {
-	//ScannerFunction func;
-	uint32_t freq = 0;
 
 	switch(rq.state()){
 	case piscan_pb::ScannerStateRequest_NewState_SCAN:
-		//func = SCAN;
 		scanStart();
 		break;
 	case piscan_pb::ScannerStateRequest_NewState_HOLD:
-		//func = HOLD;
 		scanHold();
 		break;
 	case piscan_pb::ScannerStateRequest_NewState_MANUAL:
-		//func = MANUAL;
-		//freq = static_cast<uint32_t>(rq.manfreq());
 		scanManualEntry(rq.manfreq());
 		break;
 	default:
 		LOG_F(WARNING, "Invalid ScannerStateRequest from %s", _socket.local_endpoint().address().to_string().c_str());
 		break;
 	}
-
-	//scannerFunction(func, freq);
 }
 
 void SocketConnection::_handleDemodRequest(const piscan_pb::DemodRequest& rq) {
