@@ -109,7 +109,7 @@ protected:
 	int scanStart();
 	int scanHold();
 	int scanHoldEntry(std::vector<int> index);
-	int scanManualEntry(long freq, Modulation mode = FM);
+	int scanManualEntry(long freq, std::string mode = "FM");
 	int setDemodSquelch(int level);
 	int setDemodGain(float level);
 	int getScannerContext();

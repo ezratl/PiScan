@@ -54,6 +54,7 @@ struct ScannerContext {
 	std::string modulation;
 	std::string entryIndex;
 	int delayMS = 0;
+	bool lockout = false;
 	
 };
 

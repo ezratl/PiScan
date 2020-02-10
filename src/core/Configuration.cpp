@@ -36,7 +36,7 @@ Configuration::~Configuration() {
 	// TODO Auto-generated destructor stub
 }
 
-void Configuration::setWorkingPath(std::string path){
+void Configuration::setWorkingDirectory(std::string path){
 	filesystem::path configPath(path);
 	if(!filesystem::exists(configPath))
 		if(!filesystem::create_directory(configPath)){
@@ -49,7 +49,7 @@ void Configuration::setWorkingPath(std::string path){
 	LOG_F(INFO, "Config directory: %s", path.c_str());
 }
 
-std::string Configuration::getWorkingPath() {
+std::string Configuration::getWorkingDirectory() {
 	return _configPath;
 }
 
@@ -139,17 +139,22 @@ void Configuration::saveState(){
 	write_json(path.c_str(), pt);
 }
 
-std::string Configuration::getLogfilePath(){
+std::string Configuration::getLogDirectory(){
 	filesystem::path path(_configPath);
 	path += filesystem::path::preferred_separator;
 	path += LOG_FOLDER;
 
-	if(!filesystem::exists(path)){
-		if(!filesystem::create_directory(path)){
+	if (!filesystem::exists(path)) {
+		if (!filesystem::create_directory(path)) {
 			LOG_F(ERROR, "Error creating logfile directory");
 			path = DATABASE_PATH;
 		}
 	}
+	return path;
+}
+
+std::string Configuration::getDatedLogPath(){
+	filesystem::path path(getLogDirectory());
 
 	auto t = std::time(nullptr);
 	auto tm = *std::localtime(&t);
@@ -161,6 +166,13 @@ std::string Configuration::getLogfilePath(){
 	path += filesystem::path::preferred_separator;
 	path += str;
 	path += LOGFILE_EXT;
-	return path.string();
+	return path;
+}
+
+std::string Configuration::getLatestLogPath(){
+	filesystem::path path(getLogDirectory());
+	path += filesystem::path::preferred_separator;
+	path += LOG_PATH;
+	return path;
 }
 

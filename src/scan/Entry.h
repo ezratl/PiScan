@@ -8,6 +8,7 @@
 #ifndef SCAN_ENTRY_H_
 #define SCAN_ENTRY_H_
 
+#include <exception>
 #include <boost/property_tree/ptree.hpp>
 
 #include "scandefs.h"
@@ -54,8 +55,9 @@ public:
 
 	std::string	tag() { return _tag; }
 	virtual std::string	modulation() = 0;
-	bool	isLockedOut() { return _lockout != LOCKOUT_NONE; }
-	int	delay() { return _scanDelayMS; }
+	bool	isLockedOut() { return _lockout.load() != LOCKOUT_NONE; }
+	double	delay() { return _scanDelayMS/1000.0; }
+	int		delayMS() { return _scanDelayMS; }
 	void	lockout(bool val = true) {
 		//_lockedOut = val;
 		_lockout = (val) ? LOCKOUT_PERSIST : LOCKOUT_NONE;
@@ -76,7 +78,7 @@ public:
 
 private:
 	std::string	_tag;
-	LockoutType	_lockout;
+	std::atomic<LockoutType>	_lockout;
 	int	_scanDelayMS;
 	size_t _sysIndex = 0;
 	size_t _entryIndex = 0;
@@ -135,31 +137,45 @@ public:
 /* for analog FM channels utilizing CTCSS tones */
 class PLChannel: public FMChannel {
 public:
-	PLChannel(long long freq, float tn, std::string tag, bool lo, int del) :
-			FMChannel(freq, tag, lo, del), tone(tn) {
+	PLChannel(long long freq, std::string tn, std::string tag, bool lo, int del) :
+			FMChannel(freq, tag, lo, del), s_tone(tn) {
+		try{
+			tone = std::stof(tn);
+		} catch (std::exception& e) {
+			tone = 0;
+		}
 		propertyTree.put(CHAN_TYPE_KEY, PL_CHANNEL_HASH);
 		propertyTree.put(TONE_KEY, tn);
 	}
 	~PLChannel() {};
 
 	//bool hasSignal();
+
+	virtual std::string modulation() {
+		return "PL" + s_tone;
+	}
 protected:
-	const float tone;
+	std::string s_tone;
+	float tone;
 };
 
 /* for analog FM channels uitlizing DCS squelch */
 class DCChannel : public FMChannel {
 public:
-	DCChannel(long long freq, unsigned int tn, std::string tag, bool lo, int del) :
-			FMChannel(freq, tag, lo, del), code(tn) {
+	DCChannel(long long freq, std::string tn, std::string tag, bool lo, int del) :
+			FMChannel(freq, tag, lo, del), s_code(tn) {
 		propertyTree.put(CHAN_TYPE_KEY, DC_CHANNEL_HASH);
 		propertyTree.put(CODE_KEY, tn);
 	}
 	~DCChannel() {};
 
 	//bool hasSignal();
+
+	virtual std::string modulation() {
+		return "DC" + s_code;
+	}
 protected:
-	const unsigned int code;
+	const std::string s_code;
 };
 
 /* for analog AM channels, does not include SSB, DSB or CW modes */

@@ -351,7 +351,7 @@ void app::stopScanner(){
 	scanner.stopScanner();
 }
 
-void app::manualEntry(uint32_t* freq){
+void app::manualEntry(app::ManualEntryData* freq){
 	scanner.manualEntry(freq);
 }
 
@@ -383,10 +383,18 @@ const SystemInfo app::getSystemInfo(){
 	SystemInfo info = {
 			.version = "debug",
 			.buildNumber = 0,
-			.squelchRange = {-100, 0},
+			.squelchRange = {0, 100},
 			.supportedModulations = {"FM", "AM"},
 	};
 	return info;
+}
+
+void app::scannerContextUpdate(ScannerContext ctx){
+	connectionManager.giveMessage(make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new ScannerContext(ctx)));
+}
+
+void app::demodContextUpdate(DemodContext ctx){
+	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, new DemodContext(ctx)));
 }
 
 }
@@ -417,7 +425,7 @@ int main(int argc, char **argv) {
 				break;
 			case 'p':
 				if(optarg)
-					config.setWorkingPath(std::string(optarg));
+					config.setWorkingDirectory(std::string(optarg));
 				break;
 			case 'f':
 				if(optarg)
@@ -433,7 +441,8 @@ int main(int argc, char **argv) {
 	config.loadConfig();
 	config.loadState();
 
-	loguru::add_file(config.getLogfilePath().c_str(), loguru::Truncate, logVerbosity);
+	loguru::add_file(config.getDatedLogPath().c_str(), loguru::Truncate, logVerbosity);
+	loguru::add_file(config.getLatestLogPath().c_str(), loguru::Truncate, logVerbosity);
 
 	messageManager.setReceiver(SYSTEM_CONTROL, &sysControl);
 	messageManager.setReceiver(SCANNER_SM, &scanner);

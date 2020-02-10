@@ -24,7 +24,7 @@ EntryPtr RadioSystem::makeFMChannel(ptree& pt) {
 	std::string tag = pt.get(TAG_KEY, "");
 	long long freq = pt.get(FREQ_KEY, 0);
 	bool lockout = pt.get(LOCKOUT_KEY, false);
-	int delay = pt.get(DELAY_KEY, 0.0);
+	int delay = pt.get(DELAY_KEY, 0);
 	if(freq == 0)
 		return nullptr;
 
@@ -35,7 +35,7 @@ EntryPtr RadioSystem::makeAMChannel(ptree& pt) {
 	std::string tag = pt.get(TAG_KEY, "");
 	long long freq = pt.get(FREQ_KEY, 0);
 	bool lockout = pt.get(LOCKOUT_KEY, false);
-	int delay = pt.get(DELAY_KEY, 0.0);
+	int delay = pt.get(DELAY_KEY, 0);
 	if(freq == 0)
 		return nullptr;
 
@@ -46,11 +46,11 @@ EntryPtr RadioSystem::makePLChannel(ptree& pt) {
 	std::string tag = pt.get(TAG_KEY, "");
 	long long freq = pt.get(FREQ_KEY, 0);
 	bool lockout = pt.get(LOCKOUT_KEY, false);
-	int delay = pt.get(DELAY_KEY, 0.0);
+	int delay = pt.get(DELAY_KEY, 0);
 	if(freq == 0)
 		return nullptr;
 
-	float tone = pt.get(TONE_KEY, 0.0);
+	std::string tone = pt.get(TONE_KEY, "");
 	return std::make_shared<PLChannel>(freq, tone, tag, lockout, delay);
 }
 
@@ -58,11 +58,11 @@ EntryPtr RadioSystem::makeDCChannel(ptree& pt) {
 	std::string tag = pt.get(TAG_KEY, "");
 	long long freq = pt.get(FREQ_KEY, 0);
 	bool lockout = pt.get(LOCKOUT_KEY, false);
-	int delay = pt.get(DELAY_KEY, 0.0);
+	int delay = pt.get(DELAY_KEY, 0);
 	if(freq == 0)
 		return nullptr;
 
-	unsigned int code = pt.get(CODE_KEY, 0);
+	std::string code = pt.get(CODE_KEY, "");
 	return std::make_shared<DCChannel>(freq, code, tag, lockout, delay);
 }
 

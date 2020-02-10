@@ -9,6 +9,7 @@
 #define SERVER_SCANNERSTATEMACHINE_H_
 
 #include <ctime>
+#include <chrono>
 
 #include "StateMachine.h"
 #include "SystemList.h"
@@ -19,6 +20,14 @@
 
 namespace piscan {
 
+using namespace std;
+using namespace std::chrono;
+
+// forward declaration
+namespace app{
+	struct ManualEntryData;
+};
+
 class ScannerSM: public MessageReceiver, public StateMachine, public Synchronizable {
 public:
 	ScannerSM(MessageReceiver& central, SystemList& dataSource);
@@ -27,7 +36,7 @@ public:
 	void startScan();
 	void holdScan(std::vector<int> index = std::vector<int>());
 	void stopScanner();
-	void manualEntry(uint32_t* freq);
+	void manualEntry(app::ManualEntryData* freq);
 	void giveMessage(std::shared_ptr<Message> message);
 
 	ScannerContext getCurrentContext();
@@ -67,17 +76,17 @@ private:
 	//moodycamel::ReaderWriterQueue<Message> _msgQueue;
 	SystemList& _systems;
 	//RadioSystem* _currentSystem;
-	std::shared_ptr<Entry> _currentEntry;
-	std::shared_ptr<Entry> _manualEntry;
+	shared_ptr<Entry> _currentEntry;
+	shared_ptr<Entry> _manualEntry;
 	//size_t _sysCounter = 0, _entryCounter = 0;
 	ScannerContext _currentContext;
-	std::mutex _contextMutex;
+	mutex _contextMutex;
 
-	std::atomic_bool _externalHold;
-	std::atomic_bool _manualMode;
-	std::mutex _holdMutex;
-	std::vector<int> _holdIndex;
-	std::time_t timeoutStart = 0;
+	atomic_bool _externalHold;
+	atomic_bool _manualMode;
+	mutex _holdMutex;
+	vector<int> _holdIndex;
+	time_point<system_clock, milliseconds> timeoutStart;
 
 	int _squelchHits = 0;
 

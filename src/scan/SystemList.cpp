@@ -31,7 +31,7 @@ SystemList::~SystemList() {
 }
 
 void SystemList::populateFromFile(){
-	filesystem::path path(Configuration::getConfig().getWorkingPath());
+	filesystem::path path(Configuration::getConfig().getWorkingDirectory());
 	path += filesystem::path::preferred_separator;
 	path += SYSTEMS_FILE;
 	if(!filesystem::exists(path)){
@@ -58,7 +58,7 @@ void SystemList::populateFromFile(){
 
 		try{
 			system = _makeSystem[sysType](newSystem, size());
-			LOG_F(1, "Added %s system %s", sysType.c_str(), system->tag());
+			LOG_F(1, "Added %s system %s", sysType.c_str(), system->tag().c_str());
 		} catch (std::exception& e) {
 			LOG_F(WARNING, "Unrecognized or unsupported system type: %s", sysType.c_str());
 			continue;
@@ -71,7 +71,7 @@ void SystemList::populateFromFile(){
 }
 
 bool SystemList::writeToFile(){
-	filesystem::path path(Configuration::getConfig().getWorkingPath());
+	filesystem::path path(Configuration::getConfig().getWorkingDirectory());
 	path += filesystem::path::preferred_separator;
 	path += SYSTEMS_FILE;
 
@@ -99,27 +99,39 @@ EntryPtr SystemList::getEntryByIndex(std::vector<int> index){
 }
 
 EntryPtr SystemList::getNextEntry(){
-	if(_entryNum == 0 && _retune){
-		_retune = false;
-		//if(_bins[_binNum]->size() > 1)
-			return std::make_shared<DummyChannel>(_bins[_binNum]->getCenterFreq());
-	}
+	EntryPtr entry;
 
-	auto entry = _bins[_binNum]->at(_entryNum);
+	/* TODO this will run infinitely if everything is locked out */
+	do {
+		if (_entryNum == 0 && _retune) {
+			_retune = false;
+			//if(_bins[_binNum]->size() > 1)
+			for(;_bins[_binNum]->entriesLockedOut();_binNum = (_binNum + 1) % _bins.size());
 
-	_entryNum = (_entryNum + 1) % _bins[_binNum]->size();
+			entry = std::make_shared<DummyChannel>(
+					_bins[_binNum]->getCenterFreq());
+		} else {
+			entry = _bins[_binNum]->at(_entryNum);
 
-	if(_entryNum == 0){
-		_binNum = (_binNum + 1) % _bins.size();
-		_retune = true;
-	}
+			_entryNum = (_entryNum + 1) % _bins[_binNum]->size();
 
+			if (_entryNum == 0) {
+				_binNum = (_binNum + 1) % _bins.size();
+				_retune = true;
+			}
+		}
+	} while (entry->isLockedOut() || _systems[entry->getSysIndex()]->lockedOut());
 	return entry;
 
 }
 
 void SystemList::sortBins(long long bandwidth){
 	LOG_F(1, "Sorting bandwidth chunks...");
+
+	if(this->size() == 0){
+		LOG_F(1, "System list is empty, nothing to sort");
+		return;
+	}
 
 	size_t numEntries = 0;
 	for(size_t i = 0; i < _systems.size(); i++)
@@ -132,7 +144,7 @@ void SystemList::sortBins(long long bandwidth){
 	for(size_t i = 0; i < _systems.size(); i++)
 		for(size_t k = 0; k < _systems[i]->size(); k++){
 			//entries.push_back(_systems[i]->operator [](k));
-			entries[numEntries] = _systems[i]->operator [](k);
+			entries[numEntries] = (*_systems[i])[k];
 			numEntries++;
 		}
 
@@ -150,6 +162,8 @@ void SystemList::sortBins(long long bandwidth){
 		if(entries[i]->freq() < lastFreq)
 			LOG_F(WARNING, "Entries not sorted properly!");
 		lastFreq = entries[i]->freq();
+		if(entries[i]->isLockedOut() || _systems[entries[i]->getSysIndex()]->lockedOut())
+			newBin->lockedEntries++;
 		newBin->push_back(entries[i]);
 	}
 

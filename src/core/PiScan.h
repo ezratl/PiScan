@@ -5,6 +5,15 @@
 #include "clientmessage.h"
 
 namespace piscan::app {
+struct ManualEntryData {
+public:
+	ManualEntryData(ManualEntryData& copy) : freq(copy.freq), modulation(copy.modulation){};
+	ManualEntryData(long long freq, std::string mode): freq(freq), modulation(mode){};
+
+	long long	freq;
+	std::string	modulation;
+};
+
 /* system functions */
 bool stopSystem();
 const SystemInfo getSystemInfo();
@@ -13,7 +22,7 @@ const SystemInfo getSystemInfo();
 void startScan();
 void holdScan(std::vector<int> index = std::vector<int>());
 void stopScanner();
-void manualEntry(uint32_t* freq);
+void manualEntry(ManualEntryData* freq);
 ScannerContext getScannerContext();
 
 /* demod functions */

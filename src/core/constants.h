@@ -13,7 +13,7 @@
 namespace piscan {
 
 #define TUNER_RETUNE_TIME	225000
-#define DEMOD_BUFFER_TIME	7000
+#define DEMOD_BUFFER_TIME	10000
 
 enum ConnectionLevel {
 	RECEIVE_ONLY = 0, VIEWER, FULL_CONTROL,

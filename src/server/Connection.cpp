@@ -93,10 +93,11 @@ int Connection::scanHoldEntry(std::vector<int> index) {
 	return 0;
 }
 
-int Connection::scanManualEntry(long freq, Modulation mode) {
+int Connection::scanManualEntry(long freq, std::string mode) {
 	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_MANUAL };
-	//return issueRequest(params, new uint32_t(freq));
-	app::manualEntry(new uint32_t(freq));
+	//return issueRequest(params, new uint32_t(freq));3
+	auto data = new app::ManualEntryData(freq, mode);
+	app::manualEntry(data);
 	return 0;
 }
 

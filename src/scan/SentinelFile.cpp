@@ -21,6 +21,9 @@
 #define SENTINEL_NFM		"NFM"
 #define SENTINEL_FM			"FM"
 #define SENTINEL_AUTO		"AUTO"
+#define SENTINEL_AM			"AM"
+#define SENTINEL_CSQ		""
+#define SENTINEL_TONE_PRE	"TONE="
 
 #define C_GROUP				"C-Group"
 #define C_GROUP_TAG_POS		1
@@ -93,23 +96,54 @@ void SentinelFile::_newAnalogEntry(std::vector<std::string>& tokens){
 	if(_system == nullptr)
 		return;
 
-	std::string& tag = tokens[C_FREQ_TAG_POS];
-	std::string& lockout = tokens[C_FREQ_LO_POS];
-	std::string& freq = tokens[C_FREQ_FREQ_POS];
-	std::string& mode = tokens[C_FREQ_MODE_POS];
-	//std::string& tone = tokens[C_FREQ_TONE_POS];
-	std::string& delay = tokens[C_FREQ_DELAY_POS];
+	std::string& s_tag = tokens[C_FREQ_TAG_POS];
+	std::string& s_lockout = tokens[C_FREQ_LO_POS];
+	std::string& s_freq = tokens[C_FREQ_FREQ_POS];
+	std::string& s_mode = tokens[C_FREQ_MODE_POS];
+	std::string& s_tone = tokens[C_FREQ_TONE_POS];
+	std::string& s_delay = tokens[C_FREQ_DELAY_POS];
 
-	LOG_F(4, "Entry: %s - Freq: %s", tag.c_str(), freq.c_str());
+	LOG_F(4, "Entry: %s - Freq: %s", s_tag.c_str(), s_freq.c_str());
 
-	if(!mode.compare(SENTINEL_NFM) || !mode.compare(SENTINEL_FM) || !mode.compare(SENTINEL_AUTO)) {
-		auto entry = std::make_shared<FMChannel>(std::stoul(freq), tag,
-				(!lockout.compare(SENTINEL_TRUE)), (delay.compare("0")));
+	long long freq = std::stoll(s_freq);
+	bool lockout = !s_lockout.compare(SENTINEL_TRUE);
+	int delayMS = std::stoi(s_delay) * 1000;
 
-		entry->setSysIndex(_list->size() - 1);
-		entry->setEntryIndex(_system->size());
+	EntryPtr newEntry;
 
-		_system->addEntry(entry);
+	if(!s_mode.compare(SENTINEL_NFM) || !s_mode.compare(SENTINEL_FM) || !s_mode.compare(SENTINEL_AUTO)) {
+		if(!s_tone.compare(SENTINEL_CSQ)){
+			LOG_F(5, "Using CSQ");
+			newEntry = std::make_shared<FMChannel>(freq, s_tag, lockout, delayMS);
+		}
+		else if (!s_tone.substr(0, 5).compare(SENTINEL_TONE_PRE)){
+			std::string tone_coded = s_tone.substr(5);
+			std::string tone = tone_coded.substr(1);
+			LOG_F(5, "Found tone %s", tone_coded.c_str());
+			if(tone_coded.at(0) == 'C'){
+				LOG_F(5, "CTCSS tone %s", tone.c_str());
+				newEntry = std::make_shared<PLChannel>(freq, tone, s_tag, lockout, delayMS);
+			}
+			else if(tone_coded.at(0) == 'D'){
+				LOG_F(5, "DCS tone %s", tone.c_str());
+				newEntry = std::make_shared<DCChannel>(freq, tone, s_tag, lockout, delayMS);
+			}
+			else{
+				LOG_F(5, "Unknown code, default to CSQ");
+				newEntry = std::make_shared<FMChannel>(freq, s_tag, lockout, delayMS);
+			}
+		}
+		
+	}
+	else if(!s_mode.compare(SENTINEL_AM)){
+		newEntry = std::make_shared<AMChannel>(freq, s_tag, lockout, delayMS);
+	}
+
+	if (newEntry)
+	{
+		newEntry->setSysIndex(_list->size() - 1);
+		newEntry->setEntryIndex(_system->size());
+		_system->addEntry(newEntry);
 	}
 }
 
@@ -142,7 +176,7 @@ int main(int argc, char** argv){
 				break;
 			case 'o':
 				if(optarg)
-					config.setWorkingPath(std::string(optarg));
+					config.setWorkingDirectory(std::string(optarg));
 				else
 					usage();
 				break;

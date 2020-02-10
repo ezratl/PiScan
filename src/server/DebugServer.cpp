@@ -99,7 +99,10 @@ void DebugConsole::_consoleInputFunc() {
 				else
 					getDemodContext();
 			} else if (!tokens[0].compare("manual")) {
-				scanManualEntry(std::stof(tokens[1]));
+				if(tokens.size() > 2)
+					scanManualEntry(std::stof(tokens[1]), tokens[2]);
+				else
+					scanManualEntry(std::stof(tokens[1]));
 			}
 			else if (!tokens[0].compare("get")){
 				if(!tokens[1].compare("context"))
@@ -139,12 +142,14 @@ void DebugConsole::contextUpdate(ScannerContext context){
 		case ScannerContext::HOLD:
 			std::cerr << "\rHold: " << context.entryIndex << " | "
 				<< context.systemTag << " | "
-				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz\n";
+				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz | "
+				<< "LO: " << context.lockout << "\n";
 			break;
 		case ScannerContext::RECEIVE:
 			std::cerr << "\rReceive: " << context.entryIndex << " | "
 				<< context.systemTag << " | "
-				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz\n";
+				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz | "
+				<< "LO: " << context.lockout << "\n";
 			break;
 		default:
 			break;

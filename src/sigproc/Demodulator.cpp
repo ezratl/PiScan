@@ -7,6 +7,7 @@
 
 #include <unistd.h>
 
+#include "PiScan.h"
 #include "Demodulator.h"
 #include "loguru.hpp"
 
@@ -29,19 +30,19 @@ void Demodulator::start(){
 
 	std::vector<SDRDeviceInfo*>* devs = _cubic->getDevices();
 
-	CHECK_F(devs->size() > 0);
+	CHECK_F(devs->size() > 0, "No SDR devices are available");
 
 	//TODO config file for this
 	LOG_F(INFO, "Auto-selecting SDR device");
 	size_t i;
 	for(i = 0; i < devs->size();){
-		if(devs->at(i)->getDriver() != "audio")
+		if(devs->at(i)->getDriver() != "audio" && devs->at(i)->isAvailable())
 			break;
 
 		i++;
 	}
 
-	CHECK_F(i < devs->size());
+	CHECK_F(i < devs->size(), "No valid or available devices found");
 
 	auto dev = devs->at(i);
 
@@ -205,7 +206,12 @@ float Demodulator::getDecodedPL() { return 0; }
 unsigned int Demodulator::getDecodedDC() { return 0; }
 
 bool Demodulator::squelchThresholdMet() {
-	return (getSignalLevel() >= _squelchLevel);
+	//return (getSignalLevel() >= _squelchLevel); //dBm comparison
+	//return (getSignalStrength() >= _squelchLevel); //SNR
+	return (std::abs(
+			_demodMgr.getActiveContextModem()->getSignalLevel()
+					- _demodMgr.getActiveContextModem()->getSignalFloor())
+			>= _squelchLevel);
 }
 
 bool Demodulator::setModem(Modulation mode) {
@@ -214,6 +220,7 @@ bool Demodulator::setModem(Modulation mode) {
 
 	_demods[mode]->setActive(true);
 	_demodMgr.setActiveDemodulator(_demods[mode], false);
+	_demods[_currentModem]->setActive(false);
 	_currentModem = mode;
 	return true;
 }
@@ -225,7 +232,11 @@ void Demodulator::setSquelch(float level) {
 }
 
 float Demodulator::getSNR() {
-	return (_demodMgr.getActiveContextModem()->getSignalFloor()/_demodMgr.getActiveContextModem()->getSignalLevel());
+	float level = _demodMgr.getActiveContextModem()->getSignalLevel();
+	float floor = _demodMgr.getActiveContextModem()->getSignalFloor();
+	DRAW_LOG_F(7, "\t\t\tsiglevel %.1f\tfloor %.1f", level, floor);
+	return (100+level)/(100+floor);
+	//return (_demodMgr.getActiveContextModem()->getSignalFloor()/_demodMgr.getActiveContextModem()->getSignalLevel());
 }
 
 int Demodulator::getSignalStrength() {
@@ -233,7 +244,7 @@ int Demodulator::getSignalStrength() {
 	int percent = 100*fractional;
 	if(percent >= 100)
 		return 100;
-
+	DRAW_LOG_F(7, "\t\t\tsigstrength %i", percent);
 	return percent;
 }
 
@@ -293,8 +304,9 @@ void Demodulator::_handleRequest(ClientRequest& request){
 }
 
 void Demodulator::_contextUpdate(){
-	DemodContext* context = new DemodContext(_gain, _squelchLevel);
-	_centralQueue.giveMessage(std::make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, context));
+	//DemodContext* context = new DemodContext(_gain, _squelchLevel);
+	//_centralQueue.giveMessage(std::make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, context));
+	app::demodContextUpdate(DemodContext(_gain, _squelchLevel));
 }
 
 void Demodulator::setTunerGain(float gain){

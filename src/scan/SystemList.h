@@ -49,6 +49,10 @@ private:
 
 		void sort();
 		long getCenterFreq();
+
+		bool entriesLockedOut(){ return (lockedEntries == size()); };
+
+		size_t lockedEntries = 0;
 	};
 
 	ptree _jsonTree;

@@ -14,7 +14,7 @@
 
 #ifndef NDEBUG
 #define DEFAULT_LOGFILE_VERBOSITY	3
-#define LOG_PATH		"log.txt"
+#define LOG_PATH		"latest.log"
 #else
 #define DEFAULT_LOGFILE_VERBOSITY	0
 #define LOG_PATH		"~/piscan.log"
@@ -22,7 +22,7 @@
 
 #define DATABASE_PATH	"../data"
 #define LOG_FOLDER		"logs"
-#define LOGFILE_EXT		".txt"
+#define LOGFILE_EXT		".log"
 
 #define CONFIG_FILE		"config.json"
 #define STATE_FILE		"state.json"
@@ -63,8 +63,8 @@ public:
 
 	static Configuration& getConfig();
 
-	void setWorkingPath(std::string path);
-	std::string getWorkingPath();
+	void setWorkingDirectory(std::string path);
+	std::string getWorkingDirectory();
 	void loadConfig();
 	void loadState();
 	void saveConfig();
@@ -74,7 +74,9 @@ public:
 	SocketServerConfig& getSocketConfig() { return _socketConfig; };
 	DemodState& getDemodState() { return _demodState; };
 
-	std::string getLogfilePath();
+	std::string getLogDirectory();
+	std::string getDatedLogPath();
+	std::string getLatestLogPath();
 
 private:
 	static Configuration* _config;
