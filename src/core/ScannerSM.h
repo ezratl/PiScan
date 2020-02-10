@@ -9,24 +9,37 @@
 #define SERVER_SCANNERSTATEMACHINE_H_
 
 #include <ctime>
+#include <chrono>
 
 #include "StateMachine.h"
 #include "SystemList.h"
 #include "Entry.h"
 #include "messages.h"
 #include "clientmessage.h"
+#include "synchronize.h"
 
+namespace piscan {
 
-class ScannerSM: public MessageReceiver, public StateMachine {
+using namespace std;
+using namespace std::chrono;
+
+// forward declaration
+namespace app{
+	struct ManualEntryData;
+};
+
+class ScannerSM: public MessageReceiver, public StateMachine, public Synchronizable {
 public:
 	ScannerSM(MessageReceiver& central, SystemList& dataSource);
 	~ScannerSM() {};
 
 	void startScan();
-	void holdScan();
+	void holdScan(std::vector<int> index = std::vector<int>());
 	void stopScanner();
-	void manualEntry(uint32_t* freq);
-	void giveMessage(Message& message);
+	void manualEntry(app::ManualEntryData* freq);
+	void giveMessage(std::shared_ptr<Message> message);
+
+	ScannerContext getCurrentContext();
 private:
 	void ST_Load(EventData* data);
 	void ST_Scan(EventData* data);
@@ -62,21 +75,27 @@ private:
 	MessageReceiver& _centralQueue;
 	//moodycamel::ReaderWriterQueue<Message> _msgQueue;
 	SystemList& _systems;
-	RadioSystem* _currentSystem;
-	Entry* _currentEntry;
-	Entry* _manualEntry = nullptr;
-	size_t _sysCounter = 0, _entryCounter = 0;
+	//RadioSystem* _currentSystem;
+	shared_ptr<Entry> _currentEntry;
+	shared_ptr<Entry> _manualEntry;
+	//size_t _sysCounter = 0, _entryCounter = 0;
 	ScannerContext _currentContext;
-	std::mutex _contextMutex;
+	mutex _contextMutex;
 
-	bool _externalHold = false;
-	bool _manualMode = false;
-	std::time_t timeoutStart = 0;
+	atomic_bool _externalHold;
+	atomic_bool _manualMode;
+	mutex _holdMutex;
+	vector<int> _holdIndex;
+	time_point<system_clock, milliseconds> timeoutStart;
+
+	int _squelchHits = 0;
 
 	void _broadcastContextUpdate();
 	void _enableAudioOut(bool en);
 	void _handleRequest(ClientRequest& request);
 
 };
+
+}
 
 #endif /* SERVER_SCANNERSTATEMACHINE_H_ */

@@ -8,14 +8,11 @@
 #include <assert.h>
 #include "StateMachine.h"
 
+using namespace piscan;
+
 StateMachine::StateMachine(int maxStates) :
-    _maxStates(maxStates),
-    currentState(0),
-	lastState(0),
-	evtSrcExternal(false),
-    _eventGenerated(false),
-    _pEventData(NULL)
-{
+		currentState(0), lastState(0), evtSrcExternal(false), _maxStates(
+				maxStates), _eventGenerated(false), _pEventData(NULL) {
 }
 
 void StateMachine::start() {
@@ -45,6 +42,7 @@ void StateMachine::ExternalEvent(unsigned char newState,
     	std::lock_guard<std::mutex> lock(_eventMutex);
         // generate the event and execute the state engine
         InternalEvent(newState, pData);
+        evtSrcExternal = true;
         _cv.notify_one();
     }
 }
@@ -82,6 +80,8 @@ void StateMachine::StateEngine(void)
         const StateStruct* pStateMap = GetStateMap();
         (this->*pStateMap[currentState].pStateFunc)(pDataTemp);
 
+        evtSrcExternal = false;
+
         // if event data was used, then delete it
         if (pDataTemp) {
             delete pDataTemp;
@@ -93,7 +93,9 @@ void StateMachine::StateEngine(void)
         	//lock.unlock();
     }
 
-    // TBD - unlock semaphore here
+    // yield to let waiting threads generate external events
+    lock.unlock();
+    std::this_thread::yield();
 }
 
 void StateMachine::StateThreadFunc(void){

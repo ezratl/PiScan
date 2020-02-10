@@ -9,10 +9,16 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 
 #include "constants.h"
 #include "DebugServer.h"
 #include "loguru.hpp"
+#include "threadname.h"
+
+#define DS_THREAD_NAME	"DebugConsole"
+
+using namespace piscan;
 
 bool DebugConsole::connect(){
 	std::cerr << "\nConnecting...\n";
@@ -29,17 +35,20 @@ void DebugConsole::disconnect(){
 	notifyDisconnected();
 }
 
-void DebugConsole::giveMessage(Message& message){
-	delete &message;
+void DebugConsole::giveMessage(std::shared_ptr<Message> message){
+
 }
 
 void DebugConsole::_consoleInputFunc() {
+	setThreadName(DS_THREAD_NAME);
+
 	std::string input = "";
 	std::vector<std::string> tokens(5);
 	std::stringstream sstream;
 	std::string intermediate;
 	std::cerr << "\nConsole connected\n";
 
+	getSystemInfo();
 	getScannerContext();
 	getDemodContext();
 
@@ -68,9 +77,16 @@ void DebugConsole::_consoleInputFunc() {
 				else
 					getDemodContext();
 			} else if (!tokens[0].compare("scan"))
-				scannerFunction(ScannerFunction::SCAN);
+				scanStart();
 			else if (!tokens[0].compare("hold")) {
-				scannerFunction(ScannerFunction::HOLD);
+				if (tokens.size() > 2) {
+					std::vector<int> entryIndex;
+					for(size_t i = 1; i < tokens.size(); i++)
+						entryIndex.push_back(std::stoi(tokens[i]));
+					scanHoldEntry(entryIndex);
+				}
+				else
+					scanHold();
 			} else if (!tokens[0].compare("gain")) {
 				if (tokens.size() > 1) {
 					int gain = 0;
@@ -83,7 +99,10 @@ void DebugConsole::_consoleInputFunc() {
 				else
 					getDemodContext();
 			} else if (!tokens[0].compare("manual")) {
-				scannerFunction(ScannerFunction::MANUAL, std::stof(tokens[1]));
+				if(tokens.size() > 2)
+					scanManualEntry(std::stof(tokens[1]), tokens[2]);
+				else
+					scanManualEntry(std::stof(tokens[1]));
 			}
 			else if (!tokens[0].compare("get")){
 				if(!tokens[1].compare("context"))
@@ -118,17 +137,19 @@ void DebugConsole::contextUpdate(ScannerContext context){
 	/*std::thread([context]{*/
 		switch(context.state){
 		case ScannerContext::SCAN:
-			std::cerr << "\rScanning: " << context.systemTag << "\n";
+			std::cerr << "\rScanning..." << std::endl;
 			break;
 		case ScannerContext::HOLD:
 			std::cerr << "\rHold: " << context.entryIndex << " | "
 				<< context.systemTag << " | "
-				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz\n";
+				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz | "
+				<< "LO: " << context.lockout << "\n";
 			break;
 		case ScannerContext::RECEIVE:
 			std::cerr << "\rReceive: " << context.entryIndex << " | "
 				<< context.systemTag << " | "
-				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz\n";
+				<< context.entryTag << " | " << (context.frequency / 1E6) << "MHz | "
+				<< "LO: " << context.lockout << "\n";
 			break;
 		default:
 			break;
@@ -136,9 +157,15 @@ void DebugConsole::contextUpdate(ScannerContext context){
 	/*});*/
 }
 
-void DebugConsole::systemMessage(GeneralMessage message){
+void DebugConsole::handleSystemMessage(GeneralMessage message){
+	static std::map<GeneralMessage::MessageType, std::string> messageLabels = {
+			{GeneralMessage::INFO, "info"},
+			{GeneralMessage::ERROR, "error"},
+			{GeneralMessage::WARNING, "warning"}
+	};
+	std::cerr << messageLabels[message.type];
 	/*std::thread([message]{*/
-		std::cerr << "\rSystem message: ";
+		/*std::cerr << "\rSystem message: ";
 		switch(message.type){
 		case GeneralMessage::INFO:
 			std::cerr << "info";
@@ -149,22 +176,33 @@ void DebugConsole::systemMessage(GeneralMessage message){
 		case GeneralMessage::ERROR:
 			std::cerr << "error";
 			break;
-		}
+		}*/
 		std::cerr << "\n" << message.content;
 	/*});*/
 }
 
 void DebugConsole::contextUpdate(DemodContext context) {
 	std::cerr << "\rGain: ";
-	if(context.gain >= 0)
+	/*if(context.gain >= 0)
 		std::cerr << context.gain;
 	else
-		std::cerr << "auto";
+		std::cerr << "auto";*/
+	std::cerr << ((context.gain >= 0) ? std::to_string(context.gain) : "auto");
 	std::cerr << "\nSquelch: " << context.squelch << std::endl;
 }
 
+void DebugConsole::handleSystemInfo(const SystemInfo info){
+	std::cerr << "System version: " << info.version << "\n";
+	std::cerr << "Build number: " << info.buildNumber << "\n";
+	std::cerr << "Squelch range: [" << info.squelchRange.first << ", " << info.squelchRange.second << "\n";
+	std::cerr << "Modulatons:\n";
+	for(auto mod = info.supportedModulations.begin(); mod != info.supportedModulations.end(); mod++){
+		std::cerr << "\t" << *mod << "\n";
+	}
+}
+
 void DebugServer::start(){
-	this->_connection = new DebugConsole();
+	//this->_connection(new DebugConsole());
 	this->_host.requestConnection(_connection);
 	if(_connection == nullptr)
 		DLOG_F(WARNING, "Debug connection failed");
@@ -175,7 +213,7 @@ void DebugServer::stop(){
 		_connection->disconnect();
 }
 
-void DebugServer::giveMessage(Message& message){
+void DebugServer::giveMessage(std::shared_ptr<Message> message){
 	delete &message;
 }
 

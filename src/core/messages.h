@@ -15,6 +15,8 @@
 
 #define MESSAGE_RECEIVERS	5
 
+namespace piscan {
+
 enum {
 	SYSTEM_CONTROL = 0,
 	SCANNER_SM,
@@ -85,6 +87,7 @@ struct DemodMessage : public Message {
 		CLIENT_REQUEST = 0,
 		SET_SQUELCH,
 		SET_GAIN,
+		OPEN_AUDIO,
 
 		STOP = 0xFF
 	};
@@ -126,7 +129,7 @@ struct ServerMessage : public Message {
 class MessageReceiver {
 public:
 	virtual ~MessageReceiver() {};
-	virtual void giveMessage(Message& msg) = 0;
+	virtual void giveMessage(std::shared_ptr<Message> message) = 0;
 };
-
+}
 #endif /* MESSAGES_H_ */

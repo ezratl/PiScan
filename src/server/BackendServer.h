@@ -11,6 +11,8 @@
 #include "messages.h"
 #include "connection.h"
 
+namespace piscan {
+
 class BackendServer : public MessageReceiver {
 public:
 	BackendServer(ServerInterface& host) : _host(host) {}
@@ -22,5 +24,5 @@ public:
 protected:
 	ServerInterface& _host;
 };
-
+}
 #endif /* BACKENDSERVER_H_ */

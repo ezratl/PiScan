@@ -8,17 +8,12 @@
 #ifndef CORE_CONSTANTS_H_
 #define CORE_CONSTANTS_H_
 
-#ifndef NDEBUG
-#define LOG_PATH	"log.txt"
-#define CONFIG_PATH	"piscan.config"
-#else
-#define LOG_PATH	"~/piscan.log"
-#define CONFIG_PATH	"~/piscan.config"
-#endif
-
-#define DATABASE_PATH	"../data"
-
 #define AUTO_GAIN	-10
+
+namespace piscan {
+
+#define TUNER_RETUNE_TIME	225000
+#define DEMOD_BUFFER_TIME	10000
 
 enum ConnectionLevel {
 	RECEIVE_ONLY = 0, VIEWER, FULL_CONTROL,
@@ -61,4 +56,8 @@ enum {
 	DEMOD_CONTEXT,
 };
 
+
+void terminate();
+
+}
 #endif /* CORE_CONSTANTS_H_ */
