@@ -76,6 +76,8 @@ private:
 	void _broadcastGeneralMessage(unsigned char group, GeneralMessage& message);
 	std::shared_ptr<Message> _makeContextRequest(ClientRequest* rq);
 
+	void _broadcastSignalLevelUpdate(int level);
+
 };
 }
 #endif /* SERVER_SERVERMANAGER_H_ */

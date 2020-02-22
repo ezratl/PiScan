@@ -134,6 +134,11 @@ void SocketConnection::handleSystemInfo(const SystemInfo info){
 	delete ctx;
 }
 
+void SocketConnection::handleSignalLevel(const int level){
+	//TODO
+	(void) level;
+}
+
 void SocketConnection::_startRead() {
 	_socket.async_read_some(boost::asio::buffer(_readBuffer, READ_BUFFER_LENGTH),
 			boost::bind(&SocketConnection::_handleRead, shared_from_this(),

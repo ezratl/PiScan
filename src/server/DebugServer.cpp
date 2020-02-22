@@ -201,6 +201,10 @@ void DebugConsole::handleSystemInfo(const SystemInfo info){
 	}
 }
 
+void DebugConsole::handleSignalLevel(const int level){
+	std::cerr << "\r" << "Signal: " << level << "\t\t\t\t";
+}
+
 void DebugServer::start(){
 	//this->_connection(new DebugConsole());
 	this->_host.requestConnection(_connection);

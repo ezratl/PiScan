@@ -170,7 +170,7 @@ void ScannerSM::ST_Hold(EventData* data){
 	if(currentState != lastState || indexHold)
 		_broadcastContextUpdate();
 
-	DLOG_F(6, "Ext hold: %i", _externalHold.load());
+	DLOG_F(8, "Ext hold: %i", _externalHold.load());
 
 	/* start receive if signal active */
 	if (_currentEntry->hasSignal()) {
@@ -320,7 +320,7 @@ void ScannerSM::_broadcastContextUpdate() {
 }
 
 void ScannerSM::_enableAudioOut(bool en){
-	app::audioMute(en);
+	app::squelchBreak(en);
 }
 
 void ScannerSM::giveMessage(shared_ptr<Message> message) {

@@ -58,6 +58,7 @@ public:
 	virtual void contextUpdate(const DemodContext context) = 0;
 	virtual void handleSystemMessage(const GeneralMessage message) = 0;
 	virtual void handleSystemInfo(const SystemInfo info) = 0;
+	virtual void handleSignalLevel(const int level) = 0;
 
 	virtual const std::string identifier() = 0;
 

@@ -41,6 +41,7 @@ public:
 	void contextUpdate(const DemodContext context);
 	void handleSystemMessage(const GeneralMessage message);
 	void handleSystemInfo(const SystemInfo info);
+	void handleSignalLevel(const int level);
 
 	tcp::socket& socket() { return _socket; };
 

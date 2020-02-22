@@ -371,8 +371,8 @@ DemodContext app::getDemodContext(){
 	return DemodContext(demod.getTunerGain(), demod.getSquelch());
 }
 
-void app::audioMute(bool mute){
-	demod.audioMute(mute);
+void app::squelchBreak(bool mute){
+	demod.squelchBreak(mute);
 }
 
 long long app::getTunerSampleRate() {
@@ -395,6 +395,10 @@ void app::scannerContextUpdate(ScannerContext ctx){
 
 void app::demodContextUpdate(DemodContext ctx){
 	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, new DemodContext(ctx)));
+}
+
+void app::signalLevelUpdate(int level){
+	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::SIGNAL_LEVEL, new int(level)));
 }
 
 }

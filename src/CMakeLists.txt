@@ -87,7 +87,8 @@ include_directories(
 	external 
 	scan 
 	server 
-	sigproc 
+	sigproc
+	util 
 	external/PiScan-protobuf 
 	external/loguru
 	external/tinyxml

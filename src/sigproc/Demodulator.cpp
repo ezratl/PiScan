@@ -6,6 +6,7 @@
  */
 
 #include <unistd.h>
+#include <functional>
 
 #include "PiScan.h"
 #include "Demodulator.h"
@@ -14,6 +15,7 @@
 #define DEFAULT_SDR_SAMPLE_RATE	2048000
 #define INIT_FREQUENCY			100000000
 #define NUM_RATES_DEFAULT	4
+#define SIGLEVEL_REFRESH_INTERVAL	250 // milliseconds
 
 using namespace piscan;
 
@@ -144,6 +146,14 @@ void Demodulator::start(){
 
 	//setModem(NFM);
 	_demodMgr.setActiveDemodulator(_demods[NFM], false);
+
+	//create signal level refresh timer
+	std::function<void()> func([this](){
+		int level = getSignalStrength();
+		LOG_F(7, "Signal strength %i", level);
+		app::signalLevelUpdate(level);
+	});
+	_sigLevelRefresher.create(SIGLEVEL_REFRESH_INTERVAL, func);
 
 	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_READY);
 	//_centralQueue.giveMessage(message);
@@ -334,7 +344,10 @@ float Demodulator::getSquelch(){
 	return _squelchLevel;
 }
 
-void Demodulator::audioMute(bool mute){
+void Demodulator::squelchBreak(bool mute){
+	//mute = !mute;
+	mute ? _sigLevelRefresher.start() : _sigLevelRefresher.stop();
+
 	_demodMgr.getCurrentModem()->setMuted(!mute);
 }
 

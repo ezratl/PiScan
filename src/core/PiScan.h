@@ -29,10 +29,11 @@ ScannerContext getScannerContext();
 void setTunerGain(float gain);
 void setDemodSquelch(float level);
 DemodContext getDemodContext();
-void audioMute(bool mute = true);
+void squelchBreak(bool mute = true);
 long long getTunerSampleRate();
 
 /* server functions */
 void scannerContextUpdate(ScannerContext ctx);
 void demodContextUpdate(DemodContext ctx);
+void signalLevelUpdate(int level);
 }
