@@ -15,7 +15,7 @@
 #include "loguru.hpp"
 #include "threadname.h"
 
-#define DMDPRE_THREAD_NAME  "Demod Pre Proc"
+#define DMDPRE_THREAD_NAME  "Pre Proc"
 
 //50 ms
 #define HEARTBEAT_CHECK_PERIOD_MICROS (50 * 1000) 
@@ -67,7 +67,10 @@ void DemodulatorPreThread::run() {
 #endif
 
     //std::cout << "Demodulator preprocessor thread started.." << std::endl;
-    setThreadName(DMDPRE_THREAD_NAME);
+    {
+    	std::string tname = newDemodType + " " + DMDPRE_THREAD_NAME;
+    	setThreadName(tname.c_str());
+    }
     LOG_F(INFO, "Demodulator prepocessing thread started");
 
     ReBuffer<DemodulatorThreadPostIQData> buffers("DemodulatorPreThreadBuffers");

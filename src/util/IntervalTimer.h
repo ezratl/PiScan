@@ -85,7 +85,6 @@ public:
 				}
 			}
 		});
-		_timerThread.detach();
 
 	}
 
@@ -111,9 +110,13 @@ private:
 	inline void destroy(){
 		//std::cout << "\tdestroy timer\n";
 		_execute = false;
-		unique_lock<mutex> lock(_mtx);
-		_cv.notify_all();
-		stop();
+		if(_runTimer.load())
+			stop();
+		else{
+			unique_lock<mutex> lock(_mtx);
+			_cv.notify_all();
+		}
+		_timerThread.join();
 	}
 
 private:

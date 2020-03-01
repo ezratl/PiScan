@@ -153,7 +153,8 @@ void Demodulator::start(){
 		LOG_F(7, "Signal strength %i", level);
 		app::signalLevelUpdate(level);
 	});
-	_sigLevelRefresher.create(SIGLEVEL_REFRESH_INTERVAL, func);
+	_sigLevelRefresher = new IntervalTimer();
+	_sigLevelRefresher->create(SIGLEVEL_REFRESH_INTERVAL, func);
 
 	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_READY);
 	//_centralQueue.giveMessage(message);
@@ -168,6 +169,9 @@ void Demodulator::stop(){
 	DemodState& state = Configuration::getConfig().getDemodState();
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
+
+	_sigLevelRefresher->stop();
+	delete _sigLevelRefresher;
 
 	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_STOPPED);
 	//_centralQueue.giveMessage(message);
@@ -216,12 +220,12 @@ float Demodulator::getDecodedPL() { return 0; }
 unsigned int Demodulator::getDecodedDC() { return 0; }
 
 bool Demodulator::squelchThresholdMet() {
-	//return (getSignalLevel() >= _squelchLevel); //dBm comparison
+	return (getSignalLevel() >= _squelchLevel); //dBm comparison
 	//return (getSignalStrength() >= _squelchLevel); //SNR
-	return (std::abs(
+	/*return (std::abs(
 			_demodMgr.getActiveContextModem()->getSignalLevel()
 					- _demodMgr.getActiveContextModem()->getSignalFloor())
-			>= _squelchLevel);
+			>= _squelchLevel);*/
 }
 
 bool Demodulator::setModem(Modulation mode) {
@@ -346,7 +350,7 @@ float Demodulator::getSquelch(){
 
 void Demodulator::squelchBreak(bool mute){
 	//mute = !mute;
-	mute ? _sigLevelRefresher.start() : _sigLevelRefresher.stop();
+	mute ? _sigLevelRefresher->start() : _sigLevelRefresher->stop();
 
 	_demodMgr.getCurrentModem()->setMuted(!mute);
 }

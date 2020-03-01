@@ -137,6 +137,16 @@ void SocketConnection::handleSystemInfo(const SystemInfo info){
 void SocketConnection::handleSignalLevel(const int level){
 	//TODO
 	(void) level;
+	auto ctx = new piscan_pb::SignalLevel();
+	ctx->set_level(level);
+
+	piscan_pb::ServerToClient msg;
+	msg.set_type(piscan_pb::ServerToClient_Type_SIGNAL_LEVEL);
+	msg.set_allocated_signallevel(ctx);
+
+	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
+	_startWrite(_writeBuffer, msg.ByteSize());
+	delete ctx;
 }
 
 void SocketConnection::_startRead() {
