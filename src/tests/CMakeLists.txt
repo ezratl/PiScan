@@ -12,5 +12,5 @@ else (DETACH_KERNEL_DRIVER)
     message (STATUS "Building with kernel driver detaching disabled, use -DDETACH_KERNEL_DRIVER=ON to enable")
 endif (DETACH_KERNEL_DRIVER)
 
-target_link_libraries(testclient server external pthread boost_system protobuf dl)
+target_link_libraries(testclient core server proto loguru pthread boost_system protobuf dl)
 target_link_libraries(test_utils pthread)

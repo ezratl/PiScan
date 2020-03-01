@@ -8,6 +8,12 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(piScan_backend piScan_backend.cpp)
 
+execute_process(
+	COMMAND protoc -I=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf --cpp_out=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf context.proto
+	COMMAND protoc -I=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf --cpp_out=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf messages.proto
+	COMMAND protoc -I=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf --cpp_out=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf request.proto
+)
+
 MACRO(use_included_rtaudio)
     SET (cubicsdr_sources
         ${cubicsdr_sources}
@@ -114,9 +120,11 @@ include_directories(${SOAPY_SDR_INCLUDE_DIR})
 SET(OTHER_LIBRARIES ${SOAPY_SDR_LIBRARY} ${OTHER_LIBRARIES})
 ADD_DEFINITIONS(
     -DUSE_SOAPY_SDR=1
-)    
+)   
 
-target_link_libraries(piScan_backend core cubic external loguru scan server sigproc 
+add_dependencies(server proto)
+
+target_link_libraries(piScan_backend core cubic external loguru proto scan server sigproc 
 	pthread boost_system protobuf liquid ${OTHER_LIBRARIES})
 
 
