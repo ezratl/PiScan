@@ -81,7 +81,7 @@ private:
 
 	std::map<Modulation, DemodulatorInstancePtr> _demods;
 
-	IntervalTimer* _sigLevelRefresher;
+	IntervalTimer _sigLevelRefresher;
 
 	void _handleMessage(std::shared_ptr<DemodMessage> message);
 	void _handleRequest(ClientRequest& request);

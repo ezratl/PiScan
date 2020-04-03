@@ -383,7 +383,7 @@ const SystemInfo app::getSystemInfo(){
 	SystemInfo info = {
 			.version = "debug",
 			.buildNumber = 0,
-			.squelchRange = {-100, 0},
+			.squelchRange = {0, 100},
 			.supportedModulations = {"FM", "AM"},
 	};
 	return info;

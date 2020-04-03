@@ -69,7 +69,7 @@ void SocketConnection::contextUpdate(const ScannerContext context){
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
-	delete ctx;
+	//delete ctx; // its seems protobuf handles deletion, leaving this causes a double free error
 }
 
 void SocketConnection::contextUpdate(const DemodContext context){
@@ -84,7 +84,7 @@ void SocketConnection::contextUpdate(const DemodContext context){
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
-	delete ctx;
+	//delete ctx;
 }
 
 void SocketConnection::handleSystemMessage(const GeneralMessage message) {
@@ -113,7 +113,7 @@ void SocketConnection::handleSystemMessage(const GeneralMessage message) {
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
-	delete ctx;
+	//delete ctx;
 }
 
 void SocketConnection::handleSystemInfo(const SystemInfo info){
@@ -131,7 +131,7 @@ void SocketConnection::handleSystemInfo(const SystemInfo info){
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
-	delete ctx;
+	//delete ctx;
 }
 
 void SocketConnection::handleSignalLevel(const int level){
@@ -146,7 +146,7 @@ void SocketConnection::handleSignalLevel(const int level){
 
 	msg.SerializeToArray(_writeBuffer, WRITE_BUFFER_LENGTH);
 	_startWrite(_writeBuffer, msg.ByteSize());
-	delete ctx;
+	//delete ctx;
 }
 
 void SocketConnection::_startRead() {
@@ -207,25 +207,28 @@ void SocketConnection::_handleWrite(const boost::system::error_code& err,
 }
 
 void SocketConnection::_handleGeneralRequest(const piscan_pb::GeneralRequest& rq) {
-	static std::map<piscan_pb::GeneralRequest_RequestType, std::function<int(void)>> rqHandlers = {
-			{piscan_pb::GeneralRequest_RequestType_SCANNER_CONTEXT, [this]{return getScannerContext();}},
-			{piscan_pb::GeneralRequest_RequestType_DEMOD_CONTEXT, [this]{return getDemodContext();}},
-			{piscan_pb::GeneralRequest_RequestType_SYSTEM_INFO, [this]{return getSystemInfo();}},
-	};
+//	static std::map<piscan_pb::GeneralRequest_RequestType, std::function<int(void)>> rqHandlers = {
+//			{piscan_pb::GeneralRequest_RequestType_SCANNER_CONTEXT, [this]{return getScannerContext();}},
+//			{piscan_pb::GeneralRequest_RequestType_DEMOD_CONTEXT, [this]{return getDemodContext();}},
+//			{piscan_pb::GeneralRequest_RequestType_SYSTEM_INFO, [this]{return getSystemInfo();}},
+//	};
 
-	/*switch(rq.type()){
+	switch(rq.type()){
 	case piscan_pb::GeneralRequest_RequestType_SCANNER_CONTEXT:
 		getScannerContext();
 		break;
 	case piscan_pb::GeneralRequest_RequestType_DEMOD_CONTEXT:
 		getDemodContext();
 		break;
+	case piscan_pb::GeneralRequest_RequestType_SYSTEM_INFO:
+		getSystemInfo();
+		break;
 	default:
 		LOG_F(WARNING, "Invalid GeneralRequest from %s", _socket.remote_endpoint().address().to_string().c_str());
 		break;
-	}*/
+	}
 
-	rqHandlers[rq.type()]();
+//	rqHandlers[rq.type()]();
 }
 
 void SocketConnection::_handleScanStateRequest(

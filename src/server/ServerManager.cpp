@@ -225,7 +225,7 @@ int ServerManager::giveRequest(void* request){
 void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 	assert(message->destination == SERVER_MAN);
 	auto msg = std::dynamic_pointer_cast<ServerMessage>(message);
-	int* level = nullptr;
+	int level = 0;
 	switch (msg->type) {
 	case ServerMessage::CONTEXT_UPDATE:
 		switch(message->source){
@@ -250,9 +250,9 @@ void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 		break;
 	case ServerMessage::SIGNAL_LEVEL:
 		DLOG_F(7, "Broadcast siglevel update");
-		level = reinterpret_cast<int*>(msg->pData);
-		_broadcastSignalLevelUpdate(*level);
-		delete level;
+		level = *(reinterpret_cast<int*>(msg->pData));
+		delete msg->pData;
+		_broadcastSignalLevelUpdate(level);
 		break;
 	default:
 		break;
