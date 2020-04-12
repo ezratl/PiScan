@@ -22,7 +22,7 @@ using namespace piscan;
 Demodulator::Demodulator(MessageReceiver& central) : _centralQueue(central), _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
 
 void Demodulator::start(){
-	DemodState& state = Configuration::getConfig().getDemodState();
+	DemodState& state = app::getConfig().getDemodState();
 	_squelchLevel = state.squelch;
 	_gain = state.gain;
 
@@ -170,7 +170,7 @@ void Demodulator::stop(){
 	_cubic->stopDevice(false, 2000);
 	_cubic->OnExit();
 	
-	DemodState& state = Configuration::getConfig().getDemodState();
+	DemodState& state = app::getConfig().getDemodState();
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 
@@ -192,12 +192,14 @@ bool Demodulator::setFrequency(long long freq) {
 	if(std::abs(_cubic->getFrequency() - freq) >= (_cubic->getSampleRate() / 2)){
         _cubic->setFrequency(freq);
         //also arbitrary
-        usleep(TUNER_RETUNE_TIME);
+        //usleep(TUNER_RETUNE_TIME);
+        std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
 	}
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 	//this is totally arbitrary
-	usleep(DEMOD_BUFFER_TIME);
+	//usleep(DEMOD_BUFFER_TIME);
+	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().demodDelay));
 
 	_currentFreq = freq;
 
@@ -209,7 +211,8 @@ bool Demodulator::setFrequency(long long freq) {
 bool Demodulator::setTunerFrequency(long long freq){
     _cubic->setFrequency(freq);
 	_demodMgr.getCurrentModem()->setFrequency(freq);
-    usleep(200000);
+    //usleep(200000);
+	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
 	return true;
 }
 
@@ -221,12 +224,18 @@ float Demodulator::getDecodedPL() { return 0; }
 unsigned int Demodulator::getDecodedDC() { return 0; }
 
 bool Demodulator::squelchThresholdMet() {
-	//return (getSignalLevel() >= _squelchLevel); //dBm comparison
-	return (getSignalStrength() >= _squelchLevel); //SNR
-	/*return (std::abs(
-			_demodMgr.getActiveContextModem()->getSignalLevel()
-					- _demodMgr.getActiveContextModem()->getSignalFloor())
-			>= _squelchLevel);*/
+	switch (app::getConfig().getDemodConfig().squelchType) {
+	case SQUELCH_PCT:
+		return (getSignalStrength() >= _squelchLevel);
+	case SQUELCH_SNR:
+		return (std::abs(
+				_demodMgr.getActiveContextModem()->getSignalLevel()
+						- _demodMgr.getActiveContextModem()->getSignalFloor())
+				>= _squelchLevel);
+	case SQUELCH_DBM:
+	default:
+		return (getSignalLevel() >= _squelchLevel); //dBm comparison
+	}
 }
 
 bool Demodulator::setModem(Modulation mode) {
@@ -254,7 +263,7 @@ float Demodulator::getSNR() {
 	//return (_demodMgr.getActiveContextModem()->getSignalFloor()/_demodMgr.getActiveContextModem()->getSignalLevel());
 }
 
-int Demodulator::getSignalStrength() {
+int Demodulator::getSignalStrength() { // uses signal level as a fraction between floor and 0dBm - unreliable
 //	float fractional = getSNR() - 1;
 //	int percent = 100*fractional;
 //	if(percent >= 100)

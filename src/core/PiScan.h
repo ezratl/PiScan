@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "clientmessage.h"
+#include "Configuration.h"
 
 namespace piscan::app {
 struct ManualEntryData {
@@ -17,6 +18,7 @@ public:
 /* system functions */
 bool stopSystem();
 const SystemInfo getSystemInfo();
+inline Configuration& getConfig() { return Configuration::getConfig(); };
 
 /* scanner functions */
 void startScan();

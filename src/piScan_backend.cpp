@@ -166,7 +166,7 @@ public:
 		LOG_F(INFO, "System initialized");
 
 		_connectionManager.allowConnections();
-		_scanner.startScan();
+		_scanner.startScanner();
 
 		sysRun = true;
 	}
@@ -383,9 +383,18 @@ const SystemInfo app::getSystemInfo(){
 	SystemInfo info = {
 			.version = "debug",
 			.buildNumber = 0,
-			.squelchRange = {0, 100},
+			.squelchRange = {0, 0},
 			.supportedModulations = {"FM", "AM"},
 	};
+	switch(getConfig().getDemodConfig().squelchType){
+	case SQUELCH_PCT:
+	case SQUELCH_SNR:
+		info.squelchRange = {0, 100};
+		break;
+	case SQUELCH_DBM:
+	default:
+		info.squelchRange = {-100, 0};
+	}
 	return info;
 }
 
@@ -484,7 +493,7 @@ int main(int argc, char **argv) {
 			demod.waitReady();
 
 			connectionManager.allowConnections();
-			scanner.startScan();
+			scanner.startScanner();
 
 			sysRun = true;
 		}

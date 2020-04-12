@@ -9,6 +9,8 @@
 #define SERVER_CONFIGURATION_H_
 
 #include <string>
+#include <vector>
+#include <boost/property_tree/ptree.hpp>
 
 #include "constants.h"
 
@@ -48,12 +50,40 @@ struct SocketServerConfig {
 	std::string pythonBinary = DEFAULT_PY_ENV_LOCATION;
 };
 
+#define TUNER_RETUNE_TIME	225000
+#define DEMOD_BUFFER_TIME	10000
+
+#define SQUELCH_DBM	0
+#define SQUELCH_SNR	1
+#define SQUELCH_PCT 2
+
+#define DEFAULT_SQUELCH_MODE	(SQUELCH_DBM)
+
+struct DemodConfig {
+	long int retuneDelay = TUNER_RETUNE_TIME;
+	long int demodDelay = DEMOD_BUFFER_TIME;
+	int squelchType = DEFAULT_SQUELCH_MODE;
+};
+
 #define DEFAULT_SQUELCH	0
 #define DEFAULT_GAIN	(AUTO_GAIN)
 
 struct DemodState {
 	float squelch = DEFAULT_SQUELCH;
 	float gain = DEFAULT_GAIN;
+};
+
+#define	SCAN_STATE_SCAN		0
+#define SCAN_STATE_HOLD		1
+#define SCAN_STATE_MANUAL	2
+#define DEFAULT_SCAN_STATE	(SCAN_STATE_SCAN)
+
+struct ScannerState {
+	int scanState = DEFAULT_SCAN_STATE;
+	long long manualFreq = 0;
+	std::string manualModualtion = "";
+	std::vector<int> holdIndex = {};
+	std::string holdKey = "";
 };
 
 class Configuration {
@@ -72,7 +102,10 @@ public:
 
 	GeneralConfig& getGeneralConfig() { return _generalConfig; };
 	SocketServerConfig& getSocketConfig() { return _socketConfig; };
+	DemodConfig& getDemodConfig() { return _demodConfig; };
+
 	DemodState& getDemodState() { return _demodState; };
+	ScannerState& getScannerState() { return _scannerState; };
 
 	std::string getLogDirectory();
 	std::string getDatedLogPath();
@@ -84,9 +117,15 @@ private:
 
 	GeneralConfig _generalConfig;
 	SocketServerConfig _socketConfig;
+	DemodConfig _demodConfig;
+
 	DemodState _demodState;
+	ScannerState _scannerState;
 
 	Configuration();
+
+	boost::property_tree::ptree _ptConfig;
+	boost::property_tree::ptree _ptState;
 };
 
 }

@@ -33,6 +33,7 @@ public:
 	ScannerSM(MessageReceiver& central, SystemList& dataSource);
 	~ScannerSM() {};
 
+	void startScanner();
 	void startScan();
 	void holdScan(std::vector<int> index = std::vector<int>());
 	void stopScanner();

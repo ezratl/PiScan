@@ -125,6 +125,6 @@ ADD_DEFINITIONS(
 add_dependencies(server proto)
 
 target_link_libraries(piScan_backend core cubic external loguru proto scan server sigproc 
-	pthread boost_system protobuf liquid ${OTHER_LIBRARIES})
+	pthread atomic boost_system protobuf liquid ${OTHER_LIBRARIES})
 
 
