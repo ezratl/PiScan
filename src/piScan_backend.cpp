@@ -290,23 +290,27 @@ static SystemController sysControl(messageManager, scanSystems, scanner, connect
 
 static std::atomic_bool steadyState(false);
 
-void terminate(){
+void hardTerminate(){
 	LOG_F(WARNING, "Terminating - resources may not be properly released");
 	std::terminate();
 }
 
 void sigTermHandler(int signal){
-
-	sysRun = false;
-	//exit(1);
-	piscan::terminate();
+	// SIGTERM is raised by the kernel during shutdown
+	if(sysRun){
+		app::stopSystem();
+		sysRun = false;
+	}
+	// SIGTERM called after exit process has started - possibly because the program locked up and the user wants to force quit
+	else
+		piscan::hardTerminate();
 }
 
 void sigIntHandler(int signal){
 	LOG_F(INFO, "Stop triggered by interrupt");
 
 	if(!sysRun)
-		piscan::terminate();
+		piscan::hardTerminate();
 
 	sysRun = false;
 }

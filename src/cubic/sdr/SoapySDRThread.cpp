@@ -103,7 +103,7 @@ bool SDRThread::init() {
     if (!stream) {
         wxGetApp().sdrThreadNotify(SDRThread::SDR_THREAD_FAILED, std::string("Stream setup failed, stream is null. ") + streamExceptionStr);
         //std::cout << "Stream setup failed, stream is null. " << streamExceptionStr << std::endl;
-        LOG_F(ERROR, "Stream setup failed, stream is null");
+        ABORT_F("Stream setup failed, stream is null");
         return false;
     }
 

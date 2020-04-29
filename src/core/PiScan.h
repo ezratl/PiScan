@@ -19,6 +19,7 @@ public:
 bool stopSystem();
 const SystemInfo getSystemInfo();
 inline Configuration& getConfig() { return Configuration::getConfig(); };
+void softAbort();
 
 /* scanner functions */
 void startScan();

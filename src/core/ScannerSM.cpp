@@ -213,7 +213,7 @@ void ScannerSM::ST_Hold(EventData* data){
 	else if(_currentEntry->delayMS()){
 		auto current = time_point_cast<milliseconds>(system_clock::now());
 
-		if((current- timeoutStart).count() < _currentEntry->delayMS()){
+		if(std::chrono::duration_cast<std::chrono::duration<int, std::milli>>(current- timeoutStart).count() < _currentEntry->delayMS()){
 			InternalEvent(ST_HOLD);
 		}
 		else if(!evtSrcExternal){

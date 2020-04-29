@@ -210,6 +210,9 @@ void DemodulatorThread::run() {
         
         bool squelched = squelchEnabled && (signalLevel < squelchLevel);
         
+        //
+        signalLevel = currentSignalLevel;
+
         if (squelchEnabled) {
             if (!squelched && !squelchBreak) {
                     if (wxGetApp().getSoloMode() /*&& !wxGetApp().getAppFrame()->isUserDemodBusy()*/) {

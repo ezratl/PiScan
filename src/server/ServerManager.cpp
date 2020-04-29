@@ -251,8 +251,8 @@ void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 	case ServerMessage::SIGNAL_LEVEL:
 		DLOG_F(7, "Broadcast siglevel update");
 		level = *(reinterpret_cast<int*>(msg->pData));
-		delete msg->pData;
 		_broadcastSignalLevelUpdate(level);
+		delete &level;
 		break;
 	default:
 		break;
