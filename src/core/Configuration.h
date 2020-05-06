@@ -65,6 +65,14 @@ struct DemodConfig {
 	int squelchType = DEFAULT_SQUELCH_MODE;
 };
 
+#define DEFAULT_RTSP_PORT	8554
+#define DEFAULT_RTSP_OVER_HTTP	false
+
+struct AudioServerConfig {
+	int rtspPort = DEFAULT_RTSP_PORT;
+	bool httpTunneling = DEFAULT_RTSP_OVER_HTTP;
+};
+
 #define DEFAULT_SQUELCH	0
 #define DEFAULT_GAIN	(AUTO_GAIN)
 
@@ -103,6 +111,7 @@ public:
 	GeneralConfig& getGeneralConfig() { return _generalConfig; };
 	SocketServerConfig& getSocketConfig() { return _socketConfig; };
 	DemodConfig& getDemodConfig() { return _demodConfig; };
+	AudioServerConfig& getAudioServerConfig() { return _rtspConfig; };
 
 	DemodState& getDemodState() { return _demodState; };
 	ScannerState& getScannerState() { return _scannerState; };
@@ -118,6 +127,7 @@ private:
 	GeneralConfig _generalConfig;
 	SocketServerConfig _socketConfig;
 	DemodConfig _demodConfig;
+	AudioServerConfig _rtspConfig;
 
 	DemodState _demodState;
 	ScannerState _scannerState;

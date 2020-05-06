@@ -13,6 +13,7 @@
 
 #include "loguru.hpp"
 #include "threadname.h"
+#include "PiScan.h"
 
 #define AUDIO_THREAD_NAME   "Audio"
 
@@ -24,6 +25,10 @@ std::map<int, AudioThread* >  AudioThread::deviceController;
 std::map<int, int> AudioThread::deviceSampleRate;
 
 std::recursive_mutex AudioThread::m_device_mutex;
+
+static AudioThread* controllerInstance = nullptr;
+
+AudioThread* piscan::app::getAudioController() { return controllerInstance; }
 
 AudioThread::AudioThread() : IOThread(), nBufferFrames(1024), sampleRate(0), controllerThread(nullptr) {
 
@@ -255,6 +260,15 @@ static int audioCallback(void *outputBuffer, void * /* inputBuffer */, unsigned 
         }
     }
 
+    /* copy the output buffer to a batch for the RTSP server
+     * probably not a great approach but for now the easiest way to get the mixed output to the stream */
+    std::shared_ptr<std::vector<float>> batch = std::make_shared<std::vector<float>>();
+
+    for (size_t i = 0; i < nBufferFrames * 2; i+=2)
+    	batch->push_back(out[i]);
+
+    src->outputQueue.try_enqueue(batch);
+
     return 0;
 }
 
@@ -441,7 +455,9 @@ void AudioThread::setupDevice(int deviceId) {
             deviceController[parameters.deviceId] = newController;
         }
         else if (deviceController[parameters.deviceId] == this) {
-
+        	// this may be problematic if more than one audio controller is active
+        	controllerInstance = this;
+        	outputQueue = moodycamel::ReaderWriterQueue<std::shared_ptr<std::vector<float>>>(4);
             //Attach callback
             dac.openStream(&parameters, NULL, RTAUDIO_FLOAT32, sampleRate, &nBufferFrames, &audioCallback, (void *)this, &opts);
             dac.startStream();

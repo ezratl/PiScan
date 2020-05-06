@@ -85,6 +85,9 @@ void Configuration::loadConfig(){
 	_demodConfig.demodDelay = _ptConfig.get("config.demod.demod_delay", static_cast<long int>(DEMOD_BUFFER_TIME));
 	_demodConfig.squelchType = _ptConfig.get("config.demod.squelch_mode", DEFAULT_SQUELCH_MODE);
 
+	_rtspConfig.rtspPort = _ptConfig.get("config.audio_stream.rtsp_port", DEFAULT_RTSP_PORT);
+	_rtspConfig.httpTunneling = _ptConfig.get("config.audio_stream.http_tunneling", DEFAULT_RTSP_OVER_HTTP);
+
 }
 
 void Configuration::loadState(){
@@ -138,6 +141,9 @@ void Configuration::saveConfig(){
 	_ptConfig.put("config.demod.retune_delay", _demodConfig.retuneDelay);
 	_ptConfig.put("config.demod.demod_delay", _demodConfig.demodDelay);
 	_ptConfig.put("config.demod.squelch_mode", _demodConfig.squelchType);
+
+	_ptConfig.put("config.audio_stream.rtsp_port", _rtspConfig.rtspPort);
+	_ptConfig.put("config.audio_stream.http_tunneling", _rtspConfig.httpTunneling);
 
 	write_json(path.c_str(), _ptConfig);
 }

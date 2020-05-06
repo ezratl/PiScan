@@ -5,6 +5,8 @@
 #include "clientmessage.h"
 #include "Configuration.h"
 
+class AudioThread; //forward declaration
+
 namespace piscan::app {
 struct ManualEntryData {
 public:
@@ -39,4 +41,8 @@ long long getTunerSampleRate();
 void scannerContextUpdate(ScannerContext ctx);
 void demodContextUpdate(DemodContext ctx);
 void signalLevelUpdate(int level);
+
+/* audio related */
+AudioThread* getAudioController();
+
 }

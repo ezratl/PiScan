@@ -12,6 +12,7 @@
 #include "ThreadBlockingQueue.h"
 #include "RtAudio.h"
 #include "DemodDefs.h"
+#include "readerwriterqueue.h"
 
 class AudioThreadInput {
 public:
@@ -121,6 +122,9 @@ public:
     AudioThreadInputPtr currentInput;
     size_t audioQueuePtr;
     float gain;
+
+    // this queue is used by the RTSP stream
+    moodycamel::ReaderWriterQueue<std::shared_ptr<std::vector<float>>> outputQueue;
 
 private:
 
