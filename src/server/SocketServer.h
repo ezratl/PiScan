@@ -74,7 +74,7 @@ private:
 /* listener for socket connections */
 class SocketServer: public BackendServer {
 public:
-	SocketServer(ServerInterface& host, boost::asio::io_service& io_service) : BackendServer(host), _acceptor(io_service) {};
+	SocketServer(ServerInterface& host, boost::asio::io_service& io_service) : BackendServer(host), _ioService(io_service), _acceptor(io_service) {};
 	~SocketServer() {};
 
 	void start();
@@ -83,6 +83,7 @@ public:
 
 	void giveMessage(std::shared_ptr<Message> message);
 private:
+	io_service& _ioService;
 	tcp::acceptor _acceptor;
 	uint16_t _listenPort = DEFAULT_TCP_PORT;
 	int _activeConnections = 0;

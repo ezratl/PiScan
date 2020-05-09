@@ -312,7 +312,7 @@ void SocketServer::giveMessage(std::shared_ptr<Message> message){
 
 void SocketServer::start_accept() {
 	// creates a socket
-	SocketConnection::pointer connection = SocketConnection::create(_acceptor.get_io_service());
+	SocketConnection::pointer connection = SocketConnection::create(_ioService);
 
 	// initiates an asynchronous accept operation
 	// to wait for a new connection.
