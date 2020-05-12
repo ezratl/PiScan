@@ -31,6 +31,7 @@ private:
 	std::thread _serverThread;
 
 	RTSPServer* _rtspServer;
+	char volatile _eventLoopWatch;
 };
 
 } /* namespace piscan */

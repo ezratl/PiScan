@@ -89,16 +89,17 @@ void AudioStreamServer::start(){
 		}
 	}
 
+	_eventLoopWatch = 0;
 
-	// TODO currently no way to terminate this thread in a friendly manner
 	_serverThread = std::thread([this]{
 		setThreadName("RTSP Server");
-		_rtspServer->envir().taskScheduler().doEventLoop(); // does not return
+		_rtspServer->envir().taskScheduler().doEventLoop(&_eventLoopWatch); // does not return
 	});
 }
 
 void AudioStreamServer::stop() {
-
+	_eventLoopWatch = 1;
+	_serverThread.join();
 }
 
 } /* namespace piscan */
