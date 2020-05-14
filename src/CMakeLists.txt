@@ -194,6 +194,10 @@ ADD_DEFINITIONS(
     -DUSE_SOAPY_SDR=1
 )   
 
+IF(LIQUID_API_OLD)
+	ADD_DEFINITIONS(-DLIQUID_API_OLD)
+ENDIF(LIQUID_API_OLD)
+
 add_dependencies(server proto)
 
 set(LIVE_LIBS livemedia liveBUE liveUE liveGS ssl crypto)
