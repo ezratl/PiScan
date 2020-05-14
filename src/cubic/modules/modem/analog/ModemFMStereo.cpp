@@ -239,11 +239,14 @@ void ModemFMStereo::demodulate(ModemKit *kit, ModemIQData *input, AudioThreadInp
         nco_crcf_mix_down(fmkit->stereoPilot, y, &x);
         
         // complex -> real
-        float usb_discard;
+#ifdef LIQUID_API_OLD
         float y[2];
-        firhilbf_c2r_execute(fmkit->firStereoC2R, x, &demodStereoData[i], &usb_discard);
-        //firhilbf_c2r_execute(fmkit->firStereoC2R, x, y);
+        firhilbf_c2r_execute(fmkit->firStereoC2R, x, y);
         demodOutputData[i] = y[0];
+#else
+        float usb_discard;
+        firhilbf_c2r_execute(fmkit->firStereoC2R, x, &demodStereoData[i], &usb_discard);
+#endif
     }
     
     //            std::cout << "[PLL] phase error: " << phase_error;
