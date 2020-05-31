@@ -63,10 +63,12 @@ LocalPCMSource::LocalPCMSource(UsageEnvironment& env, AudioThread* audioControll
   unsigned desiredSamplesPerFrame = (unsigned)(0.02*fSamplingFrequency);
   unsigned samplesPerFrame = desiredSamplesPerFrame < maxSamplesPerFrame ? desiredSamplesPerFrame : maxSamplesPerFrame;
   fPreferredFrameSize = (samplesPerFrame*fNumChannels*fBitsPerSample)/8;
+
+	LOG_F(2, "Starting audio stream");
 }
 
 LocalPCMSource::~LocalPCMSource() {
-
+	LOG_F(3, "Stream destroy");
 }
 
 void LocalPCMSource::doGetNextFrame() {
@@ -117,8 +119,11 @@ void LocalPCMSource::doGetNextFrame() {
 
 	fFrameSize = numBytesRead;
 
-	if (samplesRead == 0)
-		LOG_F(WARNING, "Audio stream underrun");
+	if (samplesRead == 0){
+		LOG_F(2, "Audio buffer underrun, closing stream");
+		handleClosure();
+		return;
+	}
 
 	// Set the 'presentation time' and 'duration' of this frame:
 	if (fPresentationTime.tv_sec == 0 && fPresentationTime.tv_usec == 0) {
@@ -136,7 +141,7 @@ void LocalPCMSource::doGetNextFrame() {
 			* fFrameSize) / bytesPerSample);
 
 	// Inform the downstream object that it has data:
-	FramedSource::afterGetting(this);
+	nextTask() = envir().taskScheduler().scheduleDelayedTask(0, (TaskFunc*)FramedSource::afterGetting, this);
 }
 
 void LocalPCMSource::doStopGettingFrames() {
