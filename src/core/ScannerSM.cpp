@@ -13,6 +13,7 @@
 #include "ListGenerator.h"
 #include "loguru.hpp"
 #include "threadname.h"
+#include "Configuration.h"
 
 
 #define DELAY_TIMEOUT	2.0
@@ -24,6 +25,31 @@ using namespace std;
 
 ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
 		StateMachine(7), _centralQueue(central), _systems(dataSource), _externalHold(false), _manualMode(false) {
+}
+
+void ScannerSM::startScanner(){
+	LOG_F(1, "Loading saved scanner state");
+	ScannerState& state = app::getConfig().getScannerState();
+	EntryPtr entry;
+	switch(state.scanState){
+	case SCAN_STATE_HOLD:
+		LOG_F(1, "Previous state hold");
+		entry = _systems.getEntryByIndex(state.holdIndex);
+		if(entry != nullptr && (entry->key() == state.holdKey))
+			holdScan(state.holdIndex);
+		else{
+			LOG_F(1, "Invalid entry index, defaulting to scan");
+			startScan();
+		}
+		break;
+	case SCAN_STATE_MANUAL:
+		LOG_F(1, "Previous state manual entry");
+		manualEntry(new app::ManualEntryData(state.manualFreq, state.manualModualtion));
+		break;
+	case SCAN_STATE_SCAN:
+	default:
+		startScan();
+	}
 }
 
 void ScannerSM::startScan(){
@@ -47,7 +73,7 @@ void ScannerSM::holdScan(vector<int> index){
 	}
 	LOG_F(1, "ExtEvent: holdScan");
 	BEGIN_TRANSITION_MAP
-		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
+		TRANSITION_MAP_ENTRY(ST_HOLD)
 		TRANSITION_MAP_ENTRY(ST_HOLD)
 		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
 		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
@@ -73,7 +99,7 @@ void ScannerSM::stopScanner(){
 void ScannerSM::manualEntry(app::ManualEntryData* freq){
 	LOG_F(1, "ExtEvent: manualEntry");
 	BEGIN_TRANSITION_MAP
-		TRANSITION_MAP_ENTRY(EVENT_IGNORED)
+		TRANSITION_MAP_ENTRY(ST_MANUAL)
 		TRANSITION_MAP_ENTRY(ST_MANUAL)
 		TRANSITION_MAP_ENTRY(ST_MANUAL)
 		TRANSITION_MAP_ENTRY(ST_MANUAL)
@@ -93,9 +119,6 @@ void ScannerSM::ST_Load(EventData* data){
 	_systems.sortBins(app::getTunerSampleRate());
 
 	// do not issue event - SM will wait until an event is generated before proceeding
-	//InternalEvent(ST_SCAN);
-	//auto message = make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_READY);
-	//_centralQueue.giveMessage(message);
 	LOG_F(1, "ScannerSM ready");
 	notifyReady();
 }
@@ -170,7 +193,7 @@ void ScannerSM::ST_Hold(EventData* data){
 	if(currentState != lastState || indexHold)
 		_broadcastContextUpdate();
 
-	DLOG_F(6, "Ext hold: %i", _externalHold.load());
+	DLOG_F(8, "Ext hold: %i", _externalHold.load());
 
 	/* start receive if signal active */
 	if (_currentEntry->hasSignal()) {
@@ -190,7 +213,7 @@ void ScannerSM::ST_Hold(EventData* data){
 	else if(_currentEntry->delayMS()){
 		auto current = time_point_cast<milliseconds>(system_clock::now());
 
-		if((current- timeoutStart).count() < _currentEntry->delayMS()){
+		if(std::chrono::duration_cast<std::chrono::duration<int, std::milli>>(current- timeoutStart).count() < _currentEntry->delayMS()){
 			InternalEvent(ST_HOLD);
 		}
 		else if(!evtSrcExternal){
@@ -252,7 +275,7 @@ void ScannerSM::ST_Manual(EventData* data){
 		//delete _manualEntry;
 
 	//TODO will replace with a function map probably
-	if(freq->modulation == "FM")
+	if(freq->modulation == "FM" || freq->modulation == "NFM")
 		_manualEntry = make_shared<FMChannel>(freq->freq, "", false, 0);
 	else if(freq->modulation == "AM")
 		_manualEntry = make_shared<AMChannel>(freq->freq, "", false, 0);
@@ -270,6 +293,27 @@ void ScannerSM::ST_Manual(EventData* data){
 
 void ScannerSM::ST_SaveAll(EventData* data){
 	DLOG_F(9, "ST_SaveAll");
+	LOG_F(1, "Saving state");
+	ScannerState& state = app::getConfig().getScannerState();
+	state.holdIndex = {};
+	state.holdKey = "";
+	state.manualFreq = 0;
+	state.manualModualtion = "";
+
+	if(_manualMode == true){
+		state.scanState = SCAN_STATE_MANUAL;
+		state.manualFreq = _currentEntry->freq();
+		state.manualModualtion = _currentEntry->modulation();
+	}
+	else if (_externalHold == true){
+		state.scanState = SCAN_STATE_HOLD;
+		state.holdIndex.push_back(_currentEntry->getSysIndex());
+		state.holdIndex.push_back(_currentEntry->getEntryIndex());
+		state.holdKey = _currentEntry->key();
+	}
+	else
+		state.scanState = SCAN_STATE_SCAN;
+
 	LOG_F(1, "Saving database");
 
 	_systems.writeToFile();
@@ -320,7 +364,7 @@ void ScannerSM::_broadcastContextUpdate() {
 }
 
 void ScannerSM::_enableAudioOut(bool en){
-	app::audioMute(en);
+	app::squelchBreak(en);
 }
 
 void ScannerSM::giveMessage(shared_ptr<Message> message) {

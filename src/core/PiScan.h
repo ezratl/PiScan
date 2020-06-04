@@ -3,6 +3,9 @@
 #include <vector>
 
 #include "clientmessage.h"
+#include "Configuration.h"
+
+class AudioThread; //forward declaration
 
 namespace piscan::app {
 struct ManualEntryData {
@@ -17,6 +20,8 @@ public:
 /* system functions */
 bool stopSystem();
 const SystemInfo getSystemInfo();
+inline Configuration& getConfig() { return Configuration::getConfig(); };
+void softAbort();
 
 /* scanner functions */
 void startScan();
@@ -29,10 +34,15 @@ ScannerContext getScannerContext();
 void setTunerGain(float gain);
 void setDemodSquelch(float level);
 DemodContext getDemodContext();
-void audioMute(bool mute = true);
+void squelchBreak(bool mute = true);
 long long getTunerSampleRate();
 
 /* server functions */
 void scannerContextUpdate(ScannerContext ctx);
 void demodContextUpdate(DemodContext ctx);
+void signalLevelUpdate(int level);
+
+/* audio related */
+AudioThread* getAudioController();
+
 }

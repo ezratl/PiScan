@@ -66,6 +66,7 @@ public:
 	virtual bool	hasSignal() = 0;
 	virtual long long freq() = 0;
 	virtual bool	isDummy() { return false; }
+	virtual std::string key() = 0;
 
 	size_t getSysIndex() { return _sysIndex; };
 	void setSysIndex(size_t index) { _sysIndex = index; };
@@ -98,6 +99,7 @@ public:
 	}
 	virtual ~Channel() {};
 	virtual long long freq() { return frequency; };
+	virtual std::string key() { return "F" + std::to_string(frequency); };
 protected:
 	const long long frequency;
 
@@ -132,6 +134,7 @@ public:
 	}
 
 	virtual bool hasSignal();
+	virtual std::string key() { return Channel::key() + "FM"; };
 };
 
 /* for analog FM channels utilizing CTCSS tones */
@@ -154,6 +157,8 @@ public:
 	virtual std::string modulation() {
 		return "PL" + s_tone;
 	}
+
+	virtual std::string key() { return FMChannel::key() + "PL" + s_tone; };
 protected:
 	std::string s_tone;
 	float tone;
@@ -174,6 +179,8 @@ public:
 	virtual std::string modulation() {
 		return "DC" + s_code;
 	}
+
+	virtual std::string key() { return FMChannel::key() + "DC" + s_code; };
 protected:
 	const std::string s_code;
 };
@@ -189,6 +196,7 @@ public:
 	virtual bool hasSignal();
 
 	virtual std::string modulation() { return "AM"; }
+	virtual std::string key() { return Channel::key() + "AM"; };
 };
 
 

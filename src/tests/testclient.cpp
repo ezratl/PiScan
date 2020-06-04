@@ -15,8 +15,8 @@
 #define READ_BUFFER_LENGTH	1024
 #define WRITE_BUFFER_LENGTH	1024
 
-using namespace boost::asio;
-using ip::tcp;
+using namespace boost;
+using asio::ip::tcp;
 using std::string;
 using std::cout;
 using std::endl;
@@ -27,7 +27,7 @@ namespace piscan {
 
 class TestClient : public ServerInterface, public boost::enable_shared_from_this<TestClient>{
 public:
-	TestClient(io_service& io_service, tcp::socket& socket) : _console(*this), _io_service(io_service), _socket(socket) {
+	TestClient(asio::io_service& io_service, tcp::socket& socket) : _console(*this), _io_service(io_service), _socket(socket) {
 		//_console(this);
 
 	}
@@ -40,14 +40,14 @@ public:
 		_startRead();
 	}
 
-	static boost::shared_ptr<TestClient> create(io_service& io_service, tcp::socket& socket){
+	static boost::shared_ptr<TestClient> create(asio::io_service& io_service, tcp::socket& socket){
 		return boost::shared_ptr<TestClient>(new TestClient(io_service, socket));
 	}
 
 private:
 	DebugServer _console;
 
-	io_service& _io_service;
+	asio::io_service& _io_service;
 	tcp::socket& _socket;
 	unsigned char _readBuffer[READ_BUFFER_LENGTH];
 	unsigned char _writeBuffer[WRITE_BUFFER_LENGTH];
@@ -57,15 +57,15 @@ private:
 	void _startRead() {
 		_socket.async_read_some(boost::asio::buffer(_readBuffer, READ_BUFFER_LENGTH),
 				boost::bind(&TestClient::_handleRead, shared_from_this(),
-						placeholders::error,
-						placeholders::bytes_transferred));
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred));
 	}
 
 	void _startWrite(uint8_t* buffer, size_t length) {
 		_socket.async_write_some(boost::asio::buffer(buffer, length),
 				boost::bind(&TestClient::_handleWrite, shared_from_this(),
-						placeholders::error,
-						placeholders::bytes_transferred));
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred));
 	}
 
 	void _handleRead(const boost::system::error_code& err,
@@ -226,7 +226,7 @@ using namespace piscan;
 int main(int argc, char **argv) {
 	loguru::init(argc, argv);
 
-	io_service io_service;
+	asio::io_service io_service;
 	tcp::socket socket(io_service);
 
 	std::string address;
@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
 	std::cin >> address;
 
 	socket.connect(
-			tcp::endpoint(ip::address::from_string(address),
+			tcp::endpoint(asio::ip::address::from_string(address),
 					1234));
 
 	boost::shared_ptr<TestClient> client = TestClient::create(io_service,

@@ -11,6 +11,8 @@
 #include <experimental/filesystem>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/optional/optional.hpp>
 
 #include "Configuration.h"
 #include "loguru.hpp"
@@ -54,7 +56,6 @@ std::string Configuration::getWorkingDirectory() {
 }
 
 void Configuration::loadConfig(){
-	ptree pt;
 	filesystem::path path(_configPath);
 	path += filesystem::path::preferred_separator;
 	path += CONFIG_FILE;
@@ -67,23 +68,29 @@ void Configuration::loadConfig(){
 	LOG_F(INFO, "Loading config");
 
 	try{
-		read_json(path, pt);
+		read_json(path, _ptConfig);
 	} catch(boost::property_tree::json_parser_error& e){
 		LOG_F(WARNING, "Error parsing file: %s", e.message().c_str());
 	}
 
-	_generalConfig.logfileVerbosity = pt.get("config.general.log_verbosity", DEFAULT_LOGFILE_VERBOSITY);
+	_generalConfig.logfileVerbosity = _ptConfig.get("config.general.log_verbosity", DEFAULT_LOGFILE_VERBOSITY);
 
-	_socketConfig.maxConnections = pt.get("config.socket.max_connections", MAX_TCP_CONNECTIONS);
-	_socketConfig.tcpPort = pt.get("config.socket.port", DEFAULT_TCP_PORT);
-	_socketConfig.spawnLocalClient = pt.get("config.socket.use_gui", DEFAULT_SPAWN_CLIENT);
-	_socketConfig.pythonClient = pt.get("config.socket.client_path", DEFAULT_PY_CLIENT_LOCATION);
-	_socketConfig.pythonBinary = pt.get("config.socket.python_path", DEFAULT_PY_ENV_LOCATION);
+	_socketConfig.maxConnections = _ptConfig.get("config.socket.max_connections", MAX_TCP_CONNECTIONS);
+	_socketConfig.tcpPort = _ptConfig.get("config.socket.port", DEFAULT_TCP_PORT);
+	_socketConfig.spawnLocalClient = _ptConfig.get("config.socket.use_gui", DEFAULT_SPAWN_CLIENT);
+	_socketConfig.pythonClient = _ptConfig.get("config.socket.client_path", DEFAULT_PY_CLIENT_LOCATION);
+	_socketConfig.pythonBinary = _ptConfig.get("config.socket.python_path", DEFAULT_PY_ENV_LOCATION);
+
+	_demodConfig.retuneDelay = _ptConfig.get("config.demod.retune_delay", static_cast<long int>(TUNER_RETUNE_TIME));
+	_demodConfig.demodDelay = _ptConfig.get("config.demod.demod_delay", static_cast<long int>(DEMOD_BUFFER_TIME));
+	_demodConfig.squelchType = _ptConfig.get("config.demod.squelch_mode", DEFAULT_SQUELCH_MODE);
+
+	_rtspConfig.rtspPort = _ptConfig.get("config.audio_stream.rtsp_port", DEFAULT_RTSP_PORT);
+	_rtspConfig.httpTunneling = _ptConfig.get("config.audio_stream.http_tunneling", DEFAULT_RTSP_OVER_HTTP);
 
 }
 
 void Configuration::loadState(){
-	ptree pt;
 	filesystem::path path(_configPath);
 	path += filesystem::path::preferred_separator;
 	path += STATE_FILE;;
@@ -96,47 +103,74 @@ void Configuration::loadState(){
 	LOG_F(INFO, "Loading saved state");
 
 	try{
-		read_json(path, pt);
+		read_json(path, _ptState);
 	} catch(boost::property_tree::json_parser_error& e){
 		LOG_F(WARNING, "Error parsing file: %s", e.message().c_str());
 	}
 
-	_demodState.gain = pt.get("state.demod.gain", DEFAULT_GAIN);
-	_demodState.squelch = pt.get("state.demod.squelch", DEFAULT_SQUELCH);
+	_demodState.gain = _ptState.get("state.demod.gain", DEFAULT_GAIN);
+	_demodState.squelch = _ptState.get("state.demod.squelch", DEFAULT_SQUELCH);
 
+	_scannerState.scanState = _ptState.get("state.scanner.state", DEFAULT_SCAN_STATE);
+	_scannerState.manualFreq = _ptState.get("state.scanner.manual_freq", 100000000);
+	_scannerState.manualModualtion = _ptState.get("state.scanner.manual_mode", "");
+	_scannerState.holdKey = _ptState.get("state.scanner.hold_key", "");
+	try{
+		BOOST_FOREACH(ptree::value_type& v, _ptState.get_child("state.scanner.hold_index")) {
+			int ind = std::stoi(v.second.data());
+			_scannerState.holdIndex.push_back(ind);
+		}
+	}catch(std::exception& e){};
 }
 
 void Configuration::saveConfig(){
-	ptree pt;
 	filesystem::path path(_configPath);
 	path += filesystem::path::preferred_separator;
 	path += CONFIG_FILE;
 
 	LOG_F(INFO, "Saving config");
 
-	pt.put("config.general.log_verbosity", _generalConfig.logfileVerbosity);
+	_ptConfig.put("config.general.log_verbosity", _generalConfig.logfileVerbosity);
 
-	pt.put("config.socket.port", _socketConfig.tcpPort);
-	pt.put("config.socket.max_connections", _socketConfig.maxConnections);
-	pt.put("config.socket.use_gui", _socketConfig.spawnLocalClient);
-	pt.put("config.socket.client_path", _socketConfig.pythonClient);
-	pt.put("config.socket.python_path", _socketConfig.pythonBinary);
+	_ptConfig.put("config.socket.port", _socketConfig.tcpPort);
+	_ptConfig.put("config.socket.max_connections", _socketConfig.maxConnections);
+	_ptConfig.put("config.socket.use_gui", _socketConfig.spawnLocalClient);
+	_ptConfig.put("config.socket.client_path", _socketConfig.pythonClient);
+	_ptConfig.put("config.socket.python_path", _socketConfig.pythonBinary);
 
-	write_json(path.c_str(), pt);
+	_ptConfig.put("config.demod.retune_delay", _demodConfig.retuneDelay);
+	_ptConfig.put("config.demod.demod_delay", _demodConfig.demodDelay);
+	_ptConfig.put("config.demod.squelch_mode", _demodConfig.squelchType);
+
+	_ptConfig.put("config.audio_stream.rtsp_port", _rtspConfig.rtspPort);
+	_ptConfig.put("config.audio_stream.http_tunneling", _rtspConfig.httpTunneling);
+
+	write_json(path.c_str(), _ptConfig);
 }
 
 void Configuration::saveState(){
-	ptree pt;
 	filesystem::path path(_configPath);
 	path += filesystem::path::preferred_separator;
 	path += STATE_FILE;
 
 	LOG_F(INFO, "Saving state");
 
-	pt.put("state.demod.gain", _demodState.gain);
-	pt.put("state.demod.squelch", _demodState.squelch);
+	_ptState.put("state.demod.gain", _demodState.gain);
+	_ptState.put("state.demod.squelch", _demodState.squelch);
 
-	write_json(path.c_str(), pt);
+	_ptState.put("state.scanner.state", _scannerState.scanState);
+	_ptState.put("state.scanner.manual_freq", _scannerState.manualFreq);
+	_ptState.put("state.scanner.manual_mode", _scannerState.manualModualtion);
+	_ptState.put("state.scanner.hold_key", _scannerState.holdKey);
+	ptree ind;
+	BOOST_FOREACH(int i, _scannerState.holdIndex) {
+		ptree val;
+		val.put("", i);
+		ind.push_back(std::make_pair("", val));
+	}
+	_ptState.put_child("state.scanner.hold_index", ind);
+
+	write_json(path.c_str(), _ptState);
 }
 
 std::string Configuration::getLogDirectory(){

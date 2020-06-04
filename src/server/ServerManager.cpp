@@ -48,6 +48,9 @@ void ServerManager::start(bool useDebugServer, bool spawnLocalClient){
 	_sockServer = new SocketServer(*this, _io_service);
 	_servers.push_back(_sockServer);
 
+	_audioServer = new AudioStreamServer(*this);
+	_servers.push_back(_audioServer);
+
 	_run = true;
 	_queueThread = std::thread(&ServerManager::_queueThreadFunc, this);
 
@@ -225,6 +228,7 @@ int ServerManager::giveRequest(void* request){
 void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 	assert(message->destination == SERVER_MAN);
 	auto msg = std::dynamic_pointer_cast<ServerMessage>(message);
+	int* level = nullptr;
 	switch (msg->type) {
 	case ServerMessage::CONTEXT_UPDATE:
 		switch(message->source){
@@ -246,6 +250,12 @@ void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 	case ServerMessage::STOP:
 		disconnectClients();
 		_run = false;
+		break;
+	case ServerMessage::SIGNAL_LEVEL:
+		DLOG_F(7, "Broadcast siglevel update");
+		level = reinterpret_cast<int*>(msg->pData);
+		_broadcastSignalLevelUpdate(*level);
+		delete level;
 		break;
 	default:
 		break;
@@ -324,6 +334,15 @@ std::shared_ptr<Message> ServerManager::_makeContextRequest(ClientRequest* rq){
 		break;
 	default:
 		return nullptr;
+	}
+}
+
+void ServerManager::_broadcastSignalLevelUpdate(int level) {
+	for (size_t i = 0; i < MAX_CONNECTIONS; i++) {
+		if (_connections[i] != nullptr) {
+			Connection* con = _connections[i].get();
+			con->handleSignalLevel(level);
+		}
 	}
 }
 

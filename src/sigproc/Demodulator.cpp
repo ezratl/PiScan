@@ -6,6 +6,7 @@
  */
 
 #include <unistd.h>
+#include <functional>
 
 #include "PiScan.h"
 #include "Demodulator.h"
@@ -14,13 +15,14 @@
 #define DEFAULT_SDR_SAMPLE_RATE	2048000
 #define INIT_FREQUENCY			100000000
 #define NUM_RATES_DEFAULT	4
+#define SIGLEVEL_REFRESH_INTERVAL	100 // milliseconds
 
 using namespace piscan;
 
 Demodulator::Demodulator(MessageReceiver& central) : _centralQueue(central), _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
 
 void Demodulator::start(){
-	DemodState& state = Configuration::getConfig().getDemodState();
+	DemodState& state = app::getConfig().getDemodState();
 	_squelchLevel = state.squelch;
 	_gain = state.gain;
 
@@ -145,6 +147,16 @@ void Demodulator::start(){
 	//setModem(NFM);
 	_demodMgr.setActiveDemodulator(_demods[NFM], false);
 
+	//create signal level refresh timer
+	std::function<void()> func([this](){
+		int level = getSignalStrength();
+
+		LOG_F(7, "Signal strength %i", level);
+		app::signalLevelUpdate(level);
+	});
+	//_sigLevelRefresher = new IntervalTimer();
+	_sigLevelRefresher.create(SIGLEVEL_REFRESH_INTERVAL, func);
+
 	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_READY);
 	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator started");
@@ -152,10 +164,13 @@ void Demodulator::start(){
 }
 
 void Demodulator::stop(){
+	_sigLevelRefresher.stop();
+	//delete _sigLevelRefresher;
+
 	_cubic->stopDevice(false, 2000);
 	_cubic->OnExit();
 	
-	DemodState& state = Configuration::getConfig().getDemodState();
+	DemodState& state = app::getConfig().getDemodState();
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 
@@ -177,12 +192,14 @@ bool Demodulator::setFrequency(long long freq) {
 	if(std::abs(_cubic->getFrequency() - freq) >= (_cubic->getSampleRate() / 2)){
         _cubic->setFrequency(freq);
         //also arbitrary
-        usleep(TUNER_RETUNE_TIME);
+        //usleep(TUNER_RETUNE_TIME);
+        std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
 	}
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 	//this is totally arbitrary
-	usleep(DEMOD_BUFFER_TIME);
+	//usleep(DEMOD_BUFFER_TIME);
+	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().demodDelay));
 
 	_currentFreq = freq;
 
@@ -194,7 +211,8 @@ bool Demodulator::setFrequency(long long freq) {
 bool Demodulator::setTunerFrequency(long long freq){
     _cubic->setFrequency(freq);
 	_demodMgr.getCurrentModem()->setFrequency(freq);
-    usleep(200000);
+    //usleep(200000);
+	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
 	return true;
 }
 
@@ -206,12 +224,18 @@ float Demodulator::getDecodedPL() { return 0; }
 unsigned int Demodulator::getDecodedDC() { return 0; }
 
 bool Demodulator::squelchThresholdMet() {
-	//return (getSignalLevel() >= _squelchLevel); //dBm comparison
-	//return (getSignalStrength() >= _squelchLevel); //SNR
-	return (std::abs(
-			_demodMgr.getActiveContextModem()->getSignalLevel()
-					- _demodMgr.getActiveContextModem()->getSignalFloor())
-			>= _squelchLevel);
+	switch (app::getConfig().getDemodConfig().squelchType) {
+	case SQUELCH_PCT:
+		return (getSignalStrength() >= _squelchLevel);
+	case SQUELCH_SNR:
+		return (std::abs(
+				_demodMgr.getActiveContextModem()->getSignalLevel()
+						- _demodMgr.getActiveContextModem()->getSignalFloor())
+				>= _squelchLevel);
+	case SQUELCH_DBM:
+	default:
+		return (getSignalLevel() >= _squelchLevel); //dBm comparison
+	}
 }
 
 bool Demodulator::setModem(Modulation mode) {
@@ -239,13 +263,24 @@ float Demodulator::getSNR() {
 	//return (_demodMgr.getActiveContextModem()->getSignalFloor()/_demodMgr.getActiveContextModem()->getSignalLevel());
 }
 
-int Demodulator::getSignalStrength() {
-	float fractional = getSNR() - 1;
-	int percent = 100*fractional;
-	if(percent >= 100)
-		return 100;
-	DRAW_LOG_F(7, "\t\t\tsigstrength %i", percent);
-	return percent;
+int Demodulator::getSignalStrength() { // uses signal level as a fraction between floor and 0dBm - unreliable
+//	float fractional = getSNR() - 1;
+//	int percent = 100*fractional;
+//	if(percent >= 100)
+//		return 100;
+
+	float signal = _demodMgr.getActiveContextModem()->getSignalLevel();
+	float floor = _demodMgr.getActiveContextModem()->getSignalFloor();
+	float ceiling = 0.0;
+	float range = ceiling - floor;
+
+	int level = (100 * (signal - floor)) / range;
+	if (level > 100)
+		level = 100;
+
+//	DRAW_LOG_F(7, "\t\t\tsigstrength %i", percent);
+//	return percent;
+	return level;
 }
 
 void Demodulator::giveMessage(std::shared_ptr<Message> message){
@@ -334,7 +369,10 @@ float Demodulator::getSquelch(){
 	return _squelchLevel;
 }
 
-void Demodulator::audioMute(bool mute){
+void Demodulator::squelchBreak(bool mute){
+	//mute = !mute;
+	mute ? _sigLevelRefresher.start() : _sigLevelRefresher.stop();
+
 	_demodMgr.getCurrentModem()->setMuted(!mute);
 }
 

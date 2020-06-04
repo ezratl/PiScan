@@ -166,7 +166,7 @@ public:
 		LOG_F(INFO, "System initialized");
 
 		_connectionManager.allowConnections();
-		_scanner.startScan();
+		_scanner.startScanner();
 
 		sysRun = true;
 	}
@@ -290,23 +290,27 @@ static SystemController sysControl(messageManager, scanSystems, scanner, connect
 
 static std::atomic_bool steadyState(false);
 
-void terminate(){
+void hardTerminate(){
 	LOG_F(WARNING, "Terminating - resources may not be properly released");
 	std::terminate();
 }
 
 void sigTermHandler(int signal){
-
-	sysRun = false;
-	//exit(1);
-	piscan::terminate();
+	// SIGTERM is raised by the kernel during shutdown
+	if(sysRun){
+		app::stopSystem();
+		sysRun = false;
+	}
+	// SIGTERM called after exit process has started - possibly because the program locked up and the user wants to force quit
+	else
+		piscan::hardTerminate();
 }
 
 void sigIntHandler(int signal){
 	LOG_F(INFO, "Stop triggered by interrupt");
 
 	if(!sysRun)
-		piscan::terminate();
+		piscan::hardTerminate();
 
 	sysRun = false;
 }
@@ -371,8 +375,8 @@ DemodContext app::getDemodContext(){
 	return DemodContext(demod.getTunerGain(), demod.getSquelch());
 }
 
-void app::audioMute(bool mute){
-	demod.audioMute(mute);
+void app::squelchBreak(bool mute){
+	demod.squelchBreak(mute);
 }
 
 long long app::getTunerSampleRate() {
@@ -383,9 +387,18 @@ const SystemInfo app::getSystemInfo(){
 	SystemInfo info = {
 			.version = "debug",
 			.buildNumber = 0,
-			.squelchRange = {0, 100},
+			.squelchRange = {0, 0},
 			.supportedModulations = {"FM", "AM"},
 	};
+	switch(getConfig().getDemodConfig().squelchType){
+	case SQUELCH_PCT:
+	case SQUELCH_SNR:
+		info.squelchRange = {0, 100};
+		break;
+	case SQUELCH_DBM:
+	default:
+		info.squelchRange = {-100, 0};
+	}
 	return info;
 }
 
@@ -395,6 +408,10 @@ void app::scannerContextUpdate(ScannerContext ctx){
 
 void app::demodContextUpdate(DemodContext ctx){
 	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, new DemodContext(ctx)));
+}
+
+void app::signalLevelUpdate(int level){
+	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::SIGNAL_LEVEL, new int(level)));
 }
 
 }
@@ -480,7 +497,7 @@ int main(int argc, char **argv) {
 			demod.waitReady();
 
 			connectionManager.allowConnections();
-			scanner.startScan();
+			scanner.startScanner();
 
 			sysRun = true;
 		}

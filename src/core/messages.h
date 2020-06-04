@@ -114,6 +114,7 @@ struct ServerMessage : public Message {
 	~ServerMessage() {};
 	enum {
 		CONTEXT_UPDATE,
+		SIGNAL_LEVEL,
 
 		NOTIFY_ALL_CLIENTS,
 		NOTIFY_USERS,

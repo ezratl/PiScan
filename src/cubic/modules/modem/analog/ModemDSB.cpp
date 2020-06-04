@@ -4,7 +4,11 @@
 #include "ModemDSB.h"
 
 ModemDSB::ModemDSB() : ModemAnalog() {
+#ifdef LIQUID_API_OLD
     demodAM_DSB = ampmodem_create(0.5, 0.0, LIQUID_AMPMODEM_DSB, 1);
+#else
+    demodAM_DSB = ampmodem_create(0.5, LIQUID_AMPMODEM_DSB, 1);
+#endif
     useSignalOutput(true);
 }
 

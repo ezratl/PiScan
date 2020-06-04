@@ -18,7 +18,7 @@ class Entry;
 struct SystemInfo {
 	string version;
 	int buildNumber;
-	pair<const int, const int> squelchRange;
+	pair<int, int> squelchRange;
 	vector<string> supportedModulations;
 };
 

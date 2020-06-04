@@ -246,3 +246,5 @@ ModelManifest.xml
 *.vscode
 
 [Dd]ata/
+src/external/live
+*.md5

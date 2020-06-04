@@ -21,6 +21,7 @@
 #include "DebugServer.h"
 #include "BackendServer.h"
 #include "synchronize.h"
+#include "AudioStreamServer.h"
 
 
 #define MAX_CONNECTIONS	5
@@ -63,6 +64,7 @@ private:
 
 	DebugServer* _debugServer = nullptr;
 	SocketServer* _sockServer = nullptr;
+	AudioStreamServer* _audioServer = nullptr;
 
 	void _queueThreadFunc(void);
 	void _handleMessage(std::shared_ptr<Message> message);
@@ -75,6 +77,8 @@ private:
 
 	void _broadcastGeneralMessage(unsigned char group, GeneralMessage& message);
 	std::shared_ptr<Message> _makeContextRequest(ClientRequest* rq);
+
+	void _broadcastSignalLevelUpdate(int level);
 
 };
 }

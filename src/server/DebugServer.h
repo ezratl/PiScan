@@ -32,6 +32,7 @@ public:
 	void contextUpdate(const DemodContext context);
 	void handleSystemMessage(const GeneralMessage message);
 	void handleSystemInfo(const SystemInfo info);
+	void handleSignalLevel(const int level);
 
 	const std::string identifier() {
 		return "Debug Console";

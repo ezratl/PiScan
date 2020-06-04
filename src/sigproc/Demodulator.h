@@ -16,6 +16,7 @@
 #include "SDRDeviceInfo.h"
 #include "Configuration.h"
 #include "synchronize.h"
+#include "IntervalTimer.h"
 
 
 namespace piscan {
@@ -65,7 +66,7 @@ public:
 	void setTunerGain(float gain);
 	float getTunerGain();
 	float getSquelch();
-	void audioMute(bool mute);
+	void squelchBreak(bool mute);
 	long long getTunerSampleRate();
 
 private:
@@ -80,7 +81,7 @@ private:
 
 	std::map<Modulation, DemodulatorInstancePtr> _demods;
 
-	
+	IntervalTimer _sigLevelRefresher;
 
 	void _handleMessage(std::shared_ptr<DemodMessage> message);
 	void _handleRequest(ClientRequest& request);
