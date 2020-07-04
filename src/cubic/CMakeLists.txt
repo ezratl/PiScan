@@ -23,41 +23,21 @@ SET(CPACK_PACKAGE_VERSION_PATCH ${CUBICSDR_VERSION_PATCH})
 
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sdr)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/demod)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules)
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog)
+	
+	
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/modules/modem)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/audio)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/util)
 	
-	target_include_directories(cubic PUBLIC sdr demod modules modules/modem modules/modem/analog audio util)
-	target_include_directories(piScan_backend PUBLIC sdr demod modules modules/modem modules/modem/analog audio util)
+#	target_include_directories(cubic PUBLIC sdr demod modules modules/modem modules/modem/analog audio util)
+#	target_include_directories(piScan_backend PUBLIC sdr demod modules modules/modem modules/modem/analog audio util)
+target_include_directories(piScan_backend PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_sources(cubic PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/sdr/SDRDeviceInfo.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sdr/SDRPostThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sdr/SDREnumerator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sdr/SoapySDRThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/demod/DemodulatorPreThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/demod/DemodulatorThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/demod/DemodulatorWorkerThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/demod/DemodulatorInstance.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/demod/DemodulatorMgr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/Modem.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/ModemAnalog.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/ModemDigital.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemAM.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemDSB.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemFM.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemNBFM.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemFMStereo.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemIQ.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemLSB.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modules/modem/analog/ModemUSB.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioSinkThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioSinkFileThread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioFile.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioFileWAV.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/util/Timer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/util/DataTree.cpp
-)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+#set(CUBIC_LIBS cubic cubic_demod cubic_modem cubic_sdr cubic_util cubic_audio)
+
+#add_dependencies(cubic cubic_modem cubic_sdr cubic_util cubic_audio)
+
+#target_link_libraries(cubic LINK_PUBLIC cubic_demod cubic_modem cubic_sdr cubic_util cubic_audio)
+target_link_libraries(piScan_backend cubic)

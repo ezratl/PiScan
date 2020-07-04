@@ -1,4 +1,6 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.13)
+
+cmake_policy(SET CMP0079 NEW)
 
 project (piScan_backend)
 
@@ -170,6 +172,7 @@ include_directories(
 	external/live/groupsock/include
 	external/live/UsageEnvironment/include
 	external/live/BasicUsageEnvironment/include
+    # TODO these includes need refactored into a lib interface
 	cubic/sdr
 	cubic/demod
 	cubic/modules
@@ -198,10 +201,24 @@ IF(LIQUID_API_OLD)
 	ADD_DEFINITIONS(-DLIQUID_API_OLD)
 ENDIF(LIQUID_API_OLD)
 
+# TODO refactoring needed to eliminate this dependency
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/util)
+target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/util)
+# TODO refactoring needed to eliminate this dependency
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
+target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
+
 add_dependencies(server proto)
 
 set(LIVE_LIBS livemedia liveBUE liveUE liveGS ssl crypto)
 
-target_link_libraries(piScan_backend core cubic external loguru proto scan server sigproc 
-	pthread atomic boost_system protobuf liquid ${LIVE_LIBS} ${OTHER_LIBRARIES})
+#set(CUBIC_LIBS cubic cubic_demod cubic_modem cubic_sdr cubic_util cubic_audio)
+
+set(SYSTEM_LIBS pthread atomic boost_system protobuf liquid)
+
+set(APPLICATION_LIBS ${SYSTEM_LIBS} ${LIVE_LIBS} ${CUBIC_LIBS} ${OTHER_LIBRARIES})
+
+set(APPLICATION_LIBS core external loguru proto scan server sigproc ${APPLICATION_LIBS})
+
+target_link_libraries(piScan_backend ${APPLICATION_LIBS})
 

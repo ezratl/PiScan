@@ -1,17 +1,10 @@
 add_library(server
 	AudioServerMediaSubsession.cpp
-	AudioServerMediaSubsession.h
 	AudioStreamServer.cpp
-	AudioStreamServer.h
 	BackendServer.cpp
-	BackendServer.h
 	Connection.cpp
 	DebugServer.cpp
-	DebugServer.h
 	LocalPCMSource.cpp
-	LocalPCMSource.h
 	ServerManager.cpp
-	ServerManager.h
 	SocketServer.cpp
-	SocketServer.h
 	)
