@@ -5,13 +5,13 @@
  *      Author: ezra
  */
 
-#include "AudioServerMediaSubsession.h"
-#include "LocalPCMSource.h"
+#include "audio_server/AudioServerMediaSubsession.h"
+#include "audio_server/LocalPCMSource.h"
 #include "uLawAudioFilter.hh"
 #include "SimpleRTPSink.hh"
 #include "MP3Transcoder.hh"
 
-namespace piscan {
+namespace piscan::server::audio {
 
 AudioServerMediaSubsession* AudioServerMediaSubsession
 ::createNew(UsageEnvironment& env, Boolean reuseFirstSource,

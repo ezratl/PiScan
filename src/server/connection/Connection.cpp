@@ -7,9 +7,9 @@
 
 #include "PiScan.h"
 #include "connection.h"
-//#include "request.h"
+#include "request.h"
 
-using namespace piscan;
+namespace piscan::server::connection {
 
 void Connection::notifyDisconnected() {
 	ClientRequest::RequestParams params = { .type = NOTIFY_DISCONNECTED };
@@ -22,17 +22,17 @@ int Connection::issueRequest(ClientRequest::RequestParams params, void* data) {
 	switch (r) {
 	case ServerInterface::RQ_DENIED:
 		handleSystemMessage(
-				GeneralMessage(GeneralMessage::ERROR,
+				piscan::server::context::GeneralMessage(piscan::server::context::GeneralMessage::ERROR,
 						"Request failed: denied"));
 		break;
 	case ServerInterface::RQ_INSUFFICIENT_PERMISSION:
 		handleSystemMessage(
-				GeneralMessage(GeneralMessage::ERROR,
+				piscan::server::context::GeneralMessage(piscan::server::context::GeneralMessage::ERROR,
 						"Request failed: insufficient permissions"));
 		break;
 	case ServerInterface::RQ_INVALID_HANDLE:
 		handleSystemMessage(
-				GeneralMessage(GeneralMessage::ERROR,
+				piscan::server::context::GeneralMessage(piscan::server::context::GeneralMessage::ERROR,
 						"Request failed: bad connection handle"));
 		break;
 	default:
@@ -134,4 +134,6 @@ int Connection::getDemodContext(){
 int Connection::getSystemInfo(){
 	handleSystemInfo(app::getSystemInfo());
 	return 0;
+}
+
 }

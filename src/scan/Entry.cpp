@@ -8,29 +8,29 @@
 #include <assert.h>
 #include <stddef.h>
 
+#include "scan_types.h"
 #include "Entry.h"
 #include "loguru.hpp"
+#include "sigproc_types.h"
 
-using namespace piscan;
+using ptree = boost::property_tree::ptree;
 
-DemodInterface* Entry::demod = nullptr;
+namespace piscan::scan {
 
 bool DummyChannel::hasSignal(){
-	if(!demod->setTunerFrequency(this->frequency))
+	if(!demod.setTunerFrequency(this->frequency))
 		return false;
 
 	return false;
 }
 
 bool FMChannel::hasSignal(void){
-	assert(demod != nullptr);
+	demod.setModem(piscan::sigproc::NFM);
 
-	demod->setModem(NFM);
-
-	if(!demod->setFrequency(this->frequency))
+	if(!demod.setFrequency(this->frequency))
 		return false;
 
-	if(demod->squelchThresholdMet())
+	if(demod.squelchThresholdMet())
 		return true;
 	/*	LOG_F(6, "Signal checking: %lli", this->frequency);
 	for(size_t squelchHits = 0; demod->squelchThresholdMet(); squelchHits++){
@@ -42,15 +42,15 @@ bool FMChannel::hasSignal(void){
 }
 
 bool AMChannel::hasSignal(void){
-	assert(demod != nullptr);
+	demod.setModem(piscan::sigproc::AM);
 
-	demod->setModem(AM);
-
-	if (!demod->setFrequency(this->frequency))
+	if (!demod.setFrequency(this->frequency))
 		return false;
 
-	if (demod->squelchThresholdMet())
+	if (demod.squelchThresholdMet())
 		return true;
 
 	return false;
+}
+
 }

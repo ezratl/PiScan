@@ -2,10 +2,13 @@
 
 #include <vector>
 
-#include "clientmessage.h"
+#include "messages/context.h"
 #include "Configuration.h"
 
 class AudioThread; //forward declaration
+namespace piscan::sigproc {
+class DemodInterface;
+}
 
 namespace piscan::app {
 struct ManualEntryData {
@@ -19,8 +22,8 @@ public:
 
 /* system functions */
 bool stopSystem();
-const SystemInfo getSystemInfo();
-inline Configuration& getConfig() { return Configuration::getConfig(); };
+const piscan::server::context::SystemInfo getSystemInfo();
+inline piscan::config::Configuration& getConfig() { return piscan::config::Configuration::getConfig(); };
 void softAbort();
 
 /* scanner functions */
@@ -28,18 +31,19 @@ void startScan();
 void holdScan(std::vector<int> index = std::vector<int>());
 void stopScanner();
 void manualEntry(ManualEntryData* freq);
-ScannerContext getScannerContext();
+piscan::server::context::ScannerContext getScannerContext();
 
 /* demod functions */
+piscan::sigproc::DemodInterface& getDemodInstance();
 void setTunerGain(float gain);
 void setDemodSquelch(float level);
-DemodContext getDemodContext();
+piscan::server::context::DemodContext getDemodContext();
 void squelchBreak(bool mute = true);
 long long getTunerSampleRate();
 
 /* server functions */
-void scannerContextUpdate(ScannerContext ctx);
-void demodContextUpdate(DemodContext ctx);
+void scannerContextUpdate(piscan::server::context::ScannerContext ctx);
+void demodContextUpdate(piscan::server::context::DemodContext ctx);
 void signalLevelUpdate(int level);
 
 /* audio related */

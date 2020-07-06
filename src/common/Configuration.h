@@ -30,7 +30,7 @@
 #define STATE_FILE		"state.json"
 #define SYSTEMS_FILE	"systems.json"
 
-namespace piscan {
+namespace piscan::config {
 
 struct GeneralConfig {
 	int logfileVerbosity = DEFAULT_LOGFILE_VERBOSITY;

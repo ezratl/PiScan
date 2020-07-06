@@ -7,13 +7,16 @@
 
 #pragma once
 
-#include <BackendServer.h>
-
+#include "server_types.h"
+#include "BackendServer.h"
 #include "liveMedia.hh"
+#include "messages.h"
 
-namespace piscan {
+namespace piscan::server {
 
+namespace audio {
 class LocalPCMSource;
+}
 
 class AudioStreamServer: public BackendServer {
 public:
@@ -23,7 +26,7 @@ public:
 	void start();
 	void stop();
 
-	LocalPCMSource* startFromAudioController(int sampleRate);
+	audio::LocalPCMSource* startFromAudioController(int sampleRate);
 
 	void giveMessage(std::shared_ptr<Message> message) { (void)message; };
 

@@ -18,7 +18,7 @@
 
 class AudioThread; // forward declaration
 
-namespace piscan {
+namespace piscan::server::audio {
 
 class LocalPCMSource: public AudioInputDevice {
 public:

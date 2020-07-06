@@ -5,8 +5,8 @@
  *      Author: ezra
  */
 
-#ifndef CORE_CONSTANTS_H_
-#define CORE_CONSTANTS_H_
+#ifndef COMMON_CONSTANTS_H_
+#define COMMON_CONSTANTS_H_
 
 #define AUTO_GAIN	-10
 
@@ -57,4 +57,4 @@ enum {
 void terminate();
 
 }
-#endif /* CORE_CONSTANTS_H_ */
+#endif /* COMMON_CONSTANTS_H_ */

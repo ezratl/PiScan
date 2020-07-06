@@ -11,14 +11,15 @@
 #include <ctime>
 #include <chrono>
 
+#include "scan_types.h"
 #include "StateMachine.h"
-#include "SystemList.h"
-#include "Entry.h"
-#include "messages.h"
-#include "clientmessage.h"
 #include "synchronize.h"
+#include "messages/context.h"
+#include "messages.h"
 
 namespace piscan {
+
+class ClientRequest;
 
 using namespace std;
 using namespace std::chrono;
@@ -30,7 +31,7 @@ namespace app{
 
 class ScannerSM: public MessageReceiver, public StateMachine, public Synchronizable {
 public:
-	ScannerSM(MessageReceiver& central, SystemList& dataSource);
+	ScannerSM(MessageReceiver& central, piscan::scan::SystemList& dataSource);
 	~ScannerSM() {};
 
 	void startScanner();
@@ -40,7 +41,7 @@ public:
 	void manualEntry(app::ManualEntryData* freq);
 	void giveMessage(std::shared_ptr<Message> message);
 
-	ScannerContext getCurrentContext();
+	piscan::server::context::ScannerContext getCurrentContext();
 private:
 	void ST_Load(EventData* data);
 	void ST_Scan(EventData* data);
@@ -75,12 +76,12 @@ private:
 private:
 	MessageReceiver& _centralQueue;
 	//moodycamel::ReaderWriterQueue<Message> _msgQueue;
-	SystemList& _systems;
+	piscan::scan::SystemList& _systems;
 	//RadioSystem* _currentSystem;
-	shared_ptr<Entry> _currentEntry;
-	shared_ptr<Entry> _manualEntry;
+	piscan::scan::EntryPtr _currentEntry;
+	piscan::scan::EntryPtr _manualEntry;
 	//size_t _sysCounter = 0, _entryCounter = 0;
-	ScannerContext _currentContext;
+	piscan::server::context::ScannerContext _currentContext;
 	mutex _contextMutex;
 
 	atomic_bool _externalHold;

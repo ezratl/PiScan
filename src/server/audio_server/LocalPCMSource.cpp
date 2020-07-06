@@ -16,7 +16,7 @@
 #include "AudioThread.h"
 #include "PiScan.h"
 
-namespace piscan {
+namespace piscan::server::audio {
 
 LocalPCMSource*
 LocalPCMSource::createNew(UsageEnvironment& env) {

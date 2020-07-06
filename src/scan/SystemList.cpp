@@ -9,16 +9,21 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 
+#include "scan_types.h"
 #include "SystemList.h"
-#include "Configuration.h"
 #include "loguru.hpp"
+#include "RadioSystem.h"
+#include "Entry.h"
 #include "constants.h"
+#include "Configuration.h"
 
-using namespace piscan;
 using namespace std::experimental;
+using ptree = boost::property_tree::ptree;
+
+namespace piscan::scan {
 
 std::unordered_map<std::string, std::function<RadioSystemPtr(ptree&, size_t)>> SystemList::_makeSystem = {
-		{ANALOG_SYSTEM_HASH, makeAnalogSystem}
+		{database::systems::type_analog, makeAnalogSystem}
 };
 
 SystemList::SystemList() {
@@ -31,7 +36,7 @@ SystemList::~SystemList() {
 }
 
 void SystemList::populateFromFile(){
-	filesystem::path path(Configuration::getConfig().getWorkingDirectory());
+	filesystem::path path(piscan::config::Configuration::getConfig().getWorkingDirectory());
 	path += filesystem::path::preferred_separator;
 	path += SYSTEMS_FILE;
 	if(!filesystem::exists(path)){
@@ -48,11 +53,11 @@ void SystemList::populateFromFile(){
 		LOG_F(WARNING, "Error parsing file: %s", e.message().c_str());
 	}
 
-	BOOST_FOREACH(ptree::value_type& v, _jsonTree.get_child(std::string(SYSTEMS_KEY).append("."))){
+	BOOST_FOREACH(ptree::value_type& v, _jsonTree.get_child(std::string(database::systems_key).append("."))){
 		LOG_F(1, "%s", v.first.c_str());
 		ptree newSystem = v.second;
 
-		std::string sysType = newSystem.get(SYS_TYPE_KEY, "unspecified");
+		std::string sysType = newSystem.get(database::systems::type_key, "unspecified");
 
 		RadioSystemPtr system;
 
@@ -71,7 +76,7 @@ void SystemList::populateFromFile(){
 }
 
 bool SystemList::writeToFile(){
-	filesystem::path path(Configuration::getConfig().getWorkingDirectory());
+	filesystem::path path(piscan::config::Configuration::getConfig().getWorkingDirectory());
 	path += filesystem::path::preferred_separator;
 	path += SYSTEMS_FILE;
 
@@ -84,7 +89,7 @@ bool SystemList::writeToFile(){
 		systems.push_back(std::make_pair("", p->getPropertyTree()));
 	}
 
-	pt.add_child(SYSTEMS_KEY, systems);
+	pt.add_child(database::systems_key, systems);
 
 	write_json(path, pt);
 
@@ -268,4 +273,6 @@ long SystemList::EntryBin::getCenterFreq(){
 RadioSystemPtr SystemList::makeAnalogSystem(ptree& pt, size_t index){
 	auto system = std::make_shared<AnalogSystem>(pt, index);
 	return system;
+}
+
 }

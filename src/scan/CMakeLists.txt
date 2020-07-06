@@ -5,4 +5,4 @@ add_library(scan
 	)
 	
 add_executable(piscan_hpdconv SentinelFile.cpp)
-target_link_libraries(piscan_hpdconv scan core boost_system loguru pthread stdc++fs dl)
+target_link_libraries(piscan_hpdconv scan common boost_system loguru pthread stdc++fs dl)

@@ -9,10 +9,16 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <iostream>
 
-#include "constants.h"
+#include "scan_types.h"
+#include "Entry.h"
+#include "RadioSystem.h"
+#include "SystemList.h"
 #include "ListGenerator.h"
 #include "loguru.hpp"
+#include "sigproc_types.h"
+#include "constants.h"
 
 #define SENTINEL_FILE		"list.hpd"
 
@@ -37,7 +43,7 @@
 #define C_FREQ_TONE_POS		5
 #define C_FREQ_DELAY_POS	8
 
-using namespace piscan;
+namespace piscan::scan {
 
 bool SentinelFile::generateSystemList(SystemList& list) {
 	_list = &list;
@@ -147,6 +153,30 @@ void SentinelFile::_newAnalogEntry(std::vector<std::string>& tokens){
 	}
 }
 
+} // namespace piscan::scan
+
+namespace piscan::sigproc {
+class DummyDemod : public DemodInterface {
+public:
+	virtual bool setFrequency(long long /*freq*/) { return false; };
+	virtual bool setTunerFrequency(long long /*freq*/) { return false; };
+	virtual float getSignalLevel() { return 0.0f; };
+	virtual float getDecodedPL() { return 0.0f; };
+	virtual unsigned int getDecodedDC() { return 0u;};
+	virtual bool squelchThresholdMet() { return false; };
+	virtual bool setModem(Modulation /*mode*/) { return false; };
+	virtual void setSquelch(float /*level*/) {};
+	virtual float getSNR() { return 0.0f; };
+	virtual int getSignalStrength() { return 0; };
+} demod;
+}
+
+//piscan::sigproc::DummyDemod demod;
+
+piscan::sigproc::DemodInterface& piscan::app::getDemodInstance() {
+	return piscan::sigproc::demod;
+}
+
 void usage() {
 	std::cout << "Usage:\n\t";
 	std::cout << "piscan_hpdconv -i [path to .hpd file] -o [path to PiScan data folder]\n";
@@ -157,8 +187,8 @@ void usage() {
 }
 
 int main(int argc, char** argv){
-	Configuration& config = Configuration::getConfig();
-	SystemList list;
+	piscan::config::Configuration& config = piscan::config::Configuration::getConfig();
+	piscan::scan::SystemList list;
 	std::string hpdPath;
 	bool verbose = false;
 
@@ -194,7 +224,7 @@ int main(int argc, char** argv){
 	else
 		loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
 
-	SentinelFile generator(hpdPath);
+	piscan::scan::SentinelFile generator(hpdPath);
 
 	if(!generator.generateSystemList(list)){
 		LOG_F(ERROR, "File parsing failed");

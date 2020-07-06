@@ -13,25 +13,24 @@
 #include <vector>
 #include <boost/asio.hpp>
 
-#include "messages.h"
-#include "request.h"
-#include "connection.h"
-#include "clientmessage.h"
+#include "connection/connection_types.h"
+#include "server_types.h"
 #include "SocketServer.h"
-#include "DebugServer.h"
 #include "BackendServer.h"
 #include "synchronize.h"
 #include "AudioStreamServer.h"
+#include "messages/context.h"
+#include "messages.h"
+#include "request.h"
 
 
 #define MAX_CONNECTIONS	5
 
 namespace piscan {
 
-class Connection;
-class SocketServer;
+using ConnectionPtr = server::connection::ConnectionPtr;
 
-class ServerManager : public MessageReceiver, public ServerInterface, public Synchronizable {
+class ServerManager : public MessageReceiver, public server::ServerInterface, public Synchronizable {
 public:
 	ServerManager(boost::asio::io_service& io_service, MessageReceiver& central);
 	~ServerManager() {
@@ -50,11 +49,11 @@ private:
 	boost::asio::io_service& _io_service;
 	MessageReceiver& _centralQueue;
 	moodycamel::ConcurrentQueue<std::shared_ptr<Message>> _queue;
-	moodycamel::ReaderWriterQueue<boost::shared_ptr<Connection>> _connectionQueue;
+	moodycamel::ReaderWriterQueue<ConnectionPtr> _connectionQueue;
 	int _activeConnections;
 	//std::vector<boost::shared_ptr<Connection>> _connections;
-	boost::shared_ptr<Connection> _connections[MAX_CONNECTIONS];
-	std::vector<BackendServer*> _servers;
+	ConnectionPtr _connections[MAX_CONNECTIONS];
+	std::vector<server::BackendServer*> _servers;
 	std::thread _queueThread;
 	std::mutex _msgMutex;
 	std::condition_variable _cv;
@@ -62,20 +61,20 @@ private:
 	bool _allowConnections = false;
 	bool _run = false;
 
-	DebugServer* _debugServer = nullptr;
-	SocketServer* _sockServer = nullptr;
-	AudioStreamServer* _audioServer = nullptr;
+	server::DebugServer* _debugServer = nullptr;
+	server::SocketServer* _sockServer = nullptr;
+	server::AudioStreamServer* _audioServer = nullptr;
 
 	void _queueThreadFunc(void);
 	void _handleMessage(std::shared_ptr<Message> message);
-	void _addConnection(boost::shared_ptr<Connection> client);
-	int requestConnection(boost::shared_ptr<Connection> client);
+	void _addConnection(ConnectionPtr client);
+	int requestConnection(ConnectionPtr client);
 	int giveRequest(void* request);
 
 	template <class T>
 	void _broadcastContextUpdate(T& context);
 
-	void _broadcastGeneralMessage(unsigned char group, GeneralMessage& message);
+	void _broadcastGeneralMessage(unsigned char group, piscan::server::context::GeneralMessage& message);
 	std::shared_ptr<Message> _makeContextRequest(ClientRequest* rq);
 
 	void _broadcastSignalLevelUpdate(int level);

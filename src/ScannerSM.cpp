@@ -13,6 +13,10 @@
 #include "ListGenerator.h"
 #include "loguru.hpp"
 #include "threadname.h"
+#include "SystemList.h"
+#include "Entry.h"
+#include "RadioSystem.h"
+#include "request.h"
 #include "Configuration.h"
 
 
@@ -23,14 +27,14 @@
 using namespace piscan;
 using namespace std;
 
-ScannerSM::ScannerSM(MessageReceiver& central, SystemList& dataSource) :
+ScannerSM::ScannerSM(MessageReceiver& central, piscan::scan::SystemList& dataSource) :
 		StateMachine(7), _centralQueue(central), _systems(dataSource), _externalHold(false), _manualMode(false) {
 }
 
 void ScannerSM::startScanner(){
 	LOG_F(1, "Loading saved scanner state");
-	ScannerState& state = app::getConfig().getScannerState();
-	EntryPtr entry;
+	piscan::config::ScannerState& state = app::getConfig().getScannerState();
+	piscan::scan::EntryPtr entry;
 	switch(state.scanState){
 	case SCAN_STATE_HOLD:
 		LOG_F(1, "Previous state hold");
@@ -137,7 +141,7 @@ void ScannerSM::ST_Scan(EventData* data){
 	}
 
 	_enableAudioOut(false);
-	_currentContext.state = ScannerContext::SCAN;
+	_currentContext.state = piscan::server::context::ScannerContext::SCAN;
 	_manualMode = false;
 	_externalHold = false;
 
@@ -189,7 +193,7 @@ void ScannerSM::ST_Hold(EventData* data){
 	}
 
 	_enableAudioOut(false);
-	_currentContext.state = ScannerContext::HOLD;
+	_currentContext.state = piscan::server::context::ScannerContext::HOLD;
 	if(currentState != lastState || indexHold)
 		_broadcastContextUpdate();
 
@@ -243,7 +247,7 @@ void ScannerSM::ST_Receive(EventData* data){
 	}
 
 	_enableAudioOut(true);
-	_currentContext.state = ScannerContext::RECEIVE;
+	_currentContext.state = piscan::server::context::ScannerContext::RECEIVE;
 	if(currentState != lastState)
 		_broadcastContextUpdate();
 
@@ -276,12 +280,12 @@ void ScannerSM::ST_Manual(EventData* data){
 
 	//TODO will replace with a function map probably
 	if(freq->modulation == "FM" || freq->modulation == "NFM")
-		_manualEntry = make_shared<FMChannel>(freq->freq, "", false, 0);
+		_manualEntry = make_shared<piscan::scan::FMChannel>(freq->freq, "", false, 0);
 	else if(freq->modulation == "AM")
-		_manualEntry = make_shared<AMChannel>(freq->freq, "", false, 0);
+		_manualEntry = make_shared<piscan::scan::AMChannel>(freq->freq, "", false, 0);
 	else{
 		LOG_F(WARNING, "Invalid manual entry modulation: %s", freq->modulation.c_str());
-		_manualEntry = make_shared<FMChannel>(freq->freq, "", false, 0);
+		_manualEntry = make_shared<piscan::scan::FMChannel>(freq->freq, "", false, 0);
 	}
 	delete freq;
 	_currentEntry = _manualEntry;
@@ -294,7 +298,7 @@ void ScannerSM::ST_Manual(EventData* data){
 void ScannerSM::ST_SaveAll(EventData* data){
 	DLOG_F(9, "ST_SaveAll");
 	LOG_F(1, "Saving state");
-	ScannerState& state = app::getConfig().getScannerState();
+	piscan::config::ScannerState& state = app::getConfig().getScannerState();
 	state.holdIndex = {};
 	state.holdKey = "";
 	state.manualFreq = 0;
@@ -333,7 +337,7 @@ void ScannerSM::ST_Stopped(EventData* data){
 void ScannerSM::_broadcastContextUpdate() {
 	DLOG_F(6, "Broadcasting context");
 	lock_guard<mutex> lock(_contextMutex);
-	if (_currentContext.state != ScannerContext::SCAN)
+	if (_currentContext.state != piscan::server::context::ScannerContext::SCAN)
 	{
 		if (_manualMode)
 		{
@@ -357,7 +361,7 @@ void ScannerSM::_broadcastContextUpdate() {
 		_currentContext.clearFields();
 	}
 
-	//auto message = make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new ScannerContext(_currentContext));
+	//auto message = make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::ScannerContext(_currentContext));
 
 	//_centralQueue.giveMessage(message);
 	app::scannerContextUpdate(_currentContext);
@@ -427,7 +431,7 @@ void ScannerSM::_handleRequest(ClientRequest& request) {
 	}
 	else if (rq->rqInfo.type == GET_CONTEXT){
 		unique_lock<mutex> lock(_contextMutex);
-		ScannerContext* context = new ScannerContext(_currentContext);
+		piscan::server::context::ScannerContext* context = new piscan::server::context::ScannerContext(_currentContext);
 		lock.unlock();
 		rq->connection->scannerContextRequestCallback(rq->rqHandle, context);
 	}
@@ -438,7 +442,7 @@ void ScannerSM::_handleRequest(ClientRequest& request) {
 	delete rq;
 }
 
-ScannerContext ScannerSM::getCurrentContext(){
+piscan::server::context::ScannerContext ScannerSM::getCurrentContext(){
 	unique_lock<mutex> lock(_contextMutex);
-	return ScannerContext(_currentContext);
+	return piscan::server::context::ScannerContext(_currentContext);
 }

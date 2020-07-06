@@ -11,13 +11,14 @@
 #include <vector>
 #include <unordered_map>
 #include <boost/property_tree/ptree.hpp>
+#include <string>
 
-#include "RadioSystem.h"
-#include "Entry.h"
+#include "scan_types.h"
 
-#define SYSTEMS_KEY	"systems"
 
-namespace piscan {
+using ptree = boost::property_tree::ptree;
+
+namespace piscan::scan {
 
 class SystemList {
 public:

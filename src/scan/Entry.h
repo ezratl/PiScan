@@ -10,30 +10,19 @@
 
 #include <exception>
 #include <boost/property_tree/ptree.hpp>
+#include <atomic>
 
-#include "scandefs.h"
-#include "Demodulator.h"
+#include "scan_types.h"
+#include "sigproc_types.h"
+#include "PiScan.h"
 
 #define TAG_LENGTH	20
 
-#define FM_CHANNEL_HASH		"fmc"
-#define AM_CHANNEL_HASH		"amc"
-#define PL_CHANNEL_HASH		"plc"
-#define DC_CHANNEL_HASH		"dcc"
-
-#define CHAN_TYPE_KEY	"chantype"
-#define TAG_KEY			"tag"
-#define LOCKOUT_KEY		"lockout"
-#define DELAY_KEY		"delay"
-#define FREQ_KEY		"freq"
-#define TONE_KEY		"tone"
-#define CODE_KEY		"code"
-
 #define SQUELCH_TRIGGER_HITS	25
 
-using namespace boost::property_tree;
+using ptree = boost::property_tree::ptree;
 
-namespace piscan {
+namespace piscan::scan {
 
 /* base class for all types of scanner entries */
 class Entry {
@@ -45,11 +34,11 @@ public:
 		LOCKOUT_TIMER,
 	};
 
-	Entry(std::string tag, bool lo, int del) : _tag(tag), /*_lockedOut(lo),*/ _scanDelayMS(del) {
+	Entry(std::string tag, bool lo, int del) : _tag(tag), _scanDelayMS(del), demod(piscan::app::getDemodInstance()) {
 		_lockout = (lo) ? LOCKOUT_PERSIST : LOCKOUT_NONE;
-		propertyTree.put(TAG_KEY, tag);
-		propertyTree.put(LOCKOUT_KEY, lo);
-		propertyTree.put(DELAY_KEY, del);
+		propertyTree.put(database::entry::tag_key, tag);
+		propertyTree.put(database::entry::lockout_key, lo);
+		propertyTree.put(database::entry::delay_key, del);
 	};
 	virtual ~Entry() {};
 
@@ -61,7 +50,7 @@ public:
 	void	lockout(bool val = true) {
 		//_lockedOut = val;
 		_lockout = (val) ? LOCKOUT_PERSIST : LOCKOUT_NONE;
-		propertyTree.put(LOCKOUT_KEY, val);
+		propertyTree.put(database::entry::lockout_key, val);
 	}
 	virtual bool	hasSignal() = 0;
 	virtual long long freq() = 0;
@@ -85,8 +74,7 @@ private:
 	size_t _entryIndex = 0;
 	RadioSystemPtr _parent;
 protected:
-	static DemodInterface* demod;
-	friend void setDemodulator(DemodInterface* demod);
+	piscan::sigproc::DemodInterface& demod;
 
 	ptree propertyTree;
 };
@@ -95,7 +83,7 @@ protected:
 class Channel: public Entry {
 public:
 	Channel(long freq, std::string tag, bool lo, int del) : Entry(tag, lo, del), frequency(freq){
-		propertyTree.put(FREQ_KEY, freq);
+		propertyTree.put(database::entry::freq_key, freq);
 	}
 	virtual ~Channel() {};
 	virtual long long freq() { return frequency; };
@@ -125,7 +113,7 @@ public:
 class FMChannel : public Channel {
 public:
 	FMChannel(long long freq, std::string tag, bool lo, int del) : Channel(freq, tag, lo, del){
-		propertyTree.put(CHAN_TYPE_KEY, FM_CHANNEL_HASH);
+		propertyTree.put(database::entry::channel::type_key, database::entry::channel::type_fm);
 	}
 	~FMChannel() {};
 
@@ -147,8 +135,8 @@ public:
 		} catch (std::exception& e) {
 			tone = 0;
 		}
-		propertyTree.put(CHAN_TYPE_KEY, PL_CHANNEL_HASH);
-		propertyTree.put(TONE_KEY, tn);
+		propertyTree.put(database::entry::channel::type_key, database::entry::channel::type_pl);
+		propertyTree.put(database::entry::tone_key, tn);
 	}
 	~PLChannel() {};
 
@@ -169,8 +157,8 @@ class DCChannel : public FMChannel {
 public:
 	DCChannel(long long freq, std::string tn, std::string tag, bool lo, int del) :
 			FMChannel(freq, tag, lo, del), s_code(tn) {
-		propertyTree.put(CHAN_TYPE_KEY, DC_CHANNEL_HASH);
-		propertyTree.put(CODE_KEY, tn);
+		propertyTree.put(database::entry::channel::type_key, database::entry::channel::type_dc);
+		propertyTree.put(database::entry::code_key, tn);
 	}
 	~DCChannel() {};
 
@@ -189,7 +177,7 @@ protected:
 class AMChannel : public Channel {
 public:
 	AMChannel(long long freq, std::string tag, bool lo, int del) : Channel(freq, tag, lo, del){
-		propertyTree.put(CHAN_TYPE_KEY, AM_CHANNEL_HASH);
+		propertyTree.put(database::entry::channel::type_key, database::entry::channel::type_am);
 	}
 	~AMChannel() {};
 

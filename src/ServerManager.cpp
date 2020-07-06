@@ -14,6 +14,7 @@
 #include "DebugServer.h"
 #include "SocketServer.h"
 #include "threadname.h"
+#include "connection/connection.h"
 
 
 #define QUEUE_SIZE		64
@@ -42,13 +43,13 @@ ServerManager::ServerManager(boost::asio::io_service& io_service, MessageReceive
 
 void ServerManager::start(bool useDebugServer, bool spawnLocalClient){
 	if(useDebugServer){
-		_debugServer = new DebugServer(*this);
+		_debugServer = new server::DebugServer(*this);
 		_servers.push_back(_debugServer);
 	}
-	_sockServer = new SocketServer(*this, _io_service);
+	_sockServer = new server::SocketServer(*this, _io_service);
 	_servers.push_back(_sockServer);
 
-	_audioServer = new AudioStreamServer(*this);
+	_audioServer = new server::AudioStreamServer(*this);
 	_servers.push_back(_audioServer);
 
 	_run = true;
@@ -85,7 +86,7 @@ void ServerManager::disconnectClients(){
 	//TODO might need locks for array
 	_allowConnections = false;
 	for(int i = 0; i < MAX_CONNECTIONS; ++i){
-		Connection* con = _connections[i].get();
+		server::connection::Connection* con = _connections[i].get();
 		if(con != nullptr){
 			con->disconnect();
 		}
@@ -112,7 +113,7 @@ void ServerManager::_queueThreadFunc(void){
 			_msgAvailable = false;
 		}
 
-		boost::shared_ptr<Connection> newCon;
+		ConnectionPtr newCon;
 		while(_allowConnections && _connectionQueue.try_dequeue(newCon)){
 			_addConnection(newCon);
 			_msgAvailable = false;
@@ -144,7 +145,7 @@ void ServerManager::giveMessage(std::shared_ptr<Message> message){
 	}
 }
 
-int ServerManager::requestConnection(boost::shared_ptr<Connection> client){
+int ServerManager::requestConnection(ConnectionPtr client){
 	if(_activeConnections < MAX_CONNECTIONS){
 		DLOG_F(8, "New connection request");
 		_connectionQueue.enqueue(client);
@@ -233,10 +234,10 @@ void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 	case ServerMessage::CONTEXT_UPDATE:
 		switch(message->source){
 		case SCANNER_SM:
-			_broadcastContextUpdate(*(reinterpret_cast<ScannerContext*>(msg->pData)));
+			_broadcastContextUpdate(*(reinterpret_cast<piscan::server::context::ScannerContext*>(msg->pData)));
 			break;
 		case DEMOD:
-			_broadcastContextUpdate(*(reinterpret_cast<DemodContext*>(msg->pData)));
+			_broadcastContextUpdate(*(reinterpret_cast<piscan::server::context::DemodContext*>(msg->pData)));
 			break;
 		default:
 			break;
@@ -245,7 +246,7 @@ void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 	case ServerMessage::NOTIFY_ALL_CLIENTS:
 	case ServerMessage::NOTIFY_USERS:
 	case ServerMessage::NOTIFY_VIEWERS:
-		_broadcastGeneralMessage(msg->type, *(reinterpret_cast<GeneralMessage*>(msg->pData)));
+		_broadcastGeneralMessage(msg->type, *(reinterpret_cast<piscan::server::context::GeneralMessage*>(msg->pData)));
 		break;
 	case ServerMessage::STOP:
 		disconnectClients();
@@ -263,7 +264,7 @@ void ServerManager::_handleMessage(std::shared_ptr<Message> message){
 
 }
 
-void ServerManager::_addConnection(boost::shared_ptr<Connection> client){
+void ServerManager::_addConnection(ConnectionPtr client){
 	//TODO
 	for(unsigned int i = 0; i < MAX_CONNECTIONS; ++i){
 		if(_connections[i] == nullptr){
@@ -295,7 +296,7 @@ void ServerManager::_broadcastContextUpdate(T& context){
 	delete &context;
 }
 
-void ServerManager::_broadcastGeneralMessage(unsigned char group, GeneralMessage& message){
+void ServerManager::_broadcastGeneralMessage(unsigned char group, piscan::server::context::GeneralMessage& message){
 	unsigned char connectionLevel = 0;
 	switch(group){
 	case ServerMessage::NOTIFY_ALL_CLIENTS:
@@ -313,9 +314,9 @@ void ServerManager::_broadcastGeneralMessage(unsigned char group, GeneralMessage
 
 	for (size_t i = 0; i < MAX_CONNECTIONS; i++) {
 		if (_connections[i] != nullptr) {
-			Connection* con = _connections[i].get();
+			server::connection::Connection* con = _connections[i].get();
 			if (con->_level >= connectionLevel)
-				con->handleSystemMessage(GeneralMessage(message));
+				con->handleSystemMessage(piscan::server::context::GeneralMessage(message));
 		}
 	}
 
@@ -340,7 +341,7 @@ std::shared_ptr<Message> ServerManager::_makeContextRequest(ClientRequest* rq){
 void ServerManager::_broadcastSignalLevelUpdate(int level) {
 	for (size_t i = 0; i < MAX_CONNECTIONS; i++) {
 		if (_connections[i] != nullptr) {
-			Connection* con = _connections[i].get();
+			server::connection::Connection* con = _connections[i].get();
 			con->handleSignalLevel(level);
 		}
 	}

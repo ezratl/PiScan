@@ -12,33 +12,22 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
-#include "constants.h"
-#include "clientmessage.h"
-#include "messages.h"
+#include "connection_types.h"
+#include "server_types.h"
 #include "request.h"
+#include "messages/context.h"
+#include "constants.h"
+#include "messages.h"
 
 #define HANDLE_NULL	-1
 
 namespace piscan {
+class TestClient;
+}
 
-class Connection;
+namespace piscan::server::connection {
 
-class ServerInterface {
-public:
-	virtual ~ServerInterface() {};
-
-	enum RequestResponse {
-		RQ_ACCEPTED,
-		RQ_DENIED,
-		RQ_INSUFFICIENT_PERMISSION,
-		RQ_INVALID_HANDLE,
-	};
-
-	virtual int requestConnection(boost::shared_ptr<Connection> client) = 0;
-	virtual int giveRequest(void* request) = 0;
-};
-
-class Connection : public RequestCallbackInterface, public MessageReceiver {
+class Connection : public piscan::RequestCallbackInterface, public piscan::MessageReceiver {
 public:
 
 
@@ -54,18 +43,18 @@ public:
 	virtual void giveMessage(std::shared_ptr<Message> message) = 0;
 	virtual bool connect() = 0;
 	virtual void disconnect() = 0;
-	virtual void contextUpdate(const ScannerContext context) = 0;
-	virtual void contextUpdate(const DemodContext context) = 0;
-	virtual void handleSystemMessage(const GeneralMessage message) = 0;
-	virtual void handleSystemInfo(const SystemInfo info) = 0;
+	virtual void contextUpdate(const piscan::server::context::ScannerContext context) = 0;
+	virtual void contextUpdate(const piscan::server::context::DemodContext context) = 0;
+	virtual void handleSystemMessage(const piscan::server::context::GeneralMessage message) = 0;
+	virtual void handleSystemInfo(const piscan::server::context::SystemInfo info) = 0;
 	virtual void handleSignalLevel(const int level) = 0;
 
 	virtual const std::string identifier() = 0;
 
 private:
-	friend class ServerManager;
-	friend class ClientRequest;
-	friend class TestClient;
+	friend class piscan::ServerManager;
+	friend class piscan::ClientRequest;
+	friend class piscan::TestClient;
 
 	ConnectionLevel _level;
 	AudioReceive _audio;
@@ -74,15 +63,15 @@ private:
 
 	void scannerContextRequestCallback(int handle, void* data){
 		assert(data != nullptr);
-		ScannerContext* context = reinterpret_cast<ScannerContext*>(data);
-		contextUpdate(ScannerContext(*context));
+		piscan::server::context::ScannerContext* context = reinterpret_cast<piscan::server::context::ScannerContext*>(data);
+		contextUpdate(piscan::server::context::ScannerContext(*context));
 		delete context;
 	}
 
 	void demodContextRequestCallback(int handle, void* data){
 		assert(data != nullptr);
-		DemodContext* context = reinterpret_cast<DemodContext*>(data);
-		contextUpdate(DemodContext(*context));
+		piscan::server::context::DemodContext* context = reinterpret_cast<piscan::server::context::DemodContext*>(data);
+		contextUpdate(piscan::server::context::DemodContext(*context));
 		delete context;
 	}
 protected:
@@ -118,8 +107,6 @@ protected:
 	int getSystemInfo();
 
 };
-
-typedef boost::shared_ptr<Connection> ConnectionPtr;
 
 }
 #endif /* SERVER_CONNECTION_H_ */

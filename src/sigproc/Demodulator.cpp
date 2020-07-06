@@ -17,12 +17,12 @@
 #define NUM_RATES_DEFAULT	4
 #define SIGLEVEL_REFRESH_INTERVAL	100 // milliseconds
 
-using namespace piscan;
+namespace piscan::sigproc {
 
 Demodulator::Demodulator(MessageReceiver& central) : _centralQueue(central), _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
 
 void Demodulator::start(){
-	DemodState& state = app::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::getConfig().getDemodState();
 	_squelchLevel = state.squelch;
 	_gain = state.gain;
 
@@ -170,7 +170,7 @@ void Demodulator::stop(){
 	_cubic->stopDevice(false, 2000);
 	_cubic->OnExit();
 	
-	DemodState& state = app::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::getConfig().getDemodState();
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 
@@ -331,7 +331,7 @@ void Demodulator::_handleRequest(ClientRequest& request){
 		_contextUpdate();
 	}
 	else if(request.rqInfo.type == GET_CONTEXT){
-		DemodContext* context = new DemodContext(_gain, _squelchLevel);
+		piscan::server::context::DemodContext* context = new piscan::server::context::DemodContext(_gain, _squelchLevel);
 		request.connection->demodContextRequestCallback(request.rqHandle, context);
 	}
 
@@ -339,9 +339,9 @@ void Demodulator::_handleRequest(ClientRequest& request){
 }
 
 void Demodulator::_contextUpdate(){
-	//DemodContext* context = new DemodContext(_gain, _squelchLevel);
+	//piscan::server::context::DemodContext* context = new piscan::server::context::DemodContext(_gain, _squelchLevel);
 	//_centralQueue.giveMessage(std::make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, context));
-	app::demodContextUpdate(DemodContext(_gain, _squelchLevel));
+	app::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
 }
 
 void Demodulator::setTunerGain(float gain){
@@ -378,4 +378,6 @@ void Demodulator::squelchBreak(bool mute){
 
 long long Demodulator::getTunerSampleRate(){
 	return _cubic->getSampleRate();
+}
+
 }

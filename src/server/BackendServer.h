@@ -8,10 +8,10 @@
 #ifndef BACKENDSERVER_H_
 #define BACKENDSERVER_H_
 
+#include "server_types.h"
 #include "messages.h"
-#include "connection.h"
 
-namespace piscan {
+namespace piscan::server {
 
 class BackendServer : public MessageReceiver {
 public:

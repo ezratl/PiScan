@@ -1,10 +1,10 @@
 add_library(server
-	AudioServerMediaSubsession.cpp
 	AudioStreamServer.cpp
 	BackendServer.cpp
-	Connection.cpp
 	DebugServer.cpp
-	LocalPCMSource.cpp
-	ServerManager.cpp
 	SocketServer.cpp
-	)
+)
+
+add_subdirectory(connection)
+add_subdirectory(audio_server)
+add_subdirectory(messages)

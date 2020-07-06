@@ -158,7 +158,8 @@ set_target_properties(liveGS PROPERTIES
 
 
 include_directories(
-	core 
+	${PROJECT_SOURCE_DIR}
+	common 
 	cubic 
 	external 
 	scan 
@@ -182,13 +183,14 @@ include_directories(
 	cubic/util
 )
 
-add_subdirectory(core)
+add_subdirectory(common)
 add_subdirectory(cubic)
 add_subdirectory(external)
 add_subdirectory(scan)
 add_subdirectory(server)
 add_subdirectory(sigproc)
 add_subdirectory(tests)
+add_subdirectory(util)
 
 find_package(SoapySDR "0.4.0" NO_MODULE REQUIRED)
 include_directories(${SOAPY_SDR_INCLUDE_DIR})
@@ -202,11 +204,16 @@ IF(LIQUID_API_OLD)
 ENDIF(LIQUID_API_OLD)
 
 # TODO refactoring needed to eliminate this dependency
-target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/util)
+target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/util)
 target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/util)
 # TODO refactoring needed to eliminate this dependency
-target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
+target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
 target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
+
+target_sources(piScan_backend PUBLIC 
+	ScannerSM.cpp
+	ServerManager.cpp
+)
 
 add_dependencies(server proto)
 
@@ -218,7 +225,7 @@ set(SYSTEM_LIBS pthread atomic boost_system protobuf liquid)
 
 set(APPLICATION_LIBS ${SYSTEM_LIBS} ${LIVE_LIBS} ${CUBIC_LIBS} ${OTHER_LIBRARIES})
 
-set(APPLICATION_LIBS core external loguru proto scan server sigproc ${APPLICATION_LIBS})
+set(APPLICATION_LIBS common external loguru proto scan server sigproc util ${APPLICATION_LIBS})
 
 target_link_libraries(piScan_backend ${APPLICATION_LIBS})
 

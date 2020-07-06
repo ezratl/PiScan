@@ -9,6 +9,7 @@
 #include "PiScan.h"
 #include "constants.h"
 #include "Configuration.h"
+#include "sigproc_types.h"
 #include "Demodulator.h"
 #include "Entry.h"
 #include "loguru.hpp"
@@ -138,8 +139,8 @@ private:
 
 class SystemController : public MessageReceiver {
 public:
-	SystemController(MessageReceiver& central, SystemList& syslist,
-			ScannerSM& scan, ServerManager& conmgr, Demodulator& dm) :
+	SystemController(MessageReceiver& central, piscan::scan::SystemList& syslist,
+			ScannerSM& scan, ServerManager& conmgr, piscan::sigproc::Demodulator& dm) :
 			_centralQueue(central), _systemList(syslist), _scanner(scan), _connectionManager(
 					conmgr), _demod(dm), _flagLock(_flagsMutex, std::defer_lock) {
 		//_flagLock(_flagsMutex);
@@ -191,10 +192,10 @@ public:
 
 private:
 	MessageReceiver& _centralQueue;
-	SystemList& _systemList;
+	piscan::scan::SystemList& _systemList;
 	ScannerSM& _scanner;
 	ServerManager& _connectionManager;
-	Demodulator& _demod;
+	piscan::sigproc::Demodulator& _demod;
 
 	std::mutex _flagsMutex;
 	std::unique_lock<std::mutex> _flagLock;
@@ -282,10 +283,10 @@ private:
 static boost::asio::io_service io_service;
 static std::thread ioThread;
 static MessageManager messageManager;
-static SystemList scanSystems;
+static piscan::scan::SystemList scanSystems;
 static ScannerSM scanner(messageManager, scanSystems);
 static ServerManager connectionManager(io_service, messageManager);
-static Demodulator demod(messageManager);
+static piscan::sigproc::Demodulator demod(messageManager);
 static SystemController sysControl(messageManager, scanSystems, scanner, connectionManager, demod);
 
 static std::atomic_bool steadyState(false);
@@ -315,9 +316,8 @@ void sigIntHandler(int signal){
 	sysRun = false;
 }
 
-void setDemodulator(DemodInterface* demod) {
-	DCHECK_F(demod != nullptr);
-	Entry::demod = demod;
+piscan::sigproc::DemodInterface& app::getDemodInstance() {
+	return demod;
 }
 
 void runIO(){
@@ -359,7 +359,7 @@ void app::manualEntry(app::ManualEntryData* freq){
 	scanner.manualEntry(freq);
 }
 
-ScannerContext app::getScannerContext(){
+piscan::server::context::ScannerContext app::getScannerContext(){
 	return scanner.getCurrentContext();
 }
 
@@ -371,8 +371,8 @@ void app::setDemodSquelch(float level){
 	demod.setSquelch(level);
 }
 
-DemodContext app::getDemodContext(){
-	return DemodContext(demod.getTunerGain(), demod.getSquelch());
+piscan::server::context::DemodContext app::getDemodContext(){
+	return piscan::server::context::DemodContext(demod.getTunerGain(), demod.getSquelch());
 }
 
 void app::squelchBreak(bool mute){
@@ -383,8 +383,8 @@ long long app::getTunerSampleRate() {
 	return demod.getTunerSampleRate();
 }
 
-const SystemInfo app::getSystemInfo(){
-	SystemInfo info = {
+const piscan::server::context::SystemInfo app::getSystemInfo(){
+	piscan::server::context::SystemInfo info = {
 			.version = "debug",
 			.buildNumber = 0,
 			.squelchRange = {0, 0},
@@ -402,12 +402,12 @@ const SystemInfo app::getSystemInfo(){
 	return info;
 }
 
-void app::scannerContextUpdate(ScannerContext ctx){
-	connectionManager.giveMessage(make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new ScannerContext(ctx)));
+void app::scannerContextUpdate(piscan::server::context::ScannerContext ctx){
+	connectionManager.giveMessage(make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::ScannerContext(ctx)));
 }
 
-void app::demodContextUpdate(DemodContext ctx){
-	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, new DemodContext(ctx)));
+void app::demodContextUpdate(piscan::server::context::DemodContext ctx){
+	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::DemodContext(ctx)));
 }
 
 void app::signalLevelUpdate(int level){
@@ -428,7 +428,7 @@ int main(int argc, char **argv) {
 
 	LOG_F(INFO, "Starting PiScan");
 
-	Configuration& config = Configuration::getConfig();
+	piscan::config::Configuration& config = piscan::config::Configuration::getConfig();
 	bool useDebugConsole = false;
 	bool spawnClient = false;
 
@@ -466,8 +466,6 @@ int main(int argc, char **argv) {
 	messageManager.setReceiver(DEMOD, &demod);
 	messageManager.setReceiver(SERVER_MAN, &connectionManager);
 	//messageManager.setReceiver(AUDIO_MAN, &audioControl);
-
-	setDemodulator(&demod);
 
 	//connectionManager.useDebugServer(useDebugConsole);
 

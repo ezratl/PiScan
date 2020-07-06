@@ -1,19 +1,19 @@
 /*
- * clientmessage.h
+ * messages/context.h
  *
  *  Created on: Mar 12, 2019
  *      Author: ezra
  */
-#ifndef CORE_CLIENTMESSAGE_H_
-#define CORE_CLIENTMESSAGE_H_
+#ifndef COMMON_CLIENTMESSAGE_H_
+#define COMMON_CLIENTMESSAGE_H_
 
 #include <string>
 #include <vector>
 
-using namespace std;
-namespace piscan {
+#include "scan_types.h"
 
-class Entry;
+using namespace std;
+namespace piscan::server::context {
 
 struct SystemInfo {
 	string version;
@@ -37,7 +37,7 @@ struct ScannerContext {
 	ScannerContext(ScannerState state, std::string sysTag, std::string entryTag,
 			long long freq, std::string mod, std::string index);
 
-	ScannerContext(ScannerState state, Entry& entry);
+	ScannerContext(ScannerState state, piscan::scan::Entry& entry);
 
 	void clearFields(){
 		systemTag.clear();
@@ -83,4 +83,4 @@ struct DemodContext {
 
 }
 
-#endif /* CORE_CLIENTMESSAGE_H_ */
+#endif /* COMMON_CLIENTMESSAGE_H_ */
