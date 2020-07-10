@@ -30,8 +30,8 @@ SET(CPACK_PACKAGE_VERSION_PATCH ${CUBICSDR_VERSION_PATCH})
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/util)
 	
 #	target_include_directories(cubic PUBLIC sdr demod modules modules/modem modules/modem/analog audio util)
-#	target_include_directories(piScan_backend PUBLIC sdr demod modules modules/modem modules/modem/analog audio util)
-target_include_directories(piScan_backend PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+#	target_include_directories(piscan_server PUBLIC sdr demod modules modules/modem modules/modem/analog audio util)
+target_include_directories(piscan_server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -40,4 +40,4 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 #add_dependencies(cubic cubic_modem cubic_sdr cubic_util cubic_audio)
 
 #target_link_libraries(cubic LINK_PUBLIC cubic_demod cubic_modem cubic_sdr cubic_util cubic_audio)
-target_link_libraries(piScan_backend cubic)
+target_link_libraries(piscan_server cubic)

@@ -18,6 +18,11 @@
 
 #include "loguru.hpp"
 
+#ifndef DATABASE_PATH
+#warning "Database path not defined, using default"
+#define DATABASE_PATH	"../data"
+#endif
+
 using namespace std::experimental;
 using namespace boost::property_tree;
 

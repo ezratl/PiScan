@@ -14,15 +14,8 @@
 
 #include "constants.h"
 
-#ifndef NDEBUG
-#define DEFAULT_LOGFILE_VERBOSITY	3
+#define DEFAULT_LOGFILE_VERBOSITY 0
 #define LOG_PATH		"latest.log"
-#else
-#define DEFAULT_LOGFILE_VERBOSITY	0
-#define LOG_PATH		"~/piscan.log"
-#endif
-
-#define DATABASE_PATH	"../data"
 #define LOG_FOLDER		"logs"
 #define LOGFILE_EXT		".log"
 

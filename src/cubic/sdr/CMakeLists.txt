@@ -6,4 +6,4 @@ target_sources(cubic PUBLIC
 )
 
 target_include_directories(cubic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(piScan_backend PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(piscan_server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
