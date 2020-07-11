@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#cd src/external/PiScan-protobuf
+cd ./proto
 
-protoc -I=src/external/PiScan-protobuf --cpp_out=src/external/PiScan-protobuf *.proto
-
-#cd ../../..
+protoc -cpp_out=. *.proto

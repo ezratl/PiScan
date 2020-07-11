@@ -57,7 +57,7 @@ ExternalProject_Add(live555 # Name of the target. Could be any
     # Build step. It is actually `make`, but in a wise manner.
     BUILD_COMMAND "make"
     # Disable install step
-    INSTALL_COMMAND "make install"
+    INSTALL_COMMAND "make"
     # needed for ninja support
     BUILD_BYPRODUCTS ${PISCAN_BIN_DIR}/live/liveMedia/libliveMedia.a
     	${PISCAN_BIN_DIR}/live/BasicUsageEnvironment/libBasicUsageEnvironment.a
@@ -65,6 +65,11 @@ ExternalProject_Add(live555 # Name of the target. Could be any
     	${PISCAN_BIN_DIR}/live/UsageEnvironment/libUsageEnvironment.a
     )
 ENDIF (HGFS)
+target_include_directories(server PUBLIC ${PISCAN_BIN_DIR}/live/liveMedia/include)
+target_include_directories(server PUBLIC ${PISCAN_BIN_DIR}/live/groupsock/include)
+target_include_directories(server PUBLIC ${PISCAN_BIN_DIR}/live/UsageEnvironment/include)
+target_include_directories(server PUBLIC ${PISCAN_BIN_DIR}/live/BasicUsageEnvironment/include)
+
 
     
 add_library(livemedia STATIC IMPORTED GLOBAL)
@@ -92,4 +97,7 @@ set(LIVE_LIBS livemedia liveBUE liveUE liveGS)
 
 target_include_directories(server PUBLIC ${PROJECT_SOURCE_DIR}/proto)
 
-install(TARGETS piscan_server)
+install(
+	TARGETS piscan_server
+	DESTINATION /usr/local/bin
+)
