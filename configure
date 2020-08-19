@@ -1,4 +1,6 @@
 #!/bin/sh
 
-mkdir bin data
+sh proto_gen.sh
+
+mkdir build data
 cd bin && cmake ..

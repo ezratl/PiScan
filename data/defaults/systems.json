@@ -1,0 +1,34 @@
+{
+    "systems": [
+        {
+            "systype": "analog",
+            "tag": "Sample System",
+            "lockout": "false",
+            "channels": [
+                {
+                    "tag": "FM entry - CSQ",
+                    "lockout": "false",
+                    "delay": "2000",
+                    "freq": "453150000",
+                    "chantype": "fmc"
+                },
+                {
+                    "tag": "FM entry - PL",
+                    "lockout": "false",
+                    "delay": "2000",
+                    "freq": "471837500",
+                    "chantype": "plc",
+                    "tone": "103.5"
+                },
+                {
+                    "tag": "FM entry - DCS",
+                    "lockout": "false",
+                    "delay": "2000",
+                    "freq": "460287500",
+                    "chantype": "dcc",
+                    "code": "023"
+                }
+            ]
+        }
+    ]
+}

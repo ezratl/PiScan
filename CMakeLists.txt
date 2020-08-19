@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 project(PiScan)
 
-set(PISCAN_BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
+set(PISCAN_BIN_DIR ${PROJECT_SOURCE_DIR}/build)
 file(MAKE_DIRECTORY ${PISCAN_BIN_DIR})
 
 add_subdirectory(src)
@@ -96,8 +96,3 @@ set(LIVE_LIBS livemedia liveBUE liveUE liveGS)
 
 
 target_include_directories(server PUBLIC ${PROJECT_SOURCE_DIR}/proto)
-
-install(
-	TARGETS piscan_server
-	DESTINATION /usr/local/bin
-)

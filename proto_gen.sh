@@ -2,4 +2,4 @@
 
 cd ./proto
 
-protoc -cpp_out=. *.proto
+protoc --cpp_out=. *.proto

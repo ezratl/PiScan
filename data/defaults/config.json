@@ -1,0 +1,23 @@
+{
+    "config": {
+        "general": {
+            "log_verbosity": "0"
+        },
+        "socket": {
+            "port": "1234",
+            "max_connections": "5",
+            "use_gui": "false",
+            "client_path": ".\/",
+            "python_path": "python"
+        },
+        "demod": {
+            "retune_delay": "225000",
+            "demod_delay": "10000",
+            "squelch_mode": "0"
+        },
+        "audio_stream": {
+            "rtsp_port": "8554",
+            "http_tunneling": "false"
+        }
+    }
+}

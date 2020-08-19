@@ -149,3 +149,14 @@ set(APPLICATION_LIBS common external loguru proto scan server sigproc util ${APP
 
 target_link_libraries(piscan_server ${APPLICATION_LIBS})
 
+set(CPACK_GENERATOR "DEB")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "etaimutyloomis@gmail.com")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+include(CPack)
+
+install(
+	TARGETS piscan_server
+	DESTINATION /usr/local/bin
+    LIBRARY DESTINATION /usr/local/bin
+)
+
