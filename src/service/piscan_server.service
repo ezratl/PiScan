@@ -1,0 +1,9 @@
+[Unit]
+Description=PiScan Server
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/piscan_server -v 0
+
+[Install]
+WantedBy=multi-user.target

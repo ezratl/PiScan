@@ -1,6 +1,6 @@
 project (piscan_server)
 
-add_executable(piscan_server piScan_backend.cpp)
+add_executable(piscan_server piscan_server.cpp)
 
 MACRO(use_included_rtaudio)
     SET (cubicsdr_sources
@@ -149,6 +149,7 @@ set(APPLICATION_LIBS common external loguru proto scan server sigproc util ${APP
 
 target_link_libraries(piscan_server ${APPLICATION_LIBS})
 
+set(CPACK_SET_DESTDIR ON)
 set(CPACK_GENERATOR "DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "etaimutyloomis@gmail.com")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
@@ -159,4 +160,7 @@ install(
 	DESTINATION /usr/local/bin
     LIBRARY DESTINATION /usr/local/bin
 )
-
+install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/service/piscan_server DESTINATION /etc/init.d
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/service/piscan_server.service DESTINATION /etc/systemd/system
+)
