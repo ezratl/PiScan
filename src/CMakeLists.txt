@@ -109,6 +109,7 @@ add_subdirectory(external)
 add_subdirectory(scan)
 add_subdirectory(server)
 add_subdirectory(sigproc)
+add_subdirectory(test)
 add_subdirectory(tests)
 add_subdirectory(util)
 
