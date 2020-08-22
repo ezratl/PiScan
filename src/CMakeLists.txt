@@ -163,5 +163,7 @@ install(
 )
 install(
     FILES ${CMAKE_CURRENT_SOURCE_DIR}/service/piscan_server DESTINATION /etc/init.d
+)
+install(
     FILES ${CMAKE_CURRENT_SOURCE_DIR}/service/piscan_server.service DESTINATION /etc/systemd/system
 )
