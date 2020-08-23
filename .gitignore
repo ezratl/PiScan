@@ -250,3 +250,6 @@ src/external/live
 
 data/*.json
 data/logs
+
+__pycache__
+version.h

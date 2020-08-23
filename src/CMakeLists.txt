@@ -150,12 +150,6 @@ set(APPLICATION_LIBS common cubic external loguru proto scan server sigproc util
 
 target_link_libraries(piscan_server ${APPLICATION_LIBS})
 
-set(CPACK_SET_DESTDIR ON)
-set(CPACK_GENERATOR "DEB")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "etaimutyloomis@gmail.com")
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-include(CPack)
-
 install(
 	TARGETS piscan_server
 	DESTINATION /usr/local/bin

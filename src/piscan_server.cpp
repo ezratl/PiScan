@@ -19,6 +19,12 @@
 #include "SystemList.h"
 #include "threadname.h"
 
+#include "version.h"
+#ifndef PISCAN_VERSION
+#define PISCAN_VERSION	"debug"
+#warning "PiScan version not defined in CMake"
+#endif
+
 //enum {
 //	SYSTEM_CONTROL,
 //	SCANNER_SM,
@@ -385,7 +391,7 @@ long long app::getTunerSampleRate() {
 
 const piscan::server::context::SystemInfo app::getSystemInfo(){
 	piscan::server::context::SystemInfo info = {
-			.version = "debug",
+			.version = PISCAN_VERSION,
 			.buildNumber = 0,
 			.squelchRange = {0, 0},
 			.supportedModulations = {"FM", "AM"},
@@ -426,7 +432,7 @@ int main(int argc, char **argv) {
 	signal(SIGINT, sigIntHandler);
 	signal(SIGTERM, sigTermHandler);
 
-	LOG_F(INFO, "Starting PiScan");
+	LOG_F(INFO, "Starting PiScan, version %s", PISCAN_VERSION);
 
 	piscan::config::Configuration& config = piscan::config::Configuration::getConfig();
 	bool useDebugConsole = false;

@@ -11,9 +11,9 @@ set(PROTO_FILES
 
 PROTOBUF_GENERATE_CPP(PROTO_SRC PROTO_HEADER ${PROTO_FILES})
 protobuf_generate_python(PROTO_PY ${PROTO_FILES})
+add_custom_target(proto_py ALL DEPENDS ${PROTO_PY})
 
-ADD_LIBRARY(proto ${PROTO_HEADER} ${PROTO_SRC})
-message(${PROTO_HEADER})
+ADD_LIBRARY(proto ${PROTO_HEADER} ${PROTO_SRC} ${PROTO_PY})
 
 #target_sources(proto PUBLIC
 #	${CMAKE_CURRENT_SOURCE_DIR}/context.pb.cc
