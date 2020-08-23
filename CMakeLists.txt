@@ -1,6 +1,4 @@
-cmake_minimum_required (VERSION 3.13)
-
-cmake_policy(SET CMP0079 NEW)
+cmake_minimum_required (VERSION 3.12.4)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall -Wextra")
@@ -10,6 +8,8 @@ project(PiScan)
 
 set(PISCAN_BIN_DIR ${PROJECT_SOURCE_DIR}/build)
 file(MAKE_DIRECTORY ${PISCAN_BIN_DIR})
+
+set(LIQUID_API_OLD ON CACHE BOOL "Build with libliquid version <1.3.2")
 
 ## GoogleTest configuration
 enable_testing()

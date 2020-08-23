@@ -1,5 +1,5 @@
 add_library(util
-	StateMachine.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/StateMachine.cpp
 )
 
 add_subdirectory(test)

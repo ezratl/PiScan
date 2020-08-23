@@ -1,5 +1,5 @@
 add_library(common
-	Configuration.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Configuration.cpp
 )
 
 add_subdirectory(test)

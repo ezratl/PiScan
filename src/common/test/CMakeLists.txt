@@ -1,3 +1,3 @@
 package_add_test(common_tests
-    Configuration_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Configuration_test.cpp
 )

@@ -1,6 +1,6 @@
 project (piscan_server)
 
-add_executable(piscan_server piscan_server.cpp)
+add_executable(piscan_server ${CMAKE_CURRENT_SOURCE_DIR}/piscan_server.cpp)
 
 MACRO(use_included_rtaudio)
     SET (cubicsdr_sources
@@ -132,8 +132,8 @@ target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
 target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
 
 target_sources(piscan_server PUBLIC 
-	ScannerSM.cpp
-	ServerManager.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ScannerSM.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ServerManager.cpp
 )
 
 add_dependencies(server proto)
@@ -144,9 +144,9 @@ set(LIVE_LIBS livemedia liveBUE liveUE liveGS ssl crypto)
 
 set(SYSTEM_LIBS pthread atomic boost_system protobuf liquid)
 
-set(APPLICATION_LIBS ${SYSTEM_LIBS} ${LIVE_LIBS} ${CUBIC_LIBS} ${OTHER_LIBRARIES})
+set(APPLICATION_LIBS ${SYSTEM_LIBS} ${LIVE_LIBS} ${OTHER_LIBRARIES})
 
-set(APPLICATION_LIBS common external loguru proto scan server sigproc util ${APPLICATION_LIBS})
+set(APPLICATION_LIBS common cubic external loguru proto scan server sigproc util ${APPLICATION_LIBS})
 
 target_link_libraries(piscan_server ${APPLICATION_LIBS})
 

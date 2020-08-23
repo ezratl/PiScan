@@ -1,5 +1,5 @@
 add_library(sigproc
-	Demodulator.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Demodulator.cpp
 )
 
 add_subdirectory(test)

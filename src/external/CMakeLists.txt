@@ -1,7 +1,7 @@
 add_library(external
-	atomicops.h
-	concurrentqueue.h
-	readerwriterqueue.h
+	${CMAKE_CURRENT_SOURCE_DIR}/atomicops.h
+	${CMAKE_CURRENT_SOURCE_DIR}/concurrentqueue.h
+	${CMAKE_CURRENT_SOURCE_DIR}/readerwriterqueue.h
 )
 	
 add_library(loguru)

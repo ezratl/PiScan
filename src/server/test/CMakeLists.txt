@@ -1,6 +1,6 @@
 package_add_test(server_tests
-    AudioStreamServer_test.cpp
-    BackendServer_test.cpp
-    DebugServer_test.cpp
-    SocketServer_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AudioStreamServer_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BackendServer_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DebugServer_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SocketServer_test.cpp
 )

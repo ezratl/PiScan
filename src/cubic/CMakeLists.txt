@@ -1,8 +1,8 @@
 add_library(cubic
-    CubicSDR.cpp
-    AppConfig.cpp
-    IOThread.cpp
-    SessionMgr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CubicSDR.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AppConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/IOThread.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SessionMgr.cpp
 )
 
 #	SET(LIQUID_API_OLD OFF)
@@ -40,4 +40,4 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 #add_dependencies(cubic cubic_modem cubic_sdr cubic_util cubic_audio)
 
 #target_link_libraries(cubic LINK_PUBLIC cubic_demod cubic_modem cubic_sdr cubic_util cubic_audio)
-target_link_libraries(piscan_server cubic)
+#target_link_libraries(piscan_server cubic)

@@ -1,8 +1,8 @@
 add_library(server
-	AudioStreamServer.cpp
-	BackendServer.cpp
-	DebugServer.cpp
-	SocketServer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/AudioStreamServer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/BackendServer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/DebugServer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/SocketServer.cpp
 )
 
 add_subdirectory(connection)
