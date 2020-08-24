@@ -1,7 +1,11 @@
 
 #include "loguru.hpp"
 #include "messages.h"
+#ifdef USE_SYSTEM_RTAUDIO
+#include <rtaudio/RtAudio.h>
+#else
 #include "RtAudio.h"
+#endif
 
 namespace piscan {
 

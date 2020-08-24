@@ -25,15 +25,15 @@ IF (UNIX AND NOT APPLE)
 
     IF(USE_SYSTEM_RTAUDIO)
         find_package(RtAudio)
-        SET(OTHER_LIBRARIES ${OTHER_LIBRARIES} ${RTAUDIO_LIBRARIES})
-        ADD_DEFINITIONS(${RTAUDIO_DEFINITIONS})
+        SET(OTHER_LIBRARIES ${OTHER_LIBRARIES} rtaudio)
+        ADD_DEFINITIONS(-DUSE_SYSTEM_RTAUDIO ${RTAUDIO_DEFINITIONS})
         include_directories(${RTAUDIO_INCLUDE_DIR})
     ELSE(USE_SYSTEM_RTAUDIO)
         use_included_rtaudio()
 
-        SET(USE_AUDIO_PULSE ON CACHE BOOL "Use Pulse Audio")
+        SET(USE_AUDIO_PULSE OFF CACHE BOOL "Use Pulse Audio")
         SET(USE_AUDIO_JACK OFF CACHE BOOL "Use Jack Audio")
-        SET(USE_AUDIO_ALSA OFF CACHE BOOL "Use ALSA Audio")
+        SET(USE_AUDIO_ALSA ON CACHE BOOL "Use ALSA Audio")
         SET(USE_AUDIO_OSS OFF CACHE BOOL "Use OSS Audio")
   
         IF(USE_AUDIO_PULSE)
@@ -44,12 +44,10 @@ IF (UNIX AND NOT APPLE)
         ENDIF(USE_AUDIO_PULSE)
 
         IF(USE_AUDIO_JACK)
-           find_package(Jack)
-           SET (OTHER_LIBRARIES ${OTHER_LIBRARIES} ${JACK_LIBRARIES})
+           SET (OTHER_LIBRARIES ${OTHER_LIBRARIES} jack)
            ADD_DEFINITIONS(
                 -D__UNIX_JACK__
            )
-           include_directories(${JACK_INCLUDE_DIRS})
         ENDIF(USE_AUDIO_JACK)
 
         IF(USE_AUDIO_ALSA)

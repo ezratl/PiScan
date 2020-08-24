@@ -10,7 +10,11 @@
 #include <atomic>
 #include <memory>
 #include "ThreadBlockingQueue.h"
+#ifdef USE_SYSTEM_RTAUDIO
+#include <rtaudio/RtAudio.h>
+#else
 #include "RtAudio.h"
+#endif
 #include "DemodDefs.h"
 #include "readerwriterqueue.h"
 
