@@ -7,6 +7,8 @@
 
 #include "Configuration.h"
 
+#include <iostream>
+
 #include <iomanip>
 #include <ctime>
 #include <sstream>
@@ -19,8 +21,7 @@
 #include "loguru.hpp"
 
 #ifndef DATABASE_PATH
-#warning "Database path not defined, using default"
-#define DATABASE_PATH	"../data"
+#error "Database path not defined, please run CMake"
 #endif
 
 using namespace std::experimental;
@@ -38,7 +39,6 @@ Configuration& Configuration::getConfig() {
 
 Configuration::Configuration() {
 	_configPath = DATABASE_PATH;
-
 }
 
 Configuration::~Configuration() {

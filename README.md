@@ -61,7 +61,7 @@ In a terminal, download the source with the command:
 Then configure the environment:
 
 	sh ./bootstrap.sh
-There are three options available for audio output: PulseAudio, ALSA, and JACK. Your preference can be set by running one of the following commands from the `build` directory:
+There are three options available for audio output: PulseAudio, ALSA, JACK, and OSS. Your preference can be set by running one of the following commands from the `build` directory:
 
 	cmake ../src -DUSE_AUDIO_PULSE=ON
 	cmake ../src -DUSE_AUDIO_ALSA=ON
@@ -108,7 +108,7 @@ All data used by PiScan is stored in its working directory (this is the `data` d
 On the first run of PiScan, these files likely won't exist. It will continue running with default parameters, and a config and state file will be generated with these defaults when the program ends.
 If there is no scan file, PiScan cannot scan so it will instead hold at 100MHz. It will not allow the user to scan, but will allow manual frequency tuning.
 #### Scan Database File
-`systems.json` MUST adhere to this format for PiScan to read it correctly
+`systems.json` MUST adhere to this format for PiScan to read it correctly. Use the sample file in `data/defaults` as a starting point for your database if writing it manually.
 
 	{
 		"systems": [
@@ -155,6 +155,8 @@ The primary way to interact with PiScan is through the [client program](https://
 In short, it communicates through a TCP connection, with a default port 1234.
 
 To listen to PiScan's audio feed remotely, use a stream client that supports RTSP, such as VLC, and enter the MRL `rtsp://<host_address>:8554/audio`. Setting a low network caching time is advised to reduce audio latency.
+
+Note: The client is being migrated to this repository to simplify API development. The version in the separate repo is still recommended for now, but it will be deprecated in the next update.
 ## Disclaimer
 This is a personal project; it lacks both the design standards and testing standards of commercially-built software, meaning no guarantees can be made of its reliability. Use at your own risk.
 

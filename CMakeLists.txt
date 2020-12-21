@@ -48,7 +48,7 @@ endmacro()
 add_subdirectory(src)
 add_subdirectory(proto)
 
-target_compile_definitions(common PUBLIC -DDATABASE_PATH="${PROJECT_SOURCE_DIR}/data")
+#target_compile_definitions(common PUBLIC -DDATABASE_PATH="${PROJECT_SOURCE_DIR}/data")
 
 ## External library: LiveMedia ##
 
@@ -165,11 +165,19 @@ endif()
 
 if("${GIT_TAG}" STREQUAL "")
     set(VERSION ${GIT_BRANCH}-${GIT_REV}${GIT_DIFF})
+    set(CPACK_PACKAGE_VERSION 0.0.1)
 else()
     set(VERSION ${GIT_TAG}${GIT_DIFF})
+
+    if("${GIT_DIFF}" STREQUAL "")
+        set(CPACK_PACKAGE_VERSION ${VERSION})
+    else()
+        set(CPACK_PACKAGE_VERSION 0.0.1)
+    endif()
 endif()
 
 message("PiScan version: ${VERSION}")
+message("Package version: ${CPACK_PACKAGE_VERSION}")
 set(VERSION_DEF "#define PISCAN_VERSION \"${VERSION}\"\n")
 file(WRITE ${PROJECT_SOURCE_DIR}/src/version.h "${VERSION_DEF}")
 
@@ -177,5 +185,21 @@ set(CPACK_SET_DESTDIR ON)
 set(CPACK_GENERATOR "DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "etaimutyloomis@gmail.com")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-set(CPACK_PACKAGE_VERSION ${VERSION})
 include(CPack)
+
+
+set(DEFAULT_DATA_DIR_LOCAL ON CACHE BOOL "Use the repo as the default data directory rather than /etc/piscan")
+
+if(DEFAULT_DATA_DIR_LOCAL)
+    set(DATABASE_PATH "\"${PROJECT_SOURCE_DIR}/data\"")
+else(DEFAULT_DATA_DIR_LOCAL)
+    ## TODO additional work needed to interact properly with linux FS
+    set(DATABASE_PATH "\"/etc/piscan\"")
+
+    install(
+        CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/scripts/install_defaults.sh)"
+    )
+endif(DEFAULT_DATA_DIR_LOCAL)
+
+message("PiScan data path: ${DATABASE_PATH}")
+target_compile_definitions(common PUBLIC -DDATABASE_PATH=${DATABASE_PATH})

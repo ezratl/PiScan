@@ -1,15 +1,16 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          piscan-server
+# Provides:          piscan_server
 # Required-Start:    $local_fs $network $named $time $syslog
 # Required-Stop:     $local_fs $network $named $time $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Description:       <DESCRIPTION>
+# Description:       PiScan Server
 ### END INIT INFO
 
-SCRIPT=/usr/local/bin/piscan_server
-RUNAS=ezra
+SCRIPT="/usr/local/bin/piscan_server -v 0"
+# TODO piscan may need its own user account to avoid running the service as root
+RUNAS=`/usr/bin/logname`
 
 PIDFILE=/var/run/piscan-server.pid
 LOGFILE=/var/log/piscan-server.log
@@ -42,7 +43,7 @@ uninstall() {
   if [ "$SURE" = "yes" ]; then
     stop
     rm -f "$PIDFILE"
-    echo "Notice: log file is not be removed: '$LOGFILE'" >&2
+    #echo "Notice: log file is not be removed: '$LOGFILE'" >&2
     update-rc.d -f piscan-server remove
     rm -fv "$0"
   fi
