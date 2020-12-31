@@ -4,7 +4,7 @@ compiler:
   - clang
   - gcc
 
-script: sh ./configure_ninja && cd build && make && make test
+script: sh ./configure_ninja && cd build && ninja && ninja test
 
 dist:
   - bionic
