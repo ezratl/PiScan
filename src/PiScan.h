@@ -6,11 +6,15 @@
 #include "Configuration.h"
 
 class AudioThread; //forward declaration
-namespace piscan::sigproc {
+namespace piscan {
+namespace sigproc {
 class DemodInterface;
 }
+}
 
-namespace piscan::app {
+namespace piscan {
+namespace app {
+
 struct ManualEntryData {
 public:
 	ManualEntryData(ManualEntryData& copy) : freq(copy.freq), modulation(copy.modulation){};
@@ -49,4 +53,5 @@ void signalLevelUpdate(int level);
 /* audio related */
 AudioThread* getAudioController();
 
+}
 }

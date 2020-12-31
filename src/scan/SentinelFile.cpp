@@ -43,7 +43,8 @@
 #define C_FREQ_TONE_POS		5
 #define C_FREQ_DELAY_POS	8
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 bool SentinelFile::generateSystemList(SystemList& list) {
 	_list = &list;
@@ -153,9 +154,12 @@ void SentinelFile::_newAnalogEntry(std::vector<std::string>& tokens){
 	}
 }
 
+}
 } // namespace piscan::scan
 
-namespace piscan::sigproc {
+namespace piscan {
+namespace sigproc {
+
 class DummyDemod : public DemodInterface {
 public:
 	virtual bool setFrequency(long long /*freq*/) { return false; };
@@ -169,6 +173,7 @@ public:
 	virtual float getSNR() { return 0.0f; };
 	virtual int getSignalStrength() { return 0; };
 } demod;
+}
 }
 
 //piscan::sigproc::DummyDemod demod;

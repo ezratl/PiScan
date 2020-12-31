@@ -17,7 +17,8 @@
 #include "BackendServer.h"
 #include "messages.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 class DebugServer : public BackendServer {
 public:
@@ -31,5 +32,6 @@ private:
 	boost::shared_ptr<connection::DebugConsole> _connection;
 };
 
+}
 }
 #endif /* SERVERDEBUGOUTPUT_H_ */

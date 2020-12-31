@@ -25,7 +25,9 @@ namespace piscan {
 class TestClient;
 }
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
 class Connection : public piscan::RequestCallbackInterface, public piscan::MessageReceiver {
 public:
@@ -61,14 +63,14 @@ private:
 	ServerInterface* _serverManager;
 	int _handle;
 
-	void scannerContextRequestCallback(int handle, void* data){
+	void scannerContextRequestCallback(int /* handle */, void* data){
 		assert(data != nullptr);
 		piscan::server::context::ScannerContext* context = reinterpret_cast<piscan::server::context::ScannerContext*>(data);
 		contextUpdate(piscan::server::context::ScannerContext(*context));
 		delete context;
 	}
 
-	void demodContextRequestCallback(int handle, void* data){
+	void demodContextRequestCallback(int /* handle */, void* data){
 		assert(data != nullptr);
 		piscan::server::context::DemodContext* context = reinterpret_cast<piscan::server::context::DemodContext*>(data);
 		contextUpdate(piscan::server::context::DemodContext(*context));
@@ -108,5 +110,7 @@ protected:
 
 };
 
+}
+}
 }
 #endif /* SERVER_CONNECTION_H_ */

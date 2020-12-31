@@ -11,7 +11,9 @@
 #include "SimpleRTPSink.hh"
 #include "MP3Transcoder.hh"
 
-namespace piscan::server::audio {
+namespace piscan {
+namespace server {
+namespace audio {
 
 AudioServerMediaSubsession* AudioServerMediaSubsession
 ::createNew(UsageEnvironment& env, Boolean reuseFirstSource,
@@ -196,3 +198,5 @@ float AudioServerMediaSubsession::duration() const {
 
 
 } /* namespace piscan */
+}
+}

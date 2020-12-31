@@ -20,7 +20,8 @@
 
 using ptree = boost::property_tree::ptree;
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 typedef enum {
 	SYSTEM_ANALOG
@@ -81,5 +82,6 @@ protected:
 	std::vector<EntryPtr> entries;
 };
 
+}
 }
 #endif /* RADIOSYSTEM_H_ */

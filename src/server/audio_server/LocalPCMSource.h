@@ -18,7 +18,9 @@
 
 class AudioThread; // forward declaration
 
-namespace piscan::server::audio {
+namespace piscan {
+namespace server {
+namespace audio {
 
 class LocalPCMSource: public AudioInputDevice {
 public:
@@ -43,9 +45,7 @@ protected:
 
 private:
   double fPlayTimePerSample; // useconds
-  Boolean fFidIsSeekable;
   unsigned fLastPlayTime; // useconds
-  Boolean fHaveStartedReading;
 
   // new members
   AudioThread* _audioController;
@@ -55,3 +55,5 @@ private:
 };
 
 } /* namespace piscan */
+}
+}

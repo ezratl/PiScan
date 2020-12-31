@@ -24,7 +24,9 @@ using ip::tcp;
 #define READ_BUFFER_LENGTH	1024
 #define WRITE_BUFFER_LENGTH	1024
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
 typedef boost::shared_ptr<SocketConnection> SocketConnectionPtr;
 
@@ -70,4 +72,6 @@ private:
 
 };
 
+}
+}
 }

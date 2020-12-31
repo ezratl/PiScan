@@ -22,7 +22,8 @@
 
 using ptree = boost::property_tree::ptree;
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 /* base class for all types of scanner entries */
 class Entry {
@@ -188,5 +189,6 @@ public:
 };
 
 
+}
 }
 #endif /*Channel_ */

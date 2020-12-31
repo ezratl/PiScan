@@ -302,7 +302,7 @@ void hardTerminate(){
 	std::terminate();
 }
 
-void sigTermHandler(int signal){
+void sigTermHandler(int /* signal */){
 	// SIGTERM is raised by the kernel during shutdown
 	if(sysRun){
 		app::stopSystem();
@@ -313,7 +313,7 @@ void sigTermHandler(int signal){
 		piscan::hardTerminate();
 }
 
-void sigIntHandler(int signal){
+void sigIntHandler(int /* signal */){
 	LOG_F(INFO, "Stop triggered by interrupt");
 
 	if(!sysRun)

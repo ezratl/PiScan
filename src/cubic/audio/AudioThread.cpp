@@ -124,7 +124,7 @@ static int audioCallback(void *outputBuffer, void * /* inputBuffer */, unsigned 
 
     if (status) {
         //std::cout << "Audio buffer underflow.." << (src->underflowCount++) << std::endl << std::flush;
-        LOG_F(WARNING, "Audio buffer underflow: %i", src->underflowCount++);
+        LOG_F(WARNING, "Audio buffer underflow: %lu", src->underflowCount++);
     }
 
     double peak = 0.0;

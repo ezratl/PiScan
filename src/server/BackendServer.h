@@ -11,7 +11,8 @@
 #include "server_types.h"
 #include "messages.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 class BackendServer : public MessageReceiver {
 public:
@@ -24,5 +25,6 @@ public:
 protected:
 	ServerInterface& _host;
 };
+}
 }
 #endif /* BACKENDSERVER_H_ */

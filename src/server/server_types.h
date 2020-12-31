@@ -4,7 +4,8 @@
 
 #include "connection/connection_types.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 	class ServerInterface {
 	public:
 		virtual ~ServerInterface() {};
@@ -25,4 +26,5 @@ namespace piscan::server {
 	class DebugServer;
 	class SocketServer;
 	class AudioStreamServer;
+}
 }

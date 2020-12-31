@@ -14,7 +14,8 @@
 
 using ptree = boost::property_tree::ptree;
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 std::unordered_map<std::string, std::function<EntryPtr(ptree&)>> RadioSystem::makeEntry = {
 		{ database::entry::channel::type_fm, makeFMChannel },
@@ -113,4 +114,5 @@ ptree AnalogSystem::getPropertyTree() {
 	return pt;
 }
 
+}
 }

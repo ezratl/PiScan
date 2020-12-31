@@ -20,7 +20,8 @@
 using namespace std::experimental;
 using ptree = boost::property_tree::ptree;
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 std::unordered_map<std::string, std::function<RadioSystemPtr(ptree&, size_t)>> SystemList::_makeSystem = {
 		{database::systems::type_analog, makeAnalogSystem}
@@ -275,4 +276,5 @@ RadioSystemPtr SystemList::makeAnalogSystem(ptree& pt, size_t index){
 	return system;
 }
 
+}
 }

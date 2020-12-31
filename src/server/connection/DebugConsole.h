@@ -12,7 +12,9 @@
 #include "connection.h"
 #include "DebugServer.h"
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
 class DebugConsole : public Connection {
 public:
@@ -45,4 +47,6 @@ private:
 	void gainReceived(int handle, int gain);
 };
 
+}
+}
 }

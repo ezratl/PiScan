@@ -9,10 +9,12 @@
 #include "connection.h"
 #include "request.h"
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
 void Connection::notifyDisconnected() {
-	ClientRequest::RequestParams params = { .type = NOTIFY_DISCONNECTED };
+	ClientRequest::RequestParams params = { .type = NOTIFY_DISCONNECTED, .subType = -1 };
 	issueRequest(params);
 }
 
@@ -42,7 +44,7 @@ int Connection::issueRequest(ClientRequest::RequestParams params, void* data) {
 }
 
 int Connection::systemFunction(SystemFunction function) {
-	ClientRequest::RequestParams params = { .type = SYSTEM_FUNCTION };
+	ClientRequest::RequestParams params = { .type = SYSTEM_FUNCTION, .subType = -1 };
 	switch (function) {
 	case STOP:
 		params.subType = SYSTEM_STOP;
@@ -136,4 +138,6 @@ int Connection::getSystemInfo(){
 	return 0;
 }
 
+}
+}
 }

@@ -12,7 +12,8 @@
 #include "liveMedia.hh"
 #include "messages.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 namespace audio {
 class LocalPCMSource;
@@ -38,3 +39,4 @@ private:
 };
 
 } /* namespace piscan */
+}

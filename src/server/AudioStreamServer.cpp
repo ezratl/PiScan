@@ -16,7 +16,8 @@
 #include "threadname.h"
 #include "audio_server/AudioServerMediaSubsession.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 AudioStreamServer::AudioStreamServer(ServerInterface& host) : BackendServer(host) {
 	piscan::config::AudioServerConfig& config = app::getConfig().getAudioServerConfig();
@@ -103,3 +104,4 @@ void AudioStreamServer::stop() {
 }
 
 } /* namespace piscan */
+}

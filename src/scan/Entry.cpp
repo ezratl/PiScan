@@ -15,7 +15,8 @@
 
 using ptree = boost::property_tree::ptree;
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 bool DummyChannel::hasSignal(){
 	if(!demod.setTunerFrequency(this->frequency))
@@ -53,4 +54,5 @@ bool AMChannel::hasSignal(void){
 	return false;
 }
 
+}
 }

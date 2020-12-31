@@ -27,7 +27,8 @@
 using namespace std::experimental;
 using namespace boost::property_tree;
 
-namespace piscan::config {
+namespace piscan {
+namespace config {
 
 Configuration* Configuration::_config;
 Configuration& Configuration::getConfig() {
@@ -217,4 +218,5 @@ std::string Configuration::getLatestLogPath(){
 	return path;
 }
 
+}
 }

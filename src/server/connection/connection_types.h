@@ -2,10 +2,14 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 	class Connection;
 	typedef boost::shared_ptr<Connection> ConnectionPtr;
 
 	class DebugConsole;
 	class SocketConnection;
+}
+}
 }

@@ -17,7 +17,8 @@
 #define NUM_RATES_DEFAULT	4
 #define SIGLEVEL_REFRESH_INTERVAL	100 // milliseconds
 
-namespace piscan::sigproc {
+namespace piscan {
+namespace sigproc {
 
 Demodulator::Demodulator(MessageReceiver& central) : _centralQueue(central), _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
 
@@ -380,4 +381,5 @@ long long Demodulator::getTunerSampleRate(){
 	return _cubic->getSampleRate();
 }
 
+}
 }

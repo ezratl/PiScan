@@ -23,7 +23,8 @@
 #define STATE_FILE		"state.json"
 #define SYSTEMS_FILE	"systems.json"
 
-namespace piscan::config {
+namespace piscan {
+namespace config {
 
 struct GeneralConfig {
 	int logfileVerbosity = DEFAULT_LOGFILE_VERBOSITY;
@@ -131,5 +132,6 @@ private:
 	boost::property_tree::ptree _ptState;
 };
 
+}
 }
 #endif /* SERVER_CONFIGURATION_H_ */

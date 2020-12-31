@@ -20,7 +20,8 @@
 #include "IntervalTimer.h"
 
 
-namespace piscan::sigproc {
+namespace piscan {
+namespace sigproc {
 
 class Demodulator : public MessageReceiver, public DemodInterface, public Synchronizable {
 public:
@@ -67,5 +68,6 @@ private:
 	void _contextUpdate();
 };
 
+}
 }
 #endif /* SIGPROC_DEMODULATOR_H_ */
