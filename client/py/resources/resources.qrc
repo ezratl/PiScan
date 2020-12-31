@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>icon-256.png</file>
+  </qresource>
+  <qresource prefix="indicator">
+    <file>bar-scan.gif</file>
+    <file>loader-small.gif</file>
+  </qresource>
+</RCC>

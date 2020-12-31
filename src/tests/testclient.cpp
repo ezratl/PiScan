@@ -5,7 +5,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include "connection.h"
-#include "clientmessage.h"
+#include "messages/context.h"
 #include "DebugServer.h"
 #include "loguru.hpp"
 

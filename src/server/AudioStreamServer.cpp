@@ -14,12 +14,12 @@
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
 #include "threadname.h"
-#include "AudioServerMediaSubsession.h"
+#include "audio_server/AudioServerMediaSubsession.h"
 
-namespace piscan {
+namespace piscan::server {
 
 AudioStreamServer::AudioStreamServer(ServerInterface& host) : BackendServer(host) {
-	AudioServerConfig& config = app::getConfig().getAudioServerConfig();
+	piscan::config::AudioServerConfig& config = app::getConfig().getAudioServerConfig();
 
 
 	// Begin by setting up our usage environment:
@@ -66,7 +66,7 @@ void AudioStreamServer::start(){
 	// To convert 16-bit PCM data to 8-bit u-law, prior to streaming,
 	// change the following to True:
 	Boolean convertToULaw = true;
-	AudioServerMediaSubsession* ses = AudioServerMediaSubsession::createNew(
+	audio::AudioServerMediaSubsession* ses = audio::AudioServerMediaSubsession::createNew(
 			_rtspServer->envir(), reuseFirstSource, convertToULaw);
 	sms->addSubsession(ses);
 	_rtspServer->addServerMediaSession(sms);

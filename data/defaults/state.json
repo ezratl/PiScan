@@ -1,0 +1,15 @@
+{
+    "state": {
+        "demod": {
+            "gain": "-10",
+            "squelch": "0"
+        },
+        "scanner": {
+            "state": "2",
+            "manual_freq": "100000000",
+            "manual_mode": "NFM",
+            "hold_key": "",
+            "hold_index": ""
+        }
+    }
+}

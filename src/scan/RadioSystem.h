@@ -14,18 +14,13 @@
 #include <unordered_map>
 #include <boost/property_tree/ptree.hpp>
 
-#include "scandefs.h"
-#include "Entry.h"
+#include "scan_types.h"
 #include "loguru.hpp"
 
-#define ANALOG_SYSTEM_HASH	"analog"
 
-#define SYS_TYPE_KEY		"systype"
-#define CHANNELS_KEY		"channels"
+using ptree = boost::property_tree::ptree;
 
-using namespace boost::property_tree;
-
-namespace piscan {
+namespace piscan::scan {
 
 typedef enum {
 	SYSTEM_ANALOG
@@ -79,14 +74,7 @@ public:
 		return entries.size();
 	}*/
 
-	virtual void addEntry(EntryPtr entry){
-		if(entry != nullptr){
-			entry->setEntryIndex(numEntries);
-			entry->setSysIndex(getSysIndex());
-			entries.push_back(entry);
-			numEntries++;
-		}
-	}
+	virtual void addEntry(EntryPtr entry);
 
 	ptree getPropertyTree();
 protected:

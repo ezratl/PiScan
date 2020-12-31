@@ -1,17 +1,11 @@
 add_library(server
-	AudioServerMediaSubsession.cpp
-	AudioServerMediaSubsession.h
-	AudioStreamServer.cpp
-	AudioStreamServer.h
-	BackendServer.cpp
-	BackendServer.h
-	Connection.cpp
-	DebugServer.cpp
-	DebugServer.h
-	LocalPCMSource.cpp
-	LocalPCMSource.h
-	ServerManager.cpp
-	ServerManager.h
-	SocketServer.cpp
-	SocketServer.h
-	)
+	${CMAKE_CURRENT_SOURCE_DIR}/AudioStreamServer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/BackendServer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/DebugServer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/SocketServer.cpp
+)
+
+add_subdirectory(connection)
+add_subdirectory(audio_server)
+add_subdirectory(messages)
+add_subdirectory(test)

@@ -1,18 +1,6 @@
-cmake_minimum_required (VERSION 2.6)
+project (piscan_server)
 
-project (piScan_backend)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
-set(CMAKE_BUILD_TYPE Debug)
-
-add_executable(piScan_backend piScan_backend.cpp)
-
-execute_process(
-	COMMAND protoc -I=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf --cpp_out=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf context.proto
-	COMMAND protoc -I=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf --cpp_out=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf messages.proto
-	COMMAND protoc -I=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf --cpp_out=${CMAKE_SOURCE_DIR}/external/PiScan-protobuf request.proto
-)
+add_executable(piscan_server ${CMAKE_CURRENT_SOURCE_DIR}/piscan_server.cpp)
 
 MACRO(use_included_rtaudio)
     SET (cubicsdr_sources
@@ -37,15 +25,15 @@ IF (UNIX AND NOT APPLE)
 
     IF(USE_SYSTEM_RTAUDIO)
         find_package(RtAudio)
-        SET(OTHER_LIBRARIES ${OTHER_LIBRARIES} ${RTAUDIO_LIBRARIES})
-        ADD_DEFINITIONS(${RTAUDIO_DEFINITIONS})
+        SET(OTHER_LIBRARIES ${OTHER_LIBRARIES} rtaudio)
+        ADD_DEFINITIONS(-DUSE_SYSTEM_RTAUDIO ${RTAUDIO_DEFINITIONS})
         include_directories(${RTAUDIO_INCLUDE_DIR})
     ELSE(USE_SYSTEM_RTAUDIO)
         use_included_rtaudio()
 
-        SET(USE_AUDIO_PULSE ON CACHE BOOL "Use Pulse Audio")
+        SET(USE_AUDIO_PULSE OFF CACHE BOOL "Use Pulse Audio")
         SET(USE_AUDIO_JACK OFF CACHE BOOL "Use Jack Audio")
-        SET(USE_AUDIO_ALSA OFF CACHE BOOL "Use ALSA Audio")
+        SET(USE_AUDIO_ALSA ON CACHE BOOL "Use ALSA Audio")
         SET(USE_AUDIO_OSS OFF CACHE BOOL "Use OSS Audio")
   
         IF(USE_AUDIO_PULSE)
@@ -56,12 +44,10 @@ IF (UNIX AND NOT APPLE)
         ENDIF(USE_AUDIO_PULSE)
 
         IF(USE_AUDIO_JACK)
-           find_package(Jack)
-           SET (OTHER_LIBRARIES ${OTHER_LIBRARIES} ${JACK_LIBRARIES})
+           SET (OTHER_LIBRARIES ${OTHER_LIBRARIES} jack)
            ADD_DEFINITIONS(
                 -D__UNIX_JACK__
            )
-           include_directories(${JACK_INCLUDE_DIRS})
         ENDIF(USE_AUDIO_JACK)
 
         IF(USE_AUDIO_ALSA)
@@ -86,90 +72,26 @@ ELSE(UNIX AND NOT APPLE)
     use_included_rtaudio()
 ENDIF(UNIX AND NOT APPLE)
 
-#no md5 checking for now, need to figure out how to make it work with the text file
-#file(DOWNLOAD http://www.live555.com/liveMedia/public/live555-latest-md5.txt ${PROJECT_SOURCE_DIR}/live.md5)
-#file(READ ${PROJECT_SOURCE_DIR}/live.md5 LIVE_MD5 HEX)
 
-include(ExternalProject) # Include definition of 'ExternalProject_Add' function
-
-# when using hgfs in a VM guest tar extraction fails, so it can only be extracted on the host
-IF (HGFS)
-ExternalProject_Add(live555 # Name of the target. Could be any
-    # Setup source directory
-    SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/live
-    # Setup build directory. Here it is the same as source one.
-    BUILD_IN_SOURCE 1
-    # Configuration step
-    CONFIGURE_COMMAND ./genMakefiles linux
-    # Build step. It is actually `make`, but in a wise manner.
-    BUILD_COMMAND "make"
-    # Disable install step
-    INSTALL_COMMAND ""
-    # needed for ninja support
-    BUILD_BYPRODUCTS ${PROJECT_SOURCE_DIR}/external/live/liveMedia/libliveMedia.a
-    	${PROJECT_SOURCE_DIR}/external/live/BasicUsageEnvironment/libBasicUsageEnvironment.a
-    	${PROJECT_SOURCE_DIR}/external/live/groupsock/libgroupsock.a
-    	${PROJECT_SOURCE_DIR}/external/live/UsageEnvironment/libUsageEnvironment.a
-    )
-ELSE (HGFS)
-ExternalProject_Add(live555 # Name of the target. Could be any
-    # Setup source directory
-    SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/live
-	
-	URL http://www.live555.com/liveMedia/public/live555-latest.tar.gz
-	#URL_MD5 ${LIVE_MD5}
-    # Setup build directory. Here it is the same as source one.
-    BUILD_IN_SOURCE 1
-    # Configuration step
-    CONFIGURE_COMMAND ./genMakefiles linux
-    # Build step. It is actually `make`, but in a wise manner.
-    BUILD_COMMAND "make"
-    # Disable install step
-    INSTALL_COMMAND ""
-    # needed for ninja support
-    BUILD_BYPRODUCTS ${PROJECT_SOURCE_DIR}/external/live/liveMedia/libliveMedia.a
-    	${PROJECT_SOURCE_DIR}/external/live/BasicUsageEnvironment/libBasicUsageEnvironment.a
-    	${PROJECT_SOURCE_DIR}/external/live/groupsock/libgroupsock.a
-    	${PROJECT_SOURCE_DIR}/external/live/UsageEnvironment/libUsageEnvironment.a
-    )
-ENDIF (HGFS)
-    
-add_library(livemedia STATIC IMPORTED GLOBAL)
-set_target_properties(livemedia PROPERTIES
-	IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/external/live/liveMedia/libliveMedia.a
-	)
-	
-add_library(liveBUE STATIC IMPORTED GLOBAL)
-set_target_properties(liveBUE PROPERTIES
-	IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/external/live/BasicUsageEnvironment/libBasicUsageEnvironment.a
-	)
-	
-add_library(liveUE STATIC IMPORTED GLOBAL)
-set_target_properties(liveUE PROPERTIES
-	IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/external/live/UsageEnvironment/libUsageEnvironment.a
-	)
-	
-add_library(liveGS STATIC IMPORTED GLOBAL)
-set_target_properties(liveGS PROPERTIES
-	IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/external/live/groupsock/libgroupsock.a
-	)
 
 
 include_directories(
-	core 
+	${CMAKE_CURRENT_SOURCE_DIR}
+	common 
 	cubic 
 	external 
 	scan 
 	server 
 	sigproc
 	util 
-	external/PiScan-protobuf 
+#	external/PiScan-protobuf 
 	external/loguru
 	external/tinyxml
 	external/live/liveMedia/include
 	external/live/groupsock/include
 	external/live/UsageEnvironment/include
 	external/live/BasicUsageEnvironment/include
+    # TODO these includes need refactored into a lib interface
 	cubic/sdr
 	cubic/demod
 	cubic/modules
@@ -179,13 +101,15 @@ include_directories(
 	cubic/util
 )
 
-add_subdirectory(core)
+add_subdirectory(common)
 add_subdirectory(cubic)
 add_subdirectory(external)
 add_subdirectory(scan)
 add_subdirectory(server)
 add_subdirectory(sigproc)
+add_subdirectory(test)
 add_subdirectory(tests)
+add_subdirectory(util)
 
 find_package(SoapySDR "0.4.0" NO_MODULE REQUIRED)
 include_directories(${SOAPY_SDR_INCLUDE_DIR})
@@ -198,10 +122,40 @@ IF(LIQUID_API_OLD)
 	ADD_DEFINITIONS(-DLIQUID_API_OLD)
 ENDIF(LIQUID_API_OLD)
 
+# TODO refactoring needed to eliminate this dependency
+target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/util)
+target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/util)
+# TODO refactoring needed to eliminate this dependency
+target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
+target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
+
+target_sources(piscan_server PUBLIC 
+	${CMAKE_CURRENT_SOURCE_DIR}/ScannerSM.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ServerManager.cpp
+)
+
 add_dependencies(server proto)
 
 set(LIVE_LIBS livemedia liveBUE liveUE liveGS ssl crypto)
 
-target_link_libraries(piScan_backend core cubic external loguru proto scan server sigproc 
-	pthread atomic boost_system protobuf liquid ${LIVE_LIBS} ${OTHER_LIBRARIES})
+#set(CUBIC_LIBS cubic cubic_demod cubic_modem cubic_sdr cubic_util cubic_audio)
 
+set(SYSTEM_LIBS pthread atomic boost_system protobuf liquid)
+
+set(APPLICATION_LIBS ${SYSTEM_LIBS} ${LIVE_LIBS} ${OTHER_LIBRARIES})
+
+set(APPLICATION_LIBS common cubic external loguru proto scan server sigproc util ${APPLICATION_LIBS})
+
+target_link_libraries(piscan_server ${APPLICATION_LIBS})
+
+install(
+	TARGETS piscan_server
+	DESTINATION /usr/local/bin
+    LIBRARY DESTINATION /usr/local/bin
+)
+install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/service/piscan_server DESTINATION /etc/init.d
+)
+install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/service/piscan_server.service DESTINATION /etc/systemd/system
+)

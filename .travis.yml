@@ -1,0 +1,26 @@
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+
+script: sh ./configure_ninja && cd build && ninja && ninja test
+
+dist:
+  - bionic
+  - focal
+addons:
+  apt:
+    packages:
+      - build-essential
+      - cmake
+      - libboost-all-dev
+      - libliquid-dev
+      - libpulse-dev
+      - libasound2-dev
+      - libjack-dev
+      - protobuf-compiler
+      - libprotoc-dev
+      - libssh-dev
+      - libsoapysdr-dev
+      - ninja-build

@@ -27,7 +27,7 @@ A license hasn't been selected yet, though it's likely to be GPL - have to make 
 - Broadcastify interfacing
 
 ## System requirements
-- Linux OS - Debian or Ubuntu based distros recommended (untested on other distros)
+- Linux OS - Debian or Ubuntu based distros recommended (untested on other distros - scripts are only configured for Debian builds)
 - CPU with 2+ cores
 	* ARM: will work on at least an RPi 2B (900MHz BCM2836)
 	* x86: should run well on most modern low-power CPUs, has been tested on dual-core Atom-class processors without maxing out the CPU
@@ -54,23 +54,32 @@ The following packages need to be installed, if not already:
     protobuf-compiler, libprotoc-dev
     libssh-dev
 
+Installation can automatically be done with:
+
+	sh ./install_prereqs.sh
+
 ### Initializing 
 In a terminal, download the source with the command:
 
 	git clone https://github.com/ezratl/PiScan
 Then configure the environment:
 
-	sh ./bootstrap.sh
-There are three options available for audio output: PulseAudio, ALSA, and JACK. Your preference can be set by running one of the following commands from the `build` directory:
+	sh ./configure_make
+Or
+
+	sh ./configure_ninja
+Depending on your preferred build system
+
+There are three options available for audio output: PulseAudio, ALSA, JACK, and OSS. By default ALSA is the selected library. Your preference can be set by running one of the following commands from the `build` directory:
 
 	cmake ../src -DUSE_AUDIO_PULSE=ON
 	cmake ../src -DUSE_AUDIO_ALSA=ON
 	cmake ../src -DUSE_AUDIO_JACK=ON
-By default PulseAudio is selected, however ALSA seems to use less CPU on the RPi
+Do note that PulseAudio uses significantly more CPU than ALSA when streaming PiScan audio.
 
-Additionally, some versions of liquid have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
+Additionally, some versions of liquid, particularly `libliquid-dev` versions `1.3.2` and greater, have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
 
-	cmake ../src -DLIQUID_API_OLD=ON
+	cmake ../src -DLIQUID_API_OLD=OFF
 ### Building
 Once the environment is properly configured, `cd` into `build` and build the LiveMedia library:
 
@@ -83,14 +92,14 @@ Now you can build PiScan:
 	make all
 Alternatively, you can build the binaries individually if you don't need all of them
 
-	make piScan_backend		# main program
+	make piscan_server		# main program
 	
 	make piscan_hpdconv		# tool to convert Uniden Sentinel files to PiScan files
 ### Running
 For now, you have to be in the `build` directory to run the program. In the future there will be an install command to eliminate the need for this.
 You can now run PiScan from the command line:
 
-	./piScan_backend
+	./src/piscan_server
 See **Usage** for more information on command arguments and setting up the data files 
     
 
@@ -108,7 +117,7 @@ All data used by PiScan is stored in its working directory (this is the `data` d
 On the first run of PiScan, these files likely won't exist. It will continue running with default parameters, and a config and state file will be generated with these defaults when the program ends.
 If there is no scan file, PiScan cannot scan so it will instead hold at 100MHz. It will not allow the user to scan, but will allow manual frequency tuning.
 #### Scan Database File
-`systems.json` MUST adhere to this format for PiScan to read it correctly
+`systems.json` MUST adhere to this format (minus the comments) for PiScan to read it correctly. Use the sample file in `data/defaults` as a starting point for your database if writing it manually.
 
 	{
 		"systems": [
@@ -155,6 +164,12 @@ The primary way to interact with PiScan is through the [client program](https://
 In short, it communicates through a TCP connection, with a default port 1234.
 
 To listen to PiScan's audio feed remotely, use a stream client that supports RTSP, such as VLC, and enter the MRL `rtsp://<host_address>:8554/audio`. Setting a low network caching time is advised to reduce audio latency.
+
+Note: The client is being migrated to this repository to simplify API development. The version in the separate repo is still recommended for now, but it will be deprecated in the next update.
+
+## Troubleshooting
+If build errors are occuring with ModemAM.cpp or similar sources, the LIQUID_API_OLD CMake flag needs toggled. Generally it needs to be set to OFF for liquid versions >= 1.3.2, but swapping its value may help in other cases.
+
 ## Disclaimer
 This is a personal project; it lacks both the design standards and testing standards of commercially-built software, meaning no guarantees can be made of its reliability. Use at your own risk.
 

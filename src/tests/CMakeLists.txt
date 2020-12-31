@@ -1,6 +1,6 @@
-project(piScan_backend_tests)
+project(piscan_server_tests)
 
-add_executable(piScan_backend_tests EXCLUDE_FROM_ALL test_ScannerStateMachine.cpp)
+add_executable(piscan_server_tests EXCLUDE_FROM_ALL test_ScannerStateMachine.cpp)
 add_executable(testclient EXCLUDE_FROM_ALL testclient.cpp)
 add_executable(test_utils EXCLUDE_FROM_ALL test_utils.cpp)
 

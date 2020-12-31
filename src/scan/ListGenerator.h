@@ -11,11 +11,11 @@
 #include <vector>
 #include <string>
 
-#include "SystemList.h"
+#include "scan_types.h"
 
-namespace piscan {
+namespace piscan::scan {
 
-class SystemList;
+//class SystemList;
 
 class ListFileIO {
 public:
@@ -34,7 +34,7 @@ public:
 
 private:
 	SystemList* _list = nullptr;
-	std::shared_ptr<RadioSystem> _system;
+	RadioSystemPtr _system;
 	std::string _path;
 
 	void _newAnalogSys(std::vector<std::string>& tokens);

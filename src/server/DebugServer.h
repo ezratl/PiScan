@@ -9,56 +9,27 @@
 #define SERVERDEBUGOUTPUT_H_
 
 #include <thread>
+#include <memory>
 #include <boost/shared_ptr.hpp>
 
+#include "server_types.h"
+#include "connection/connection_types.h"
 #include "BackendServer.h"
-#include "connection.h"
+#include "messages.h"
 
-namespace piscan {
-
-class DebugServer;
-
-class DebugConsole : public Connection {
-public:
-	DebugConsole() : Connection(FULL_CONTROL, AUDIO_NONE) {}
-	~DebugConsole() {
-		_requestThread.join();
-	};
-
-	bool connect();
-	void disconnect();
-	void giveMessage(std::shared_ptr<Message> message);
-	void contextUpdate(const ScannerContext context);
-	void contextUpdate(const DemodContext context);
-	void handleSystemMessage(const GeneralMessage message);
-	void handleSystemInfo(const SystemInfo info);
-	void handleSignalLevel(const int level);
-
-	const std::string identifier() {
-		return "Debug Console";
-	}
-
-	friend DebugServer;
-
-private:
-	bool _run = false;
-	std::thread _requestThread;
-
-	void _consoleInputFunc();
-
-	void gainReceived(int handle, int gain);
-};
+namespace piscan::server {
 
 class DebugServer : public BackendServer {
 public:
-	DebugServer(ServerInterface& host) : BackendServer(host), _connection(new DebugConsole()) {}
+	DebugServer(ServerInterface& host);
 	~DebugServer() {};
 
 	void start();
 	void stop();
-	void giveMessage(std::shared_ptr<Message> message);
+	void giveMessage(std::shared_ptr<piscan::Message> message);
 private:
-	boost::shared_ptr<DebugConsole> _connection;
+	boost::shared_ptr<connection::DebugConsole> _connection;
 };
+
 }
 #endif /* SERVERDEBUGOUTPUT_H_ */
