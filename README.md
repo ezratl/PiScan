@@ -77,7 +77,7 @@ There are three options available for audio output: PulseAudio, ALSA, JACK, and 
 	cmake ../src -DUSE_AUDIO_JACK=ON
 Do note that PulseAudio uses significantly more CPU than ALSA when streaming PiScan audio.
 
-Additionally, some versions of liquid have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
+Additionally, some versions of liquid, particularly `libliquid-dev` versions `1.3.2` and greater, have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
 
 	cmake ../src -DLIQUID_API_OLD=OFF
 ### Building
@@ -168,7 +168,7 @@ To listen to PiScan's audio feed remotely, use a stream client that supports RTS
 Note: The client is being migrated to this repository to simplify API development. The version in the separate repo is still recommended for now, but it will be deprecated in the next update.
 
 ## Troubleshooting
-
+If build errors are occuring with ModemAM.cpp or similar sources, the LIQUID_API_OLD CMake flag needs toggled. Generally it needs to be set to OFF for liquid versions >= 1.3.2, but swapping its value may help in other cases.
 
 ## Disclaimer
 This is a personal project; it lacks both the design standards and testing standards of commercially-built software, meaning no guarantees can be made of its reliability. Use at your own risk.
