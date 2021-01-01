@@ -29,7 +29,7 @@ namespace piscan {
 namespace server {
 namespace connection {
 
-class Connection : public piscan::RequestCallbackInterface, public piscan::MessageReceiver {
+class Connection : public piscan::RequestCallbackInterface {
 public:
 
 
@@ -42,7 +42,6 @@ public:
 		_level(lvl), _audio(aud), _serverManager(nullptr), _handle(HANDLE_NULL) {}
 	virtual ~Connection() {};
 
-	virtual void giveMessage(std::shared_ptr<Message> message) = 0;
 	virtual bool connect() = 0;
 	virtual void disconnect() = 0;
 	virtual void contextUpdate(const piscan::server::context::ScannerContext context) = 0;

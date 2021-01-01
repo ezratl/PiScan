@@ -29,8 +29,6 @@ public:
 
 	audio::LocalPCMSource* startFromAudioController(int sampleRate);
 
-	void giveMessage(std::shared_ptr<Message> message) { (void)message; };
-
 private:
 	std::thread _serverThread;
 

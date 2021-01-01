@@ -40,10 +40,6 @@ void DebugConsole::disconnect(){
 	notifyDisconnected();
 }
 
-void DebugConsole::giveMessage(std::shared_ptr<Message> /* message */){
-
-}
-
 void DebugConsole::_consoleInputFunc() {
 	setThreadName(DS_THREAD_NAME);
 

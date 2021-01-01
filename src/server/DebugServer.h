@@ -27,7 +27,7 @@ public:
 
 	void start();
 	void stop();
-	void giveMessage(std::shared_ptr<piscan::Message> message);
+	
 private:
 	boost::shared_ptr<connection::DebugConsole> _connection;
 };

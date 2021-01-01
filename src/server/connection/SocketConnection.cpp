@@ -20,10 +20,6 @@ namespace piscan {
 namespace server {
 namespace connection {
 
-void SocketConnection::giveMessage(std::shared_ptr<Message> /* message */){
-
-}
-
 bool SocketConnection::connect(){
 	_startRead();
 	return true;

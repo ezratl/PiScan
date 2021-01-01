@@ -20,7 +20,7 @@
 namespace piscan {
 namespace sigproc {
 
-Demodulator::Demodulator(MessageReceiver& central) : _centralQueue(central), _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
+Demodulator::Demodulator() : _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
 
 void Demodulator::start(){
 	piscan::config::DemodState& state = app::getConfig().getDemodState();
@@ -158,8 +158,6 @@ void Demodulator::start(){
 	//_sigLevelRefresher = new IntervalTimer();
 	_sigLevelRefresher.create(SIGLEVEL_REFRESH_INTERVAL, func);
 
-	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_READY);
-	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator started");
 	notifyReady();
 }
@@ -175,8 +173,6 @@ void Demodulator::stop(){
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 
-	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_STOPPED);
-	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator stopped");
 	notifyDeinit();
 }
@@ -284,15 +280,6 @@ int Demodulator::getSignalStrength() { // uses signal level as a fraction betwee
 	return level;
 }
 
-void Demodulator::giveMessage(std::shared_ptr<Message> message){
-	if(message->source == CLIENT) {
-		_handleRequest(*(static_cast<ClientRequest*>(message->pData)));
-
-	}
-	else
-		_handleMessage(std::dynamic_pointer_cast<DemodMessage>(message));
-}
-
 void Demodulator::_handleMessage(std::shared_ptr<DemodMessage> message){
 	if(message->type == DemodMessage::OPEN_AUDIO){
 		_demodMgr.getCurrentModem()->setMuted((bool) message->pData);
@@ -340,8 +327,6 @@ void Demodulator::_handleRequest(ClientRequest& request){
 }
 
 void Demodulator::_contextUpdate(){
-	//piscan::server::context::DemodContext* context = new piscan::server::context::DemodContext(_gain, _squelchLevel);
-	//_centralQueue.giveMessage(std::make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, context));
 	app::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
 }
 

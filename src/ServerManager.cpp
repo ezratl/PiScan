@@ -35,10 +35,9 @@ static ConnectionLevel const permissionMap[] = {
 		RECEIVE_ONLY, //GET_CONTEXT
 };
 
-ServerManager::ServerManager(boost::asio::io_service& io_service, MessageReceiver& central) : _io_service(io_service),
-		_centralQueue(central), _queue(QUEUE_SIZE), _activeConnections(0)/*, _connections(
-				MAX_CONNECTIONS)*/ {
-
+ServerManager::ServerManager(boost::asio::io_service &io_service) : _io_service(io_service),
+																	_queue(QUEUE_SIZE), _activeConnections(0)
+{
 }
 
 void ServerManager::start(bool useDebugServer, bool spawnLocalClient){
@@ -104,12 +103,7 @@ void ServerManager::_queueThreadFunc(void){
 		while(_queue.try_dequeue(message)){
 			assert(message != nullptr);
 			DLOG_F(7, "Message receive | dst:%d | src:%d", message->destination, message->source);
-			if(message->destination != SERVER_MAN){
-				_centralQueue.giveMessage(message);
-			}
-			else{
-				_handleMessage(message);
-			}
+			_handleMessage(message);
 			_msgAvailable = false;
 		}
 
@@ -129,7 +123,6 @@ void ServerManager::_queueThreadFunc(void){
 	std::shared_ptr<Message> m;
 	while(_queue.try_dequeue(m));
 
-	//_centralQueue.giveMessage(std::make_shared<ControllerMessage>(SERVER_MAN, ControllerMessage::NOTIFY_STOPPED));
 	LOG_F(1, "Connection Manager stopped");
 	notifyDeinit();
 }

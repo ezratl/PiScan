@@ -32,7 +32,7 @@ using ConnectionPtr = server::connection::ConnectionPtr;
 
 class ServerManager : public MessageReceiver, public server::ServerInterface, public Synchronizable {
 public:
-	ServerManager(boost::asio::io_service& io_service, MessageReceiver& central);
+	ServerManager(boost::asio::io_service& io_service/*, MessageReceiver& central*/);
 	~ServerManager() {
 		for(unsigned int i = 0; i < _servers.size(); i++)
 			delete _servers[i];
@@ -47,7 +47,6 @@ protected:
 
 private:
 	boost::asio::io_service& _io_service;
-	MessageReceiver& _centralQueue;
 	moodycamel::ConcurrentQueue<std::shared_ptr<Message>> _queue;
 	moodycamel::ReaderWriterQueue<ConnectionPtr> _connectionQueue;
 	int _activeConnections;

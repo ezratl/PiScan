@@ -25,7 +25,6 @@ public:
 
 	bool connect();
 	void disconnect();
-	void giveMessage(std::shared_ptr<Message> message);
 	void contextUpdate(const piscan::server::context::ScannerContext context);
 	void contextUpdate(const piscan::server::context::DemodContext context);
 	void handleSystemMessage(const piscan::server::context::GeneralMessage message);

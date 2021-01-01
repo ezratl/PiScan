@@ -35,7 +35,6 @@ public:
 	SocketConnection(boost::asio::io_service& io_service, ConnectionLevel lvl) : Connection(lvl), _socket(io_service) {};
 	~SocketConnection() {};
 
-	void giveMessage(std::shared_ptr<Message> message);
 	bool connect();
 	void disconnect();
 	void contextUpdate(const piscan::server::context::ScannerContext context);

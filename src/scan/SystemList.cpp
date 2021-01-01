@@ -81,7 +81,7 @@ bool SystemList::writeToFile(){
 	path += filesystem::path::preferred_separator;
 	path += SYSTEMS_FILE;
 
-	LOG_F(1, "Systems file path", path.c_str());
+	LOG_F(1, "Systems file path %s", path.c_str());
 	LOG_F(INFO, "Saving systems file");
 
 	ptree pt, systems;

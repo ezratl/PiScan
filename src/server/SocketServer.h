@@ -40,7 +40,6 @@ public:
 	void stop();
 	void spawnLocalClient();
 
-	void giveMessage(std::shared_ptr<Message> message);
 private:
 	io_service& _ioService;
 	tcp::acceptor _acceptor;

@@ -58,10 +58,6 @@ void SocketServer::spawnLocalClient(){
 		_spawnPythonClient();
 }
 
-void SocketServer::giveMessage(std::shared_ptr<Message> /* message */){
-
-}
-
 void SocketServer::start_accept() {
 	// creates a socket
 	connection::SocketConnectionPtr connection = connection::SocketConnection::create(_ioService);

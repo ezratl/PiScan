@@ -35,9 +35,5 @@ void DebugServer::stop(){
 		_connection->disconnect();
 }
 
-void DebugServer::giveMessage(std::shared_ptr<Message> /* message */){
-	//delete &message;
-}
-
 }
 }

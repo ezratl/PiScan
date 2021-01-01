@@ -14,7 +14,7 @@
 namespace piscan {
 namespace server {
 
-class BackendServer : public MessageReceiver {
+class BackendServer {
 public:
 	BackendServer(ServerInterface& host) : _host(host) {}
 	virtual ~BackendServer() {};
