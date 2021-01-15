@@ -72,21 +72,21 @@ Depending on your preferred build system
 
 There are three options available for audio output: PulseAudio, ALSA, JACK, and OSS. By default ALSA is the selected library. Your preference can be set by running one of the following commands from the `build` directory:
 
-	cmake ../src -DUSE_AUDIO_PULSE=ON
-	cmake ../src -DUSE_AUDIO_ALSA=ON
-	cmake ../src -DUSE_AUDIO_JACK=ON
+	cmake .. -DUSE_AUDIO_PULSE=ON
+	cmake .. -DUSE_AUDIO_ALSA=ON
+	cmake .. -DUSE_AUDIO_JACK=ON
 Do note that PulseAudio uses significantly more CPU than ALSA when streaming PiScan audio.
 
 Additionally, some versions of liquid, particularly `libliquid-dev` versions `1.3.2` and greater, have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
 
-	cmake ../src -DLIQUID_API_OLD=OFF
+	cmake .. -DLIQUID_API_OLD=OFF
 ### Building
 Once the environment is properly configured, `cd` into `build` and build the LiveMedia library:
 
 	make live555
 If the build fails: If you are building in a shared folder in a VM on a Windows host, you must download and extract the Live sourcefiles manually into `src/external/live` and run the command below before trying again. This is due to Windows not playing nicely with permissions and symbolic links
 
-	cmake ../src -DHGFS=ON
+	cmake .. -DHGFS=ON
 Now you can build PiScan:
 
 	make all
