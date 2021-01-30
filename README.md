@@ -95,13 +95,20 @@ Alternatively, you can build the binaries individually if you don't need all of 
 	make piscan_server		# main program
 	
 	make piscan_hpdconv		# tool to convert Uniden Sentinel files to PiScan files
-### Running
-For now, you have to be in the `build` directory to run the program. In the future there will be an install command to eliminate the need for this.
-You can now run PiScan from the command line:
+Once the build is complete, you can run the install script:
 
-	./src/piscan_server
+	sudo make install
+Note: install must be re-run if the project is rebuilt
+
+### Running
+PiScan can now be run with the command:
+
+	piscan_server [args]
 See **Usage** for more information on command arguments and setting up the data files 
-    
+
+Alternatively, if you prefer not to use `make install` you can run it locally from the `build` directory with the command:
+
+	./src/piscan_server [args]
 
 ## Usage
 ### Command Arguments
