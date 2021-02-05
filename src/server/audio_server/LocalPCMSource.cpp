@@ -23,7 +23,7 @@ namespace audio {
 LocalPCMSource*
 LocalPCMSource::createNew(UsageEnvironment& env) {
   do {
-	AudioThread* controller = app::getAudioController();
+	AudioThread* controller = app::audio::getAudioController();
 	if(!controller)
 		break;
 

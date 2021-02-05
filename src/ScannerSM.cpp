@@ -33,7 +33,7 @@ ScannerSM::ScannerSM(piscan::scan::SystemList &dataSource) : StateMachine(7), _s
 
 void ScannerSM::startScanner(){
 	LOG_F(1, "Loading saved scanner state");
-	piscan::config::ScannerState& state = app::getConfig().getScannerState();
+	piscan::config::ScannerState& state = app::system::getConfig().getScannerState();
 	piscan::scan::EntryPtr entry;
 	switch(state.scanState){
 	case SCAN_STATE_HOLD:
@@ -120,7 +120,7 @@ void ScannerSM::ST_Load(EventData* /* data */){
 	LOG_F(INFO, "Loaded %lu systems", _systems.size());
 
 	//_currentSystem = _systems[0];
-	_systems.sortBins(app::getTunerSampleRate());
+	_systems.sortBins(app::demod::getTunerSampleRate());
 
 	// do not issue event - SM will wait until an event is generated before proceeding
 	LOG_F(1, "ScannerSM ready");
@@ -298,7 +298,7 @@ void ScannerSM::ST_Manual(EventData* data){
 void ScannerSM::ST_SaveAll(EventData* /* data */){
 	DLOG_F(9, "ST_SaveAll");
 	LOG_F(1, "Saving state");
-	piscan::config::ScannerState& state = app::getConfig().getScannerState();
+	piscan::config::ScannerState& state = app::system::getConfig().getScannerState();
 	state.holdIndex = {};
 	state.holdKey = "";
 	state.manualFreq = 0;
@@ -359,11 +359,11 @@ void ScannerSM::_broadcastContextUpdate() {
 		_currentContext.clearFields();
 	}
 	
-	app::scannerContextUpdate(_currentContext);
+	app::server::scannerContextUpdate(_currentContext);
 }
 
 void ScannerSM::_enableAudioOut(bool en){
-	app::squelchBreak(en);
+	app::demod::squelchBreak(en);
 }
 
 piscan::server::context::ScannerContext ScannerSM::getCurrentContext(){

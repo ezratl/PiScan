@@ -52,9 +52,9 @@ static bool sysRun;
 static boost::asio::io_service io_service;
 static std::thread ioThread;
 static piscan::scan::SystemList scanSystems;
-static ScannerSM scanner(scanSystems);
+static ScannerSM scannerInst(scanSystems);
 static ServerManager connectionManager(io_service);
-static piscan::sigproc::Demodulator demod;
+static piscan::sigproc::Demodulator demodInst;
 
 static std::atomic_bool steadyState(false);
 
@@ -66,7 +66,7 @@ void hardTerminate(){
 void sigTermHandler(int /* signal */){
 	// SIGTERM is raised by the kernel during shutdown
 	if(sysRun){
-		app::stopSystem();
+		app::system::stopSystem();
 		sysRun = false;
 	}
 	// SIGTERM called after exit process has started - possibly because the program locked up and the user wants to force quit
@@ -83,8 +83,8 @@ void sigIntHandler(int /* signal */){
 	sysRun = false;
 }
 
-piscan::sigproc::DemodInterface& app::getDemodInstance() {
-	return demod;
+piscan::sigproc::DemodInterface& app::demod::getDemodInstance() {
+	return demodInst;
 }
 
 void runIO(){
@@ -103,54 +103,54 @@ void exit(int code){
 	std::exit(code);
 }
 
-bool app::stopSystem(){
+bool app::system::stopSystem(){
 	if(steadyState.load()){
 		return true;
 	}
 	return false;
 }
 
-void app::startScan(){
-	scanner.startScan();
+void app::scanner::startScan(){
+	scannerInst.startScan();
 }
 
-void app::holdScan(std::vector<int> index){
-	scanner.holdScan(index);
+void app::scanner::holdScan(std::vector<int> index){
+	scannerInst.holdScan(index);
 }
 
-void app::stopScanner(){
-	scanner.stopScanner();
+void app::scanner::stopScanner(){
+	scannerInst.stopScanner();
 }
 
-void app::manualEntry(app::ManualEntryData* freq){
-	scanner.manualEntry(freq);
+void app::scanner::manualEntry(app::ManualEntryData* freq){
+	scannerInst.manualEntry(freq);
 }
 
-piscan::server::context::ScannerContext app::getScannerContext(){
-	return scanner.getCurrentContext();
+piscan::server::context::ScannerContext app::scanner::getScannerContext(){
+	return scannerInst.getCurrentContext();
 }
 
-void app::setTunerGain(float gain){
-	demod.setTunerGain(gain);
+void app::demod::setTunerGain(float gain){
+	demodInst.setTunerGain(gain);
 }
 
-void app::setDemodSquelch(float level){
-	demod.setSquelch(level);
+void app::demod::setDemodSquelch(float level){
+	demodInst.setSquelch(level);
 }
 
-piscan::server::context::DemodContext app::getDemodContext(){
-	return piscan::server::context::DemodContext(demod.getTunerGain(), demod.getSquelch());
+piscan::server::context::DemodContext app::demod::getDemodContext(){
+	return piscan::server::context::DemodContext(demodInst.getTunerGain(), demodInst.getSquelch());
 }
 
-void app::squelchBreak(bool mute){
-	demod.squelchBreak(mute);
+void app::demod::squelchBreak(bool mute){
+	demodInst.squelchBreak(mute);
 }
 
-long long app::getTunerSampleRate() {
-	return demod.getTunerSampleRate();
+long long app::demod::getTunerSampleRate() {
+	return demodInst.getTunerSampleRate();
 }
 
-const piscan::server::context::SystemInfo app::getSystemInfo(){
+const piscan::server::context::SystemInfo app::system::getSystemInfo(){
 	piscan::server::context::SystemInfo info = {
 			.version = PISCAN_VERSION,
 			.buildNumber = 0,
@@ -169,15 +169,15 @@ const piscan::server::context::SystemInfo app::getSystemInfo(){
 	return info;
 }
 
-void app::scannerContextUpdate(piscan::server::context::ScannerContext ctx){
+void app::server::scannerContextUpdate(piscan::server::context::ScannerContext ctx){
 	connectionManager.giveMessage(make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::ScannerContext(ctx)));
 }
 
-void app::demodContextUpdate(piscan::server::context::DemodContext ctx){
+void app::server::demodContextUpdate(piscan::server::context::DemodContext ctx){
 	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::DemodContext(ctx)));
 }
 
-void app::signalLevelUpdate(int level){
+void app::server::signalLevelUpdate(int level){
 	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::SIGNAL_LEVEL, new int(level)));
 }
 
@@ -230,19 +230,19 @@ int main(int argc, char **argv) {
 
 	try {
 		{
-			scanner.start();
+			scannerInst.start();
 			connectionManager.start(useDebugConsole, spawnClient);
-			demod.start();
+			demodInst.start();
 
 			LOG_F(4, "scanner wait");
-			scanner.waitReady();
+			scannerInst.waitReady();
 			LOG_F(4, "server wait");
 			connectionManager.waitReady();
 			LOG_F(4, "demod wait");
-			demod.waitReady();
+			demodInst.waitReady();
 
 			connectionManager.allowConnections();
-			scanner.startScanner();
+			scannerInst.startScanner();
 
 			sysRun = true;
 		}
@@ -266,16 +266,16 @@ int main(int argc, char **argv) {
 
 		{
 			LOG_F(INFO, "Stopping system");
-		scanner.stopScanner();
+		scannerInst.stopScanner();
 		connectionManager.stop();
-		demod.stop();
+		demodInst.stop();
 
 		LOG_F(4, "scanner wait");
-		scanner.waitDeinit();
+		scannerInst.waitDeinit();
 		LOG_F(4, "server wait");
 		connectionManager.waitDeinit();
 		LOG_F(4, "demod wait");
-		demod.waitDeinit();
+		demodInst.waitDeinit();
 
 		LOG_F(2, "All modules stopped");
 		}

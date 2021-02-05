@@ -28,7 +28,7 @@ std::recursive_mutex AudioThread::m_device_mutex;
 
 static AudioThread* controllerInstance = nullptr;
 
-AudioThread* piscan::app::getAudioController() { return controllerInstance; }
+AudioThread* piscan::app::audio::getAudioController() { return controllerInstance; }
 
 AudioThread::AudioThread() : IOThread(), nBufferFrames(1024), sampleRate(0), controllerThread(nullptr) {
 

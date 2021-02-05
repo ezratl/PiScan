@@ -178,7 +178,7 @@ public:
 
 //piscan::sigproc::DummyDemod demod;
 
-piscan::sigproc::DemodInterface& piscan::app::getDemodInstance() {
+piscan::sigproc::DemodInterface& piscan::app::demod::getDemodInstance() {
 	return piscan::sigproc::demod;
 }
 

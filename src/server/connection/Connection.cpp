@@ -77,21 +77,21 @@ int Connection::systemFunction(SystemFunction function) {
 int Connection::scanStart() {
 	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_SCAN };
 	//return issueRequest(params);
-	app::startScan();
+	app::scanner::startScan();
 	return 0;
 }
 
 int Connection::scanHold() {
 	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
 	//return issueRequest(params);
-	app::holdScan();
+	app::scanner::holdScan();
 	return 0;
 }
 
 int Connection::scanHoldEntry(std::vector<int> index) {
 	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_HOLD };
 	//return issueRequest(params, new std::vector<int>(index));
-	app::holdScan(index);
+	app::scanner::holdScan(index);
 	return 0;
 }
 
@@ -99,7 +99,7 @@ int Connection::scanManualEntry(long freq, std::string mode) {
 	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_MANUAL };
 	//return issueRequest(params, new uint32_t(freq));3
 	auto data = new app::ManualEntryData(freq, mode);
-	app::manualEntry(data);
+	app::scanner::manualEntry(data);
 	return 0;
 }
 
@@ -107,7 +107,7 @@ int Connection::setDemodSquelch(int level) {
 	//ClientRequest::RequestParams params = { .type = DEMOD_CONFIGURE, .subType =
 	//		DEMOD_SET_SQUELCH };
 	//return issueRequest(params, new int(level));
-	app::setDemodSquelch(level);
+	app::demod::setDemodSquelch(level);
 	return 0;
 }
 
@@ -115,26 +115,26 @@ int Connection::setDemodGain(float level) {
 	//ClientRequest::RequestParams params = { .type = DEMOD_CONFIGURE, .subType =
 	//		DEMOD_SET_GAIN };
 	//return issueRequest(params, new int(level));
-	app::setTunerGain(level);
+	app::demod::setTunerGain(level);
 	return 0;
 }
 
 int Connection::getScannerContext() {
 	//ClientRequest::RequestParams params = { .type = GET_CONTEXT, .subType = SCANNER_CONTEXT };
 	//return issueRequest(params);
-	contextUpdate(app::getScannerContext());
+	contextUpdate(app::scanner::getScannerContext());
 	return 0;
 }
 
 int Connection::getDemodContext(){
 	//ClientRequest::RequestParams params = { .type = GET_CONTEXT, .subType = DEMOD_CONTEXT };
 	//return issueRequest(params);
-	contextUpdate(app::getDemodContext());
+	contextUpdate(app::demod::getDemodContext());
 	return 0;
 }
 
 int Connection::getSystemInfo(){
-	handleSystemInfo(app::getSystemInfo());
+	handleSystemInfo(app::system::getSystemInfo());
 	return 0;
 }
 

@@ -23,7 +23,7 @@ namespace sigproc {
 Demodulator::Demodulator() : _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
 
 void Demodulator::start(){
-	piscan::config::DemodState& state = app::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::system::getConfig().getDemodState();
 	_squelchLevel = state.squelch;
 	_gain = state.gain;
 
@@ -153,7 +153,7 @@ void Demodulator::start(){
 		int level = getSignalStrength();
 
 		LOG_F(7, "Signal strength %i", level);
-		app::signalLevelUpdate(level);
+		app::server::signalLevelUpdate(level);
 	});
 	//_sigLevelRefresher = new IntervalTimer();
 	_sigLevelRefresher.create(SIGLEVEL_REFRESH_INTERVAL, func);
@@ -169,7 +169,7 @@ void Demodulator::stop(){
 	_cubic->stopDevice(false, 2000);
 	_cubic->OnExit();
 	
-	piscan::config::DemodState& state = app::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::system::getConfig().getDemodState();
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 
@@ -190,13 +190,13 @@ bool Demodulator::setFrequency(long long freq) {
         _cubic->setFrequency(freq);
         //also arbitrary
         //usleep(TUNER_RETUNE_TIME);
-        std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
+        std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().retuneDelay));
 	}
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 	//this is totally arbitrary
 	//usleep(DEMOD_BUFFER_TIME);
-	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().demodDelay));
+	std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().demodDelay));
 
 	_currentFreq = freq;
 
@@ -209,7 +209,7 @@ bool Demodulator::setTunerFrequency(long long freq){
     _cubic->setFrequency(freq);
 	_demodMgr.getCurrentModem()->setFrequency(freq);
     //usleep(200000);
-	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
+	std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().retuneDelay));
 	return true;
 }
 
@@ -221,7 +221,7 @@ float Demodulator::getDecodedPL() { return 0; }
 unsigned int Demodulator::getDecodedDC() { return 0; }
 
 bool Demodulator::squelchThresholdMet() {
-	switch (app::getConfig().getDemodConfig().squelchType) {
+	switch (app::system::getConfig().getDemodConfig().squelchType) {
 	case SQUELCH_PCT:
 		return (getSignalStrength() >= _squelchLevel);
 	case SQUELCH_SNR:
@@ -327,7 +327,7 @@ void Demodulator::_handleRequest(ClientRequest& request){
 }
 
 void Demodulator::_contextUpdate(){
-	app::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
+	app::server::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
 }
 
 void Demodulator::setTunerGain(float gain){

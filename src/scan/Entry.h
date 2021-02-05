@@ -35,7 +35,7 @@ public:
 		LOCKOUT_TIMER,
 	};
 
-	Entry(std::string tag, bool lo, int del) : _tag(tag), _scanDelayMS(del), demod(piscan::app::getDemodInstance()) {
+	Entry(std::string tag, bool lo, int del) : _tag(tag), _scanDelayMS(del), demod(piscan::app::demod::getDemodInstance()) {
 		_lockout = (lo) ? LOCKOUT_PERSIST : LOCKOUT_NONE;
 		propertyTree.put(database::entry::tag_key, tag);
 		propertyTree.put(database::entry::lockout_key, lo);
