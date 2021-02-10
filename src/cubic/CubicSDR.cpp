@@ -926,7 +926,7 @@ AppConfig *CubicSDR::getConfig() {
     return &config;
 }
 
-void CubicSDR::saveConfig() {
+void CubicSDR::saveAll() {
     config.save();
 }
 

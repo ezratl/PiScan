@@ -22,7 +22,7 @@ namespace sigproc {
 Demodulator::Demodulator() : _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()), _tunerManager(_cubic) {};
 
 void Demodulator::start(){
-	piscan::config::DemodState& state = app::system::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::system::getState().getDemodState();
 	_squelchLevel = state.squelch;
 	_gain = state.gain;
 
@@ -132,7 +132,7 @@ void Demodulator::stop(){
 	_tunerManager.stopSelectedTuner();
 	_cubic->OnExit();
 	
-	piscan::config::DemodState& state = app::system::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::system::getState().getDemodState();
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 

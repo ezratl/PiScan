@@ -29,6 +29,7 @@ namespace system {
 bool stopSystem();
 const piscan::server::context::SystemInfo getSystemInfo();
 inline piscan::config::Configuration& getConfig() { return piscan::config::Configuration::getConfig(); };
+inline piscan::config::State& getState() { return piscan::config::State::getState(); };
 void softAbort();
 }
 

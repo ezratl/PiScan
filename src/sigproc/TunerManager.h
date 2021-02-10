@@ -13,6 +13,7 @@ class SDRDeviceInfo;
 namespace piscan {
 namespace sigproc {
     class TunerComparator : public std::less<piscan::config::TunerConfig> {
+    public:
         constexpr bool operator()(piscan::config::TunerConfig& left, piscan::config::TunerConfig& right) const {
             return left.rank < right.rank;
         }

@@ -200,6 +200,7 @@ int main(int argc, char **argv) {
 	LOG_F(INFO, "Starting PiScan, version %s", PISCAN_VERSION);
 
 	piscan::config::Configuration& config = piscan::config::Configuration::getConfig();
+	piscan::config::State& state = piscan::config::State::getState();
 	bool useDebugConsole = false;
 	bool spawnClient = false;
 
@@ -225,9 +226,8 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	
-	config.loadConfig();
-	config.loadState();
+	config.loadFromFile();
+	state.loadFromFile();
 
 	loguru::add_file(config.getDatedLogPath().c_str(), loguru::Truncate, logVerbosity);
 	loguru::add_file(config.getLatestLogPath().c_str(), loguru::Truncate, logVerbosity);
@@ -287,8 +287,8 @@ int main(int argc, char **argv) {
 		LOG_F(ERROR, "%s", e.what());
 	}
 
-	config.saveState();
-	config.saveConfig();
+	state.saveToFile();
+	config.saveToFile();
 
 	piscan::exit(0);
 

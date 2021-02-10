@@ -33,7 +33,7 @@ ScannerSM::ScannerSM(piscan::scan::SystemList &dataSource) : StateMachine(7), _s
 
 void ScannerSM::startScanner(){
 	LOG_F(1, "Loading saved scanner state");
-	piscan::config::ScannerState& state = app::system::getConfig().getScannerState();
+	piscan::config::ScannerState& state = app::system::getState().getScannerState();
 	piscan::scan::EntryPtr entry;
 	switch(state.scanState){
 	case SCAN_STATE_HOLD:
@@ -298,7 +298,7 @@ void ScannerSM::ST_Manual(EventData* data){
 void ScannerSM::ST_SaveAll(EventData* /* data */){
 	DLOG_F(9, "ST_SaveAll");
 	LOG_F(1, "Saving state");
-	piscan::config::ScannerState& state = app::system::getConfig().getScannerState();
+	piscan::config::ScannerState& state = app::system::getState().getScannerState();
 	state.holdIndex = {};
 	state.holdKey = "";
 	state.manualFreq = 0;
