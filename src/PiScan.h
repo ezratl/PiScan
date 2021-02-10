@@ -49,6 +49,7 @@ void setDemodSquelch(float level);
 piscan::server::context::DemodContext getDemodContext();
 void squelchBreak(bool mute = true);
 long long getTunerSampleRate();
+//void setTunerPPM(int ppm);
 }
 
 /* server functions */

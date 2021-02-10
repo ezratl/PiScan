@@ -59,6 +59,20 @@ struct DemodConfig {
 	int squelchType = DEFAULT_SQUELCH_MODE;
 };
 
+#define DEFAULT_RANK	0
+#define DEFAULT_DESC	"NULL"
+#define DEFAULT_DRIVER	"null"
+#define DEFAULT_PPM		0
+#define DEFAULT_TUNER_SAMPLE_RATE	2048000
+
+struct TunerConfig {
+	int rank = DEFAULT_RANK;
+	std::string description = DEFAULT_DESC;
+	std::string driver = DEFAULT_DRIVER;
+	int ppmCorrection = DEFAULT_PPM;
+	long int sampleRate = DEFAULT_TUNER_SAMPLE_RATE;
+};
+
 #define DEFAULT_RTSP_PORT	8554
 #define DEFAULT_RTSP_OVER_HTTP	false
 

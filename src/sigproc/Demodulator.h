@@ -18,6 +18,7 @@
 #include "Configuration.h"
 #include "synchronize.h"
 #include "IntervalTimer.h"
+#include "TunerManager.h"
 
 
 namespace piscan {
@@ -56,6 +57,7 @@ private:
 
 	std::shared_ptr<CubicSDR> _cubic;
 	DemodulatorMgr& _demodMgr;
+	TunerManager _tunerManager;
 
 	std::map<Modulation, DemodulatorInstancePtr> _demods;
 

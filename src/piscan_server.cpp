@@ -150,6 +150,10 @@ long long app::demod::getTunerSampleRate() {
 	return demodInst.getTunerSampleRate();
 }
 
+/*void app::demod::setTunerPPM(int ppm) {
+	// TODO
+}*/
+
 const piscan::server::context::SystemInfo app::system::getSystemInfo(){
 	piscan::server::context::SystemInfo info = {
 			.version = PISCAN_VERSION,
