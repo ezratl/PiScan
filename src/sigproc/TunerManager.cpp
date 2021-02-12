@@ -1,11 +1,13 @@
 #include <functional>
 
+#include "PiScan.h"
 #include "TunerManager.h"
 #include "CubicSDR.h"
 #include "loguru.hpp"
 
 #define AUDIO_DRIVER "audio"
 
+using TunerList = piscan::config::TunerList;
 
 namespace piscan{
 namespace sigproc {
@@ -56,7 +58,7 @@ bool TunerManager::selectFirstAvailableDevice() {
     SDRDeviceInfo* device = (*(_devs.begin())).second;
     _selectedTuner.device = device;
     _selectedTuner.config.driver = device->getDriver();
-    _selectedTuner.config.description = device->getName();
+    _selectedTuner.config.descriptor = device->getName();
     return true;
 }
 
@@ -94,27 +96,62 @@ long TunerManager::nearestSampleRate(long desired, std::vector<long>& supportedR
  * @return False if a tuner could not be selected
  */
 bool TunerManager::autoSelectTuner() {
+    TunerList& tunerList = piscan::app::system::getConfig().getTunerList();
+
     if(_devs.empty()) {
         LOG_F(WARNING, "No SDR devices were found");
         return false;
     }
 
-    if (_savedTuners.empty()) {
+    if (tunerList.tuners.empty()) {
+        // TODO temporary
         LOG_F(INFO, "No saved tuners found in config, defaulting to first available");
         selectFirstAvailableDevice();
 
         LOG_F(INFO, "New tuner will be saved to config");
-        _savedTuners.push(_selectedTuner.config);
+        _selectedTuner.config.rank = tunerList.tuners.size();
+        tunerList.tuners.insert(_selectedTuner.config);
+    }
+    else {
+        bool foundTuner = false;
+        LOG_F(1, "Searching for known tuners...");
+        for (piscan::config::TunerConfig t : tunerList.tuners) {
+            auto dev = _devs.find(t.descriptor);
+            if (dev != _devs.end()) {
+                if (!(*dev).second->isAvailable()) {
+                    LOG_F(WARNING, "Found tuner %s but it is unavailable", t.descriptor.c_str());
+                    continue;
+                }
+
+                LOG_F(1, "Found tuner %s with rank %i", t.descriptor.c_str(), t.rank);
+
+                _selectedTuner.config = t;
+                _selectedTuner.device = (*dev).second;
+
+                foundTuner = true;
+                break;
+            }
+        }
+
+        // TODO temporary
+        if (!foundTuner) {
+            LOG_F(INFO, "No saved tuners were detected, defaulting to first available");
+            selectFirstAvailableDevice();
+
+            LOG_F(INFO, "New tuner will be saved to config");
+            _selectedTuner.config.rank = tunerList.tuners.size();
+            tunerList.tuners.insert(_selectedTuner.config);
+        }
     }
     
     LOG_F(INFO, "Auto selecting sample rate");
 	std::vector<long> srates(std::move(_selectedTuner.device->getSampleRates(SOAPY_SDR_RX, 0)));
 	
-    RAW_LOG_F(1, "Supported sample rates for tuner:");
+    RAW_LOG_F(2, "Supported sample rates for tuner:");
     for (long rate : srates)
-        RAW_LOG_F(1, "\t%li", rate);
+        RAW_LOG_F(2, "\t%li", rate);
 
-    _selectedTuner.config.sampleRate = nearestSampleRate(DEFAULT_TUNER_SAMPLE_RATE, srates); // TODO hardcoded sample rate temporary
+    _selectedTuner.config.sampleRate = nearestSampleRate(_selectedTuner.config.sampleRate, srates); // TODO hardcoded sample rate temporary
 
 	LOG_F(INFO, "Auto selected: %s", _selectedTuner.device->getName().c_str());
 

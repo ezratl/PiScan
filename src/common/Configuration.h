@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <boost/property_tree/ptree.hpp>
 
 #include "constants.h"
@@ -52,7 +53,7 @@ protected:
 
 struct GeneralConfig : public ConfigBase {
 public:
-	GeneralConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+	GeneralConfig(ConfigManager& cm, std::string path);
 
 	int logfileVerbosity = DEFAULT_LOGFILE_VERBOSITY;
 
@@ -68,7 +69,7 @@ public:
 
 struct SocketServerConfig : public ConfigBase {
 public:
-	SocketServerConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+	SocketServerConfig(ConfigManager& cm, std::string path);
 
 	int tcpPort = DEFAULT_TCP_PORT;
 	int maxConnections = MAX_TCP_CONNECTIONS;
@@ -90,7 +91,7 @@ public:
 #define DEFAULT_SQUELCH_MODE	(SQUELCH_DBM)
 
 struct DemodConfig : public ConfigBase {
-	DemodConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+	DemodConfig(ConfigManager& cm, std::string path);
 
 	long int retuneDelay = TUNER_RETUNE_TIME;
 	long int demodDelay = DEMOD_BUFFER_TIME;
@@ -101,24 +102,40 @@ struct DemodConfig : public ConfigBase {
 };
 
 #define DEFAULT_RANK	0
-#define DEFAULT_DESC	"NULL"
+#define DEFAULT_DESC	"null"
 #define DEFAULT_DRIVER	"null"
 #define DEFAULT_PPM		0
 #define DEFAULT_TUNER_SAMPLE_RATE	2048000
 
 struct TunerConfig {
 	int rank = DEFAULT_RANK;
-	std::string description = DEFAULT_DESC;
+	std::string descriptor = DEFAULT_DESC;
 	std::string driver = DEFAULT_DRIVER;
 	int ppmCorrection = DEFAULT_PPM;
 	long int sampleRate = DEFAULT_TUNER_SAMPLE_RATE;
+};
+
+struct TunerList : public ConfigBase {
+	class TunerComparator : public std::less<TunerConfig> {
+    public:
+        constexpr bool operator()(const TunerConfig& left, const TunerConfig& right) const {
+            return left.rank < right.rank;
+        }
+    };
+public:
+
+	TunerList(ConfigManager& cm, std::string path);
+	std::set<TunerConfig, TunerComparator> tuners;
+
+	virtual void save();
+	virtual void load();
 };
 
 #define DEFAULT_RTSP_PORT	8554
 #define DEFAULT_RTSP_OVER_HTTP	false
 
 struct AudioServerConfig : public ConfigBase {
-	AudioServerConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+	AudioServerConfig(ConfigManager& cm, std::string path);
 
 	int rtspPort = DEFAULT_RTSP_PORT;
 	bool httpTunneling = DEFAULT_RTSP_OVER_HTTP;
@@ -175,6 +192,7 @@ public:
 	SocketServerConfig& getSocketConfig() { return _socketConfig; };
 	DemodConfig& getDemodConfig() { return _demodConfig; };
 	AudioServerConfig& getAudioServerConfig() { return _rtspConfig; };
+	TunerList& getTunerList() { return _tunerList; };
 
 	std::string getLogDirectory();
 	std::string getDatedLogPath();
@@ -191,6 +209,7 @@ private:
 	SocketServerConfig _socketConfig;
 	DemodConfig _demodConfig;
 	AudioServerConfig _rtspConfig;
+	TunerList _tunerList;
 
 	Configuration();
 

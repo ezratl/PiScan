@@ -40,7 +40,7 @@ Configuration& Configuration::getConfig() {
 
 Configuration::Configuration() : _generalConfig(*this, path::config_base_path), 
 		_socketConfig(*this, path::config_base_path), _demodConfig(*this, path::config_base_path), 
-		_rtspConfig(*this, path::config_base_path) {
+		_rtspConfig(*this, path::config_base_path), _tunerList(*this, path::config_base_path) {
 	_configPath = DATABASE_PATH;
 }
 
@@ -104,7 +104,7 @@ void Configuration::loadAll(){
 	_socketConfig.load();
 	_demodConfig.load();
 	_rtspConfig.load();
-
+	_tunerList.load();
 }
 
 void Configuration::saveAll(){
@@ -112,6 +112,7 @@ void Configuration::saveAll(){
 	_socketConfig.save();
 	_demodConfig.save();
 	_rtspConfig.save();
+	_tunerList.save();
 }
 
 std::string Configuration::getLogDirectory(){
@@ -156,6 +157,8 @@ void Configuration::invalidate() {
 }
 
 /* Config implementations */
+GeneralConfig::GeneralConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+
 void GeneralConfig::load() {
 	logfileVerbosity = base.pTree().get(basePath + path::path_seperator + "general" + path::path_seperator + "log_verbosity", DEFAULT_LOGFILE_VERBOSITY);
 }
@@ -164,6 +167,8 @@ void GeneralConfig::save() {
 	logfileVerbosity = base.pTree().get(basePath + path::path_seperator + "general" + path::path_seperator + "log_verbosity", DEFAULT_LOGFILE_VERBOSITY);
 	base.invalidate();
 }
+
+SocketServerConfig::SocketServerConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
 
 void SocketServerConfig::load() {
 	maxConnections = base.pTree().get(basePath + path::path_seperator + "socket" + path::path_seperator + "max_connections", MAX_TCP_CONNECTIONS);
@@ -181,6 +186,8 @@ void SocketServerConfig::save() {
 	base.pTree().put(basePath + path::path_seperator + "socket" + path::path_seperator + "python_path", pythonBinary);
 	base.invalidate();
 }
+
+DemodConfig::DemodConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
 		
 void DemodConfig::load() {
 	retuneDelay = base.pTree().get(basePath + path::path_seperator + "demod" + path::path_seperator + "retune_delay", static_cast<long int>(TUNER_RETUNE_TIME));
@@ -194,6 +201,8 @@ void DemodConfig::save() {
 	base.pTree().put(basePath + path::path_seperator + "demod" + path::path_seperator + "squelch_mode", squelchType);
 	base.invalidate();
 }
+
+AudioServerConfig::AudioServerConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
 		
 void AudioServerConfig::load() {
 	rtspPort = base.pTree().get(basePath + path::path_seperator + "audio_stream" + path::path_seperator + "rtsp_port", DEFAULT_RTSP_PORT);
@@ -204,6 +213,50 @@ void AudioServerConfig::save() {
 	base.pTree().put(basePath + path::path_seperator + "audio_stream" + path::path_seperator + "rtsp_port", rtspPort);
 	base.pTree().put(basePath + path::path_seperator + "audio_stream" + path::path_seperator + "http_tunneling", httpTunneling);
 	base.invalidate();
+}
+
+TunerList::TunerList(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+
+void TunerList::load() {
+	try {
+		BOOST_FOREACH(ptree::value_type& v, base.pTree().get_child(basePath + path::path_seperator + "tuners")){
+			ptree tunerPT = v.second;
+			TunerConfig tuner;
+			tuner.rank = tunerPT.get("rank", 0);
+			tuner.descriptor = tunerPT.get("descriptor", "null");
+			tuner.driver = tunerPT.get("driver", "null");
+			tuner.ppmCorrection = tunerPT.get("ppm_correction", 0);
+			tuner.sampleRate = tunerPT.get("sample_rate", 2048000);
+
+			RAW_LOG_F(2, "Tuner:");
+			RAW_LOG_F(2, "\tRank: %i", tuner.rank);
+			RAW_LOG_F(2, "\tDescriptor: %s", tuner.descriptor.c_str());
+			RAW_LOG_F(2, "\tDriver: %s", tuner.driver.c_str());
+			RAW_LOG_F(2, "\tPPM: %i", tuner.ppmCorrection);
+			RAW_LOG_F(2, "\tSample rate: %li", tuner.sampleRate);
+
+			tuners.insert(std::move(tuner));
+		}
+	} catch (std::exception& e) {
+		
+	}
+}
+
+void TunerList::save() {
+	ptree tunerList, p;
+
+	base.pTree().erase(basePath + path::path_seperator + "tuners");
+
+	BOOST_FOREACH(const TunerConfig& c, tuners){
+		p.put("rank", c.rank);
+		p.put("descriptor", c.descriptor);
+		p.put("driver", c.driver);
+		p.put("ppm_correction", c.ppmCorrection);
+		p.put("sample_rate", c.sampleRate);
+		tunerList.push_back(std::make_pair("", p));
+	}
+
+	base.pTree().put_child(basePath + path::path_seperator + "tuners", tunerList);
 }
 
 }
