@@ -1,7 +1,7 @@
 import sys
 
 from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit
+from PySide2.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit, QCheckBox
 from PySide2.QtCore import QObject
 from PySide2.QtGui import QMovie, QPixmap
 
@@ -21,6 +21,9 @@ class ConnectDialog:
         self.logo = parentWindow.findChild(QLabel, 'connect_logoImage')
         self.hostLabel = parentWindow.findChild(QLabel, 'hostLabel')
         self.portLabel = parentWindow.findChild(QLabel, 'hostPortLabel')
+        self.audioCheckBox = parentWindow.findChild(QCheckBox, 'connect_audioCheckBox')
+        self.rtspPortPanel = parentWindow.findChild(QWidget, 'connect_rtspPortPanel')
+        self.rtspPortLineEdit = parentWindow.findChild(QLineEdit, 'connect_rtspPortLineEdit')
 
         self.logo.setPixmap(QPixmap("resources/icon-256.png"))
         self.logo.setVisible(False)
@@ -38,6 +41,8 @@ class ConnectDialog:
         self.confirmButton.clicked.connect(self.onConfirm)
         self.hostLineEdit.returnPressed.connect(self.onConfirm)
         self.portLineEdit.returnPressed.connect(self.onConfirm)
+
+        self.rtspPortPanel.setVisible(False)
 
     def onConfirm(self):
         host = self.hostLineEdit.text()
@@ -62,11 +67,19 @@ class ConnectDialog:
 
             self.connectIndicator.setVisible(False)
 
-            common.getApp().completeConnection(sock)
+            use_audio = self.audioCheckBox.isChecked()
+            audio_port = self.rtspPortLineEdit.text()
 
+            common.getApp().completeConnection(sock, address, use_audio, audio_port)
+        except ConnectionRefusedError:
+            self.connectFailed('Connect failed - Connection refused')
+        except gaierror as err:
+            self.connectFailed('Connect failed - ' + str(err))
+        except TimeoutError:
+            self.connectFailed('Connect failed - Timed out')
         except:
             e = sys.exc_info()[0]
-            self.connectFailed(repr(e))
+            self.connectFailed('Connect failed - Unhandled exception: ' + str(e))
             
 
     def contextWait(self):

@@ -26,7 +26,8 @@ class Scanner:
         self.modulationLabel = parentWindow.findChild(QLabel, 'scanner_modulationLabel')
         self.systemTagLabel = parentWindow.findChild(QLabel, 'scanner_systemTagLabel')
         self.entryNumLabel = parentWindow.findChild(QLabel, 'scanner_entryNumLabel')
-        self.lockoutCheckbox = parentWindow.findChild(QCheckBox, 'scanner_lockoutCheckbox')
+        self.lockoutDurationLabel = parentWindow.findChild(QLabel, 'scanner_lockoutDurationLabel')
+        self.lockoutDurationButton = parentWindow.findChild(QPushButton, 'scanner_lockoutDurationButton')
         self.scanIndicator = parentWindow.findChild(QLabel, 'scanner_scanIndicator')
         self.gainSlider = parentWindow.findChild(QSlider, 'scanner_gainSlider')
         ##self.gainLabel = parentWindow.findChild(QLabel, 'scanner_gainLabel')
@@ -42,6 +43,16 @@ class Scanner:
         self.sidebarToggleButton = parentWindow.findChild(QToolButton, 'scanner_sidebarToggle')
         self.sidebarPanel = parentWindow.findChild(QWidget, 'scanner_sidebarPanel')
 
+        self.disconnectButton = parentWindow.findChild(QToolButton, 'scanner_disconnectButton')
+        self.settingsButton = parentWindow.findChild(QToolButton, 'scanner_settingsButton')
+        self.connectInfoButton = parentWindow.findChild(QToolButton, 'scanner_connectInfoButton')
+
+        self.volumeControlPanel = parentWindow.findChild(QWidget, 'scanner_volumeControl')
+        self.volumeSlider = parentWindow.findChild(QWidget, 'scanner_volumeSlider')
+        self.muteButton = parentWindow.findChild(QWidget, 'scanner_volumeMute')
+
+        self.entryEditButton = parentWindow.findChild(QToolButton, 'scanner_entryEditButton')
+
         self.fnButton1.clicked.connect(self.onFnButton1)
         self.fnButton2.clicked.connect(self.onFnButton2)
         self.fnButton3.clicked.connect(self.onFnButton3)
@@ -50,10 +61,22 @@ class Scanner:
         self.squelchSlider.valueChanged.connect(self.onsquelchSlider)
 
         self.sidebarToggleButton.clicked.connect(self.onSidebarToggle)
-        self.sidebarOpen = True
+        self.sidebarOpen = False
+        self.sidebarPanel.setVisible(False)
+
+        self.disconnectButton.clicked.connect(self.onDisconnectButton)
+
+        self.volumeSlider.valueChanged.connect(self.onVolumeSlider)
+        self.muteButton.toggled.connect(self.onMuteButton)
 
         #temporary since settins dialog is not yet implemented
-        self.fnButton4.setEnabled(False)
+        self.volumeControlPanel.setVisible(False)
+        self.lockoutDurationButton.setVisible(False)
+        self.lockoutDurationLabel.setVisible(False)
+        self.fnButton4.setVisible(False)
+        self.settingsButton.setVisible(False)
+        self.connectInfoButton.setVisible(False)
+        self.entryEditButton.setVisible(False)
 
         movie = QMovie("resources/bar-scan.gif")
         movie.start()
@@ -178,9 +201,11 @@ class Scanner:
 
     def onSidebarToggle(self):
         if self.sidebarOpen:
+            self.sidebarToggleButton.setText('<')
             self.sidebarPanel.setVisible(False)
             self.sidebarOpen = False
         else:
+            self.sidebarToggleButton.setText('>')
             self.sidebarPanel.setVisible(True)
             self.sidebarOpen = True
 
@@ -191,3 +216,16 @@ class Scanner:
     def setGainRange(self, minimum, maximum):
         self.gainSlider.setMinimum(minimum)
         self.gainSlider.setMaximum(maximum)
+
+    def onDisconnectButton(self):
+        common.getApp().disconnect()
+
+    def onVolumeSlider(self, value):
+        common.getApp().setAudioVolume(value)
+
+    def onMuteButton(self, value):
+        self.volumeSlider.setEnabled(not value)
+        common.getApp().setAudioMute(value)
+
+    def setVolumeVisible(self, visible):
+        self.volumeControlPanel.setVisible(visible)

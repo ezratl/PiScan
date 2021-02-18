@@ -12,6 +12,7 @@ from threading import Thread
 
 from time import sleep
 
+import audio_manager
 import common
 import constants
 import connect
@@ -27,6 +28,7 @@ import google.protobuf.message as proto
 
 class PiScanClient(QWidget, common.AppInterface):
     dataReceived = Signal(bytes)
+    manualDisconnectInitiated = False
 
     def __init__(self, parent=None, address=None, port=None):
         super(PiScanClient, self).__init__(parent)
@@ -59,6 +61,8 @@ class PiScanClient(QWidget, common.AppInterface):
 
         self.inmsg = messages_pb2.ServerToClient()
 
+        self.audio = audio_manager.AudioManager()
+
     def mainWidget(self):
         return self.window
 
@@ -72,16 +76,28 @@ class PiScanClient(QWidget, common.AppInterface):
         self.setWindowMode(common.WindowMode.DIALOG)
 
     def receive(self):
+        disconnectMessage = ''
+
         while True:
             try:
                 data = self.sock.recv(2048)
+                if not data:
+                    disconnectMessage = 'Connection closed by host'
+                    break
                 self.dataReceived.emit(data)
+            except ConnectionAbortedError:
+                if not self.manualDisconnectInitiated:
+                    disconnectMessage = 'Connection aborted'
+                break
             except:
                 e = sys.exc_info()[0]
-                self.showConnectDialog(repr(e))
+                disconnectMessage = 'Unhandled exception: ' + str(e)
                 break
 
-        print("Closing connection")
+        print("Closing connection. Reason: " + disconnectMessage)
+        self.audio.stopRtspAudioStream()
+        self.manualDisconnectInitiated = False
+        self.showConnectDialog(disconnectMessage)
 
     def handleReceived(self, data):
         self.inmsg.ParseFromString(data)
@@ -110,18 +126,13 @@ class PiScanClient(QWidget, common.AppInterface):
 
     def closeEvent(self, event):
         print('Exiting...')
-        try:
-            if self.sock:
-                self.sock.close()
-                #self.rcv_thread.join()
-        except:
-            pass
+        self.disconnect()
 
     ## AppInterface methods
     #def attemptConnection(self, sock):
 
 
-    def completeConnection(self, sock):
+    def completeConnection(self, sock, host, use_audio, audio_port):
         self.sock = sock
         self.rcv_thread = Thread(target=self.receive)
         self.rcv_thread.start()
@@ -141,7 +152,12 @@ class PiScanClient(QWidget, common.AppInterface):
         message3 = messages_pb2.ClientToServer()
         message3.type = messages_pb2.ClientToServer.Type.Value('GENERAL_REQUEST')
         message3.generalRequest.type = request_pb2.GeneralRequest.RequestType.Value('SYSTEM_INFO')
-        self.sock.send(message3.SerializeToString())
+        self.sock.send(message3.SerializeToString()) 
+
+        if use_audio:
+            self.audio.startRtspAudioStream(host, audio_port) 
+            self.setAudioVolume(50) 
+        self.scanner.setVolumeVisible(use_audio)
 
     def scan(self):
         message = messages_pb2.ClientToServer()
@@ -215,6 +231,21 @@ class PiScanClient(QWidget, common.AppInterface):
             self.parentWindow.setWindowTitle('PiScan')
         else:
             self.setWindowTitle('PiScan')
+
+    def disconnect(self):
+        self.manualDisconnectInitiated = True
+        try:
+            if self.sock:
+                self.sock.close()
+                #self.rcv_thread.join()
+        except:
+            pass
+
+    def setAudioVolume(self, level):
+        self.audio.setAudioVolume(level)
+
+    def setAudioMute(self, mute):
+        self.audio.setAudioMute(mute)
 
 class HostWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None, address=None, port=None):
