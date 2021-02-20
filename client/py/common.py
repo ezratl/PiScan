@@ -67,7 +67,7 @@ class AppInterface:
     def closeEvent(self, event):
         pass
 
-    def tryConnect(self, address, port):
+    def tryConnect(self, address, port, use_audio, rtsp_port):
         pass
 
     def setWindowTitleInfo(self, message):

@@ -26,7 +26,9 @@ class Scanner:
         self.modulationLabel = parentWindow.findChild(QLabel, 'scanner_modulationLabel')
         self.systemTagLabel = parentWindow.findChild(QLabel, 'scanner_systemTagLabel')
         self.entryNumLabel = parentWindow.findChild(QLabel, 'scanner_entryNumLabel')
+        self.delayLabel = parentWindow.findChild(QLabel, 'scanner_delayLabel')
         self.lockoutDurationLabel = parentWindow.findChild(QLabel, 'scanner_lockoutDurationLabel')
+        self.scanModeLabel = parentWindow.findChild(QLabel, 'scanner_scanModeLabel')
         self.lockoutDurationButton = parentWindow.findChild(QPushButton, 'scanner_lockoutDurationButton')
         self.scanIndicator = parentWindow.findChild(QLabel, 'scanner_scanIndicator')
         self.gainSlider = parentWindow.findChild(QSlider, 'scanner_gainSlider')
@@ -69,7 +71,7 @@ class Scanner:
         self.volumeSlider.valueChanged.connect(self.onVolumeSlider)
         self.muteButton.toggled.connect(self.onMuteButton)
 
-        #temporary since settins dialog is not yet implemented
+        # TODO TEMPORARY - hiding UI elements for features not added yet
         self.volumeControlPanel.setVisible(False)
         self.lockoutDurationButton.setVisible(False)
         self.lockoutDurationLabel.setVisible(False)
@@ -77,6 +79,9 @@ class Scanner:
         self.settingsButton.setVisible(False)
         self.connectInfoButton.setVisible(False)
         self.entryEditButton.setVisible(False)
+        self.delayLabel.setVisible(False)
+        self.scanModeLabel.setVisible(False)
+        parentWindow.findChild(QWidget, 'line_4').setVisible(False)
 
         movie = QMovie("resources/bar-scan.gif")
         movie.start()

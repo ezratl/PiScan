@@ -11,7 +11,7 @@ import common
 import constants
 
 class ConnectDialog:
-    def __init__(self, parentWindow, address=None, port=None):
+    def __init__(self, parentWindow, address=None, port=None, use_audio=False, rtsp_port=None):
         self.widget = parentWindow.findChild(QWidget, 'connectPage')
         self.errorLabel = parentWindow.findChild(QLabel, 'connect_errorLabel')
         self.confirmButton = parentWindow.findChild(QPushButton, 'connect_confirmButton')
@@ -47,15 +47,19 @@ class ConnectDialog:
     def onConfirm(self):
         host = self.hostLineEdit.text()
         port = int(self.portLineEdit.text())
-        self.tryConnect(host, port)
+        audio = self.audioCheckBox.isChecked()
+        rtsp_port = int(self.rtspPortLineEdit.text())
+        self.tryConnect(host, port, audio, rtsp_port)
 
-    def tryConnect(self, address, port):
+    def tryConnect(self, address, port, use_audio=False, rtsp_port=8554):
         print('connect confirm')
         try:
             self.connectIndicator.setVisible(True)
             self.errorLabel.setVisible(False)
             self.hostLineEdit.setText(address)
             self.portLineEdit.setText(str(port))
+            self.audioCheckBox.setChecked(use_audio)
+            self.rtspPortLineEdit.setText(str(rtsp_port))
             self.widget.repaint()
             
             print('Connecting to ', address, ':', port)
@@ -67,10 +71,7 @@ class ConnectDialog:
 
             self.connectIndicator.setVisible(False)
 
-            use_audio = self.audioCheckBox.isChecked()
-            audio_port = self.rtspPortLineEdit.text()
-
-            common.getApp().completeConnection(sock, address, use_audio, audio_port)
+            common.getApp().completeConnection(sock, address, use_audio, rtsp_port)
         except ConnectionRefusedError:
             self.connectFailed('Connect failed - Connection refused')
         except gaierror as err:
