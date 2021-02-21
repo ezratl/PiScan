@@ -12,63 +12,26 @@
 #include "Demodulator.h"
 #include "loguru.hpp"
 
-#define DEFAULT_SDR_SAMPLE_RATE	2048000
 #define INIT_FREQUENCY			100000000
 #define NUM_RATES_DEFAULT	4
 #define SIGLEVEL_REFRESH_INTERVAL	100 // milliseconds
 
-namespace piscan::sigproc {
+namespace piscan {
+namespace sigproc {
 
-Demodulator::Demodulator(MessageReceiver& central) : _centralQueue(central), _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()) {};
+Demodulator::Demodulator() : _cubic(makeCubic()), _demodMgr(_cubic->getDemodMgr()), _tunerManager(_cubic) {};
 
 void Demodulator::start(){
-	piscan::config::DemodState& state = app::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::system::getState().getDemodState();
 	_squelchLevel = state.squelch;
 	_gain = state.gain;
 
+	// TODO assertions will be used until a soft abort is made available
 	CHECK_F(_cubic->OnInit());
 
-	while(_cubic->areDevicesEnumerating());
-
-	std::vector<SDRDeviceInfo*>* devs = _cubic->getDevices();
-
-	CHECK_F(devs->size() > 0, "No SDR devices are available");
-
-	//TODO config file for this
-	LOG_F(INFO, "Auto-selecting SDR device");
-	size_t i;
-	for(i = 0; i < devs->size();){
-		if(devs->at(i)->getDriver() != "audio" && devs->at(i)->isAvailable())
-			break;
-
-		i++;
-	}
-
-	CHECK_F(i < devs->size(), "No valid or available devices found");
-
-	auto dev = devs->at(i);
-
-	CHECK_F(dev->getDriver() != "audio");
-
-	LOG_F(INFO, "Auto selected: %s", dev->getName().c_str());
-
-	LOG_F(INFO, "Auto selecting sample rate");
-	std::vector<long> srates = dev->getSampleRates(SOAPY_SDR_RX, 0);
-	long srate = 0;
-	for(i = 0; i < srates.size() - 1; i++){
-		if(srates[i] <= DEFAULT_SDR_SAMPLE_RATE && srates[i+1] > DEFAULT_SDR_SAMPLE_RATE){
-			break;
-		}
-	}
-
-	srate = srates[i];
-	LOG_F(INFO, "Setting device sample rate to %li", srate);
-
-	//_cubic->setGain(name, gain_in);
-
-	_cubic->setDevice(dev, 2000);
-	_cubic->setSampleRate(srate);
-
+	CHECK_F(_tunerManager.enumerateDevices());
+	CHECK_F(_tunerManager.autoSelectTuner());
+	CHECK_F(_tunerManager.startSelectedTuner());
 
 	//sets sample rate for outputs - imported from cubic
     unsigned int desired_rates[NUM_RATES_DEFAULT] = { 48000, 44100, 96000, 192000 };
@@ -152,13 +115,11 @@ void Demodulator::start(){
 		int level = getSignalStrength();
 
 		LOG_F(7, "Signal strength %i", level);
-		app::signalLevelUpdate(level);
+		app::server::signalLevelUpdate(level);
 	});
 	//_sigLevelRefresher = new IntervalTimer();
 	_sigLevelRefresher.create(SIGLEVEL_REFRESH_INTERVAL, func);
 
-	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_READY);
-	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator started");
 	notifyReady();
 }
@@ -167,15 +128,14 @@ void Demodulator::stop(){
 	_sigLevelRefresher.stop();
 	//delete _sigLevelRefresher;
 
-	_cubic->stopDevice(false, 2000);
+	//_cubic->stopDevice(false, 2000);
+	_tunerManager.stopSelectedTuner();
 	_cubic->OnExit();
 	
-	piscan::config::DemodState& state = app::getConfig().getDemodState();
+	piscan::config::DemodState& state = app::system::getState().getDemodState();
 	state.gain = _gain;
 	state.squelch = _squelchLevel;
 
-	//auto message = std::make_shared<ControllerMessage>(DEMOD, ControllerMessage::NOTIFY_STOPPED);
-	//_centralQueue.giveMessage(message);
 	LOG_F(1, "Demodulator stopped");
 	notifyDeinit();
 }
@@ -193,13 +153,13 @@ bool Demodulator::setFrequency(long long freq) {
         _cubic->setFrequency(freq);
         //also arbitrary
         //usleep(TUNER_RETUNE_TIME);
-        std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
+        std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().retuneDelay));
 	}
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 	//this is totally arbitrary
 	//usleep(DEMOD_BUFFER_TIME);
-	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().demodDelay));
+	std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().demodDelay));
 
 	_currentFreq = freq;
 
@@ -212,7 +172,7 @@ bool Demodulator::setTunerFrequency(long long freq){
     _cubic->setFrequency(freq);
 	_demodMgr.getCurrentModem()->setFrequency(freq);
     //usleep(200000);
-	std::this_thread::sleep_for(std::chrono::microseconds(app::getConfig().getDemodConfig().retuneDelay));
+	std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().retuneDelay));
 	return true;
 }
 
@@ -224,7 +184,7 @@ float Demodulator::getDecodedPL() { return 0; }
 unsigned int Demodulator::getDecodedDC() { return 0; }
 
 bool Demodulator::squelchThresholdMet() {
-	switch (app::getConfig().getDemodConfig().squelchType) {
+	switch (app::system::getConfig().getDemodConfig().squelchType) {
 	case SQUELCH_PCT:
 		return (getSignalStrength() >= _squelchLevel);
 	case SQUELCH_SNR:
@@ -283,15 +243,6 @@ int Demodulator::getSignalStrength() { // uses signal level as a fraction betwee
 	return level;
 }
 
-void Demodulator::giveMessage(std::shared_ptr<Message> message){
-	if(message->source == CLIENT) {
-		_handleRequest(*(static_cast<ClientRequest*>(message->pData)));
-
-	}
-	else
-		_handleMessage(std::dynamic_pointer_cast<DemodMessage>(message));
-}
-
 void Demodulator::_handleMessage(std::shared_ptr<DemodMessage> message){
 	if(message->type == DemodMessage::OPEN_AUDIO){
 		_demodMgr.getCurrentModem()->setMuted((bool) message->pData);
@@ -339,9 +290,7 @@ void Demodulator::_handleRequest(ClientRequest& request){
 }
 
 void Demodulator::_contextUpdate(){
-	//piscan::server::context::DemodContext* context = new piscan::server::context::DemodContext(_gain, _squelchLevel);
-	//_centralQueue.giveMessage(std::make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, context));
-	app::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
+	app::server::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
 }
 
 void Demodulator::setTunerGain(float gain){
@@ -380,4 +329,5 @@ long long Demodulator::getTunerSampleRate(){
 	return _cubic->getSampleRate();
 }
 
+}
 }

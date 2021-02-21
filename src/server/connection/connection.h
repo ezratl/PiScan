@@ -25,9 +25,11 @@ namespace piscan {
 class TestClient;
 }
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
-class Connection : public piscan::RequestCallbackInterface, public piscan::MessageReceiver {
+class Connection : public piscan::RequestCallbackInterface {
 public:
 
 
@@ -40,7 +42,6 @@ public:
 		_level(lvl), _audio(aud), _serverManager(nullptr), _handle(HANDLE_NULL) {}
 	virtual ~Connection() {};
 
-	virtual void giveMessage(std::shared_ptr<Message> message) = 0;
 	virtual bool connect() = 0;
 	virtual void disconnect() = 0;
 	virtual void contextUpdate(const piscan::server::context::ScannerContext context) = 0;
@@ -61,14 +62,14 @@ private:
 	ServerInterface* _serverManager;
 	int _handle;
 
-	void scannerContextRequestCallback(int handle, void* data){
+	void scannerContextRequestCallback(int /* handle */, void* data){
 		assert(data != nullptr);
 		piscan::server::context::ScannerContext* context = reinterpret_cast<piscan::server::context::ScannerContext*>(data);
 		contextUpdate(piscan::server::context::ScannerContext(*context));
 		delete context;
 	}
 
-	void demodContextRequestCallback(int handle, void* data){
+	void demodContextRequestCallback(int /* handle */, void* data){
 		assert(data != nullptr);
 		piscan::server::context::DemodContext* context = reinterpret_cast<piscan::server::context::DemodContext*>(data);
 		contextUpdate(piscan::server::context::DemodContext(*context));
@@ -108,5 +109,7 @@ protected:
 
 };
 
+}
+}
 }
 #endif /* SERVER_CONNECTION_H_ */

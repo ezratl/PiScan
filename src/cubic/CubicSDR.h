@@ -137,7 +137,7 @@ public:
     int getFrequencySnap();
 
     AppConfig *getConfig();
-    void saveConfig();
+    void saveAll();
 
     void setPPM(int ppm_in);
     int getPPM();

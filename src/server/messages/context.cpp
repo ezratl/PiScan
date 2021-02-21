@@ -2,7 +2,9 @@
 
 #include "Entry.h"
 
-namespace piscan::server::context {
+namespace piscan {
+namespace server {
+namespace context {
 
 ScannerContext::ScannerContext(const ScannerContext &copy) : state(copy.state), systemTag(copy.systemTag), entryTag(
                                                                                                                copy.entryTag),
@@ -16,3 +18,5 @@ ScannerContext::ScannerContext(ScannerState state, std::string sysTag, std::stri
 ScannerContext::ScannerContext(ScannerState state, piscan::scan::Entry &entry) : state(state), systemTag(entry.tag()){
 
 }                                                                                 };
+}
+}

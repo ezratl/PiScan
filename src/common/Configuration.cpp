@@ -27,7 +27,8 @@
 using namespace std::experimental;
 using namespace boost::property_tree;
 
-namespace piscan::config {
+namespace piscan {
+namespace config {
 
 Configuration* Configuration::_config;
 Configuration& Configuration::getConfig() {
@@ -37,12 +38,10 @@ Configuration& Configuration::getConfig() {
 	return *_config;
 };
 
-Configuration::Configuration() {
+Configuration::Configuration() : _generalConfig(*this, path::config_base_path), 
+		_socketConfig(*this, path::config_base_path), _demodConfig(*this, path::config_base_path), 
+		_rtspConfig(*this, path::config_base_path), _tunerList(*this, path::config_base_path) {
 	_configPath = DATABASE_PATH;
-}
-
-Configuration::~Configuration() {
-	// TODO Auto-generated destructor stub
 }
 
 void Configuration::setWorkingDirectory(std::string path){
@@ -62,122 +61,58 @@ std::string Configuration::getWorkingDirectory() {
 	return _configPath;
 }
 
-void Configuration::loadConfig(){
+bool Configuration::loadFromFile() {
 	filesystem::path path(_configPath);
 	path += filesystem::path::preferred_separator;
 	path += CONFIG_FILE;
 	if(!filesystem::exists(path)){
 		LOG_F(INFO, "No config file exists, using defaults");
-		return;
+		return true;
 	}
 
 	LOG_F(1, "Config path: %s", path.c_str());
 	LOG_F(INFO, "Loading config");
 
 	try{
-		read_json(path, _ptConfig);
+		read_json(path, _pt);
 	} catch(boost::property_tree::json_parser_error& e){
 		LOG_F(WARNING, "Error parsing file: %s", e.message().c_str());
+		return false;
 	}
 
-	_generalConfig.logfileVerbosity = _ptConfig.get("config.general.log_verbosity", DEFAULT_LOGFILE_VERBOSITY);
+	loadAll();
 
-	_socketConfig.maxConnections = _ptConfig.get("config.socket.max_connections", MAX_TCP_CONNECTIONS);
-	_socketConfig.tcpPort = _ptConfig.get("config.socket.port", DEFAULT_TCP_PORT);
-	_socketConfig.spawnLocalClient = _ptConfig.get("config.socket.use_gui", DEFAULT_SPAWN_CLIENT);
-	_socketConfig.pythonClient = _ptConfig.get("config.socket.client_path", DEFAULT_PY_CLIENT_LOCATION);
-	_socketConfig.pythonBinary = _ptConfig.get("config.socket.python_path", DEFAULT_PY_ENV_LOCATION);
-
-	_demodConfig.retuneDelay = _ptConfig.get("config.demod.retune_delay", static_cast<long int>(TUNER_RETUNE_TIME));
-	_demodConfig.demodDelay = _ptConfig.get("config.demod.demod_delay", static_cast<long int>(DEMOD_BUFFER_TIME));
-	_demodConfig.squelchType = _ptConfig.get("config.demod.squelch_mode", DEFAULT_SQUELCH_MODE);
-
-	_rtspConfig.rtspPort = _ptConfig.get("config.audio_stream.rtsp_port", DEFAULT_RTSP_PORT);
-	_rtspConfig.httpTunneling = _ptConfig.get("config.audio_stream.http_tunneling", DEFAULT_RTSP_OVER_HTTP);
-
+	return true;
 }
 
-void Configuration::loadState(){
-	filesystem::path path(_configPath);
-	path += filesystem::path::preferred_separator;
-	path += STATE_FILE;;
-	if(!filesystem::exists(path)){
-		LOG_F(INFO, "No state file exists, using defaults");
-		return;
-	}
-
-	LOG_F(1, "State path: %s", path.c_str());
-	LOG_F(INFO, "Loading saved state");
-
-	try{
-		read_json(path, _ptState);
-	} catch(boost::property_tree::json_parser_error& e){
-		LOG_F(WARNING, "Error parsing file: %s", e.message().c_str());
-	}
-
-	_demodState.gain = _ptState.get("state.demod.gain", DEFAULT_GAIN);
-	_demodState.squelch = _ptState.get("state.demod.squelch", DEFAULT_SQUELCH);
-
-	_scannerState.scanState = _ptState.get("state.scanner.state", DEFAULT_SCAN_STATE);
-	_scannerState.manualFreq = _ptState.get("state.scanner.manual_freq", 100000000);
-	_scannerState.manualModualtion = _ptState.get("state.scanner.manual_mode", "");
-	_scannerState.holdKey = _ptState.get("state.scanner.hold_key", "");
-	try{
-		BOOST_FOREACH(ptree::value_type& v, _ptState.get_child("state.scanner.hold_index")) {
-			int ind = std::stoi(v.second.data());
-			_scannerState.holdIndex.push_back(ind);
-		}
-	}catch(std::exception& e){};
-}
-
-void Configuration::saveConfig(){
+bool Configuration::saveToFile() {
 	filesystem::path path(_configPath);
 	path += filesystem::path::preferred_separator;
 	path += CONFIG_FILE;
 
 	LOG_F(INFO, "Saving config");
 
-	_ptConfig.put("config.general.log_verbosity", _generalConfig.logfileVerbosity);
+	saveAll();
 
-	_ptConfig.put("config.socket.port", _socketConfig.tcpPort);
-	_ptConfig.put("config.socket.max_connections", _socketConfig.maxConnections);
-	_ptConfig.put("config.socket.use_gui", _socketConfig.spawnLocalClient);
-	_ptConfig.put("config.socket.client_path", _socketConfig.pythonClient);
-	_ptConfig.put("config.socket.python_path", _socketConfig.pythonBinary);
+	write_json(path.c_str(), _pt);
 
-	_ptConfig.put("config.demod.retune_delay", _demodConfig.retuneDelay);
-	_ptConfig.put("config.demod.demod_delay", _demodConfig.demodDelay);
-	_ptConfig.put("config.demod.squelch_mode", _demodConfig.squelchType);
-
-	_ptConfig.put("config.audio_stream.rtsp_port", _rtspConfig.rtspPort);
-	_ptConfig.put("config.audio_stream.http_tunneling", _rtspConfig.httpTunneling);
-
-	write_json(path.c_str(), _ptConfig);
+	return true;
 }
 
-void Configuration::saveState(){
-	filesystem::path path(_configPath);
-	path += filesystem::path::preferred_separator;
-	path += STATE_FILE;
+void Configuration::loadAll(){
+	_generalConfig.load();
+	_socketConfig.load();
+	_demodConfig.load();
+	_rtspConfig.load();
+	_tunerList.load();
+}
 
-	LOG_F(INFO, "Saving state");
-
-	_ptState.put("state.demod.gain", _demodState.gain);
-	_ptState.put("state.demod.squelch", _demodState.squelch);
-
-	_ptState.put("state.scanner.state", _scannerState.scanState);
-	_ptState.put("state.scanner.manual_freq", _scannerState.manualFreq);
-	_ptState.put("state.scanner.manual_mode", _scannerState.manualModualtion);
-	_ptState.put("state.scanner.hold_key", _scannerState.holdKey);
-	ptree ind;
-	BOOST_FOREACH(int i, _scannerState.holdIndex) {
-		ptree val;
-		val.put("", i);
-		ind.push_back(std::make_pair("", val));
-	}
-	_ptState.put_child("state.scanner.hold_index", ind);
-
-	write_json(path.c_str(), _ptState);
+void Configuration::saveAll(){
+	_generalConfig.save();
+	_socketConfig.save();
+	_demodConfig.save();
+	_rtspConfig.save();
+	_tunerList.save();
 }
 
 std::string Configuration::getLogDirectory(){
@@ -217,4 +152,112 @@ std::string Configuration::getLatestLogPath(){
 	return path;
 }
 
+void Configuration::invalidate() {
+	
+}
+
+/* Config implementations */
+GeneralConfig::GeneralConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+
+void GeneralConfig::load() {
+	logfileVerbosity = base.pTree().get(basePath + path::path_seperator + "general" + path::path_seperator + "log_verbosity", DEFAULT_LOGFILE_VERBOSITY);
+}
+
+void GeneralConfig::save() {
+	logfileVerbosity = base.pTree().get(basePath + path::path_seperator + "general" + path::path_seperator + "log_verbosity", DEFAULT_LOGFILE_VERBOSITY);
+	base.invalidate();
+}
+
+SocketServerConfig::SocketServerConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+
+void SocketServerConfig::load() {
+	maxConnections = base.pTree().get(basePath + path::path_seperator + "socket" + path::path_seperator + "max_connections", MAX_TCP_CONNECTIONS);
+	tcpPort = base.pTree().get(basePath + path::path_seperator + "socket" + path::path_seperator + "port", DEFAULT_TCP_PORT);
+	spawnLocalClient = base.pTree().get(basePath + path::path_seperator + "socket" + path::path_seperator + "use_gui", DEFAULT_SPAWN_CLIENT);
+	pythonClient = base.pTree().get(basePath + path::path_seperator + "socket" + path::path_seperator + "client_path", DEFAULT_PY_CLIENT_LOCATION);
+	pythonBinary = base.pTree().get(basePath + path::path_seperator + "socket" + path::path_seperator + "python_path", DEFAULT_PY_ENV_LOCATION);
+}
+
+void SocketServerConfig::save() {
+	base.pTree().put(basePath + path::path_seperator + "socket" + path::path_seperator + "port", tcpPort);
+	base.pTree().put(basePath + path::path_seperator + "socket" + path::path_seperator + "max_connections", maxConnections);
+	base.pTree().put(basePath + path::path_seperator + "socket" + path::path_seperator + "use_gui", spawnLocalClient);
+	base.pTree().put(basePath + path::path_seperator + "socket" + path::path_seperator + "client_path", pythonClient);
+	base.pTree().put(basePath + path::path_seperator + "socket" + path::path_seperator + "python_path", pythonBinary);
+	base.invalidate();
+}
+
+DemodConfig::DemodConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+		
+void DemodConfig::load() {
+	retuneDelay = base.pTree().get(basePath + path::path_seperator + "demod" + path::path_seperator + "retune_delay", static_cast<long int>(TUNER_RETUNE_TIME));
+	demodDelay = base.pTree().get(basePath + path::path_seperator + "demod" + path::path_seperator + "demod_delay", static_cast<long int>(DEMOD_BUFFER_TIME));
+	squelchType = base.pTree().get(basePath + path::path_seperator + "demod" + path::path_seperator + "squelch_mode", DEFAULT_SQUELCH_MODE);
+}
+
+void DemodConfig::save() {
+	base.pTree().put(basePath + path::path_seperator + "demod" + path::path_seperator + "retune_delay", retuneDelay);
+	base.pTree().put(basePath + path::path_seperator + "demod" + path::path_seperator + "demod_delay", demodDelay);
+	base.pTree().put(basePath + path::path_seperator + "demod" + path::path_seperator + "squelch_mode", squelchType);
+	base.invalidate();
+}
+
+AudioServerConfig::AudioServerConfig(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+		
+void AudioServerConfig::load() {
+	rtspPort = base.pTree().get(basePath + path::path_seperator + "audio_stream" + path::path_seperator + "rtsp_port", DEFAULT_RTSP_PORT);
+	httpTunneling = base.pTree().get(basePath + path::path_seperator + "audio_stream" + path::path_seperator + "http_tunneling", DEFAULT_RTSP_OVER_HTTP);
+}
+
+void AudioServerConfig::save() {
+	base.pTree().put(basePath + path::path_seperator + "audio_stream" + path::path_seperator + "rtsp_port", rtspPort);
+	base.pTree().put(basePath + path::path_seperator + "audio_stream" + path::path_seperator + "http_tunneling", httpTunneling);
+	base.invalidate();
+}
+
+TunerList::TunerList(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+
+void TunerList::load() {
+	try {
+		BOOST_FOREACH(ptree::value_type& v, base.pTree().get_child(basePath + path::path_seperator + "tuners")){
+			ptree tunerPT = v.second;
+			TunerConfig tuner;
+			tuner.rank = tunerPT.get("rank", 0);
+			tuner.descriptor = tunerPT.get("descriptor", "null");
+			tuner.driver = tunerPT.get("driver", "null");
+			tuner.ppmCorrection = tunerPT.get("ppm_correction", 0);
+			tuner.sampleRate = tunerPT.get("sample_rate", 2048000);
+
+			RAW_LOG_F(2, "Tuner:");
+			RAW_LOG_F(2, "\tRank: %i", tuner.rank);
+			RAW_LOG_F(2, "\tDescriptor: %s", tuner.descriptor.c_str());
+			RAW_LOG_F(2, "\tDriver: %s", tuner.driver.c_str());
+			RAW_LOG_F(2, "\tPPM: %i", tuner.ppmCorrection);
+			RAW_LOG_F(2, "\tSample rate: %li", tuner.sampleRate);
+
+			tuners.insert(std::move(tuner));
+		}
+	} catch (std::exception& e) {
+		
+	}
+}
+
+void TunerList::save() {
+	ptree tunerList, p;
+
+	base.pTree().erase(basePath + path::path_seperator + "tuners");
+
+	BOOST_FOREACH(const TunerConfig& c, tuners){
+		p.put("rank", c.rank);
+		p.put("descriptor", c.descriptor);
+		p.put("driver", c.driver);
+		p.put("ppm_correction", c.ppmCorrection);
+		p.put("sample_rate", c.sampleRate);
+		tunerList.push_back(std::make_pair("", p));
+	}
+
+	base.pTree().put_child(basePath + path::path_seperator + "tuners", tunerList);
+}
+
+}
 }

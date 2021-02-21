@@ -49,251 +49,12 @@ namespace piscan {
 
 static bool sysRun;
 
-class MessageManager : public MessageReceiver {
-public:
-	MessageManager() {};
-	~MessageManager() {};
-
-	void setReceiver(unsigned char id, MessageReceiver* ptr){
-		if(id < MESSAGE_RECEIVERS){
-			_receivers[id] = ptr;
-		}
-		else{
-			DLOG_F(ERROR, "Invalid receiver ID: %d", id);
-		}
-	}
-
-	void start() {
-		_run = true;
-		_workThread = std::thread(&MessageManager::_handlerThreadFunc, this);
-	}
-
-	void stop(bool block) {
-		_run = false;
-		std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
-		if (lock.try_lock()) {
-			_msgAvailable = true;
-			lock.unlock();
-			_cv.notify_one();
-		}
-		if(block)
-			_workThread.join();
-	}
-private:
-	moodycamel::ConcurrentQueue<std::shared_ptr<Message>> _queue;
-	std::thread _workThread;
-	std::mutex _msgMutex;
-	std::condition_variable _cv;
-	bool _msgAvailable = false;
-	bool _run = false;
-	MessageReceiver* _receivers[MESSAGE_RECEIVERS];
-
-	void _handlerThreadFunc(void){
-		setThreadName("MessageManager");
-		LOG_F(2, "MessageManager started");
-
-		while(_run){
-			std::unique_lock<std::mutex> lock(_msgMutex);
-			_cv.wait(lock, [this]{return this->_msgAvailable;});
-
-			std::shared_ptr<Message> message;
-			while(_queue.try_dequeue(message)){
-				DCHECK_F(message != nullptr);
-				DCHECK_F(message->destination != message->source);
-				DLOG_F(7, "Message receive | dst:%d | src:%d", message->destination, message->source);
-
-				if(message->destination < MESSAGE_RECEIVERS){
-					MessageReceiver* receiver = _receivers[message->destination];
-					if(receiver == nullptr){
-						DLOG_F(ERROR, "Message bound for null receiver | dst:%d | src:%d", message->destination, message->source);
-						
-					}
-					else{
-						receiver->giveMessage(message);
-					}
-				}
-				else{
-					DLOG_F(ERROR, "Message has invalid destination | dst:%d | src:%d", message->destination, message->source);
-					
-				}
-
-				_msgAvailable = false;
-			}
-
-			lock.unlock();
-
-		}
-		LOG_F(2, "MessageManager stopped");
-	}
-
-	void giveMessage(std::shared_ptr<Message> message){
-		DLOG_F(7, "Queueing message");
-		if(message->destination > MESSAGE_RECEIVERS){
-			DLOG_F(ERROR, "Message has invalid destination | dst:%d | src:%d", message->destination, message->source);
-			
-			return;
-		}
-		_queue.enqueue(message);
-		std::unique_lock<std::mutex> lock(_msgMutex, std::defer_lock);
-		if (lock.try_lock()) {
-			_msgAvailable = true;
-			lock.unlock();
-			_cv.notify_one();
-		}
-	}
-};
-
-class SystemController : public MessageReceiver {
-public:
-	SystemController(MessageReceiver& central, piscan::scan::SystemList& syslist,
-			ScannerSM& scan, ServerManager& conmgr, piscan::sigproc::Demodulator& dm) :
-			_centralQueue(central), _systemList(syslist), _scanner(scan), _connectionManager(
-					conmgr), _demod(dm), _flagLock(_flagsMutex, std::defer_lock) {
-		//_flagLock(_flagsMutex);
-		//_flagLock.unlock();
-	}
-	~SystemController() {};
-
-	void start(){
-		LOG_F(1, "System Control start");
-		_scanner.start();
-		//_connectionManager.start();
-		_demod.start();
-
-		/* let a stop call break the loop */
-		while(sysRun){
-			//_flagLock.lock();
-			if(_activeModules == ALL_FLAG){
-				//_flagLock.unlock();
-				break;
-			}
-			//_flagLock.unlock();
-		}
-
-		LOG_F(INFO, "System initialized");
-
-		_connectionManager.allowConnections();
-		_scanner.startScanner();
-
-		sysRun = true;
-	}
-
-	void stop(){
-		LOG_F(INFO, "Stopping system");
-		_scanner.stopScanner();
-		_centralQueue.giveMessage(std::make_shared<ServerMessage>(SYSTEM_CONTROL, ServerMessage::STOP, nullptr));
-		_demod.stop();
-
-		while(1){
-			//_flagLock.lock();
-			if(_activeModules == 0){
-				//_flagLock.unlock();
-				break;
-			}
-			//_flagLock.unlock();
-		}
-
-		LOG_F(2, "All modules stopped");
-	}
-
-private:
-	MessageReceiver& _centralQueue;
-	piscan::scan::SystemList& _systemList;
-	ScannerSM& _scanner;
-	ServerManager& _connectionManager;
-	piscan::sigproc::Demodulator& _demod;
-
-	std::mutex _flagsMutex;
-	std::unique_lock<std::mutex> _flagLock;
-	unsigned char _activeModules = 0;
-
-	void giveMessage(std::shared_ptr<Message> message){
-		auto msg = std::dynamic_pointer_cast<ControllerMessage>(message);
-
-		ClientRequest* request;
-		switch(msg->type){
-		case ControllerMessage::CLIENT_REQUEST:
-			request = reinterpret_cast<ClientRequest*>(message->pData);
-			processRequest(*request);
-			break;
-
-		case ControllerMessage::NOTIFY_READY:
-			switch(msg->source){
-			case SCANNER_SM:
-				_activeModules |= SCANNER_FLAG;
-				DLOG_F(8, "scanner started");
-				break;
-			case DEMOD:
-				_activeModules |= DEMOD_FLAG;
-				DLOG_F(8, "demod started");
-				break;
-			case SERVER_MAN:
-				_activeModules |= CONNMGR_FLAG;
-				DLOG_F(8, "conmgr started");
-				break;
-			case AUDIO_MAN:
-				_activeModules |= AUDIO_FLAG;
-				break;
-			default:
-				break;
-			}
-			break;
-
-		case ControllerMessage::NOTIFY_STOPPED:
-			switch (msg->source) {
-			case SCANNER_SM:
-				DLOG_F(8, "scanner stopped");
-				_activeModules &= ~SCANNER_FLAG;
-				break;
-			case DEMOD:
-				_activeModules &= ~DEMOD_FLAG;
-				DLOG_F(8, "demod stopped");
-				break;
-			case SERVER_MAN:
-				DLOG_F(8, "conmgr stopped");
-				_activeModules &= ~CONNMGR_FLAG;
-				break;
-			case AUDIO_MAN:
-				_activeModules &= ~AUDIO_FLAG;
-				break;
-			default:
-				break;
-			}
-			break;
-		}
-
-	}
-
-	void processRequest(ClientRequest& request){
-
-		switch(request.rqInfo.type){
-		case SYSTEM_FUNCTION:
-			switch(request.rqInfo.subType){
-			case SYSTEM_STOP:
-				LOG_F(1, "Stop request from client %i", request.source);
-				sysRun = false;
-				break;
-			default:
-				break;
-			}
-			break;
-
-		default:
-			break;
-		}
-
-		delete &request;
-	}
-};
-
 static boost::asio::io_service io_service;
 static std::thread ioThread;
-static MessageManager messageManager;
 static piscan::scan::SystemList scanSystems;
-static ScannerSM scanner(messageManager, scanSystems);
-static ServerManager connectionManager(io_service, messageManager);
-static piscan::sigproc::Demodulator demod(messageManager);
-static SystemController sysControl(messageManager, scanSystems, scanner, connectionManager, demod);
+static ScannerSM scannerInst(scanSystems);
+static ServerManager connectionManager(io_service);
+static piscan::sigproc::Demodulator demodInst;
 
 static std::atomic_bool steadyState(false);
 
@@ -302,10 +63,10 @@ void hardTerminate(){
 	std::terminate();
 }
 
-void sigTermHandler(int signal){
+void sigTermHandler(int /* signal */){
 	// SIGTERM is raised by the kernel during shutdown
 	if(sysRun){
-		app::stopSystem();
+		app::system::stopSystem();
 		sysRun = false;
 	}
 	// SIGTERM called after exit process has started - possibly because the program locked up and the user wants to force quit
@@ -313,7 +74,7 @@ void sigTermHandler(int signal){
 		piscan::hardTerminate();
 }
 
-void sigIntHandler(int signal){
+void sigIntHandler(int /* signal */){
 	LOG_F(INFO, "Stop triggered by interrupt");
 
 	if(!sysRun)
@@ -322,8 +83,8 @@ void sigIntHandler(int signal){
 	sysRun = false;
 }
 
-piscan::sigproc::DemodInterface& app::getDemodInstance() {
-	return demod;
+piscan::sigproc::DemodInterface& app::demod::getDemodInstance() {
+	return demodInst;
 }
 
 void runIO(){
@@ -342,54 +103,58 @@ void exit(int code){
 	std::exit(code);
 }
 
-bool app::stopSystem(){
+bool app::system::stopSystem(){
 	if(steadyState.load()){
 		return true;
 	}
 	return false;
 }
 
-void app::startScan(){
-	scanner.startScan();
+void app::scanner::startScan(){
+	scannerInst.startScan();
 }
 
-void app::holdScan(std::vector<int> index){
-	scanner.holdScan(index);
+void app::scanner::holdScan(std::vector<int> index){
+	scannerInst.holdScan(index);
 }
 
-void app::stopScanner(){
-	scanner.stopScanner();
+void app::scanner::stopScanner(){
+	scannerInst.stopScanner();
 }
 
-void app::manualEntry(app::ManualEntryData* freq){
-	scanner.manualEntry(freq);
+void app::scanner::manualEntry(app::ManualEntryData* freq){
+	scannerInst.manualEntry(freq);
 }
 
-piscan::server::context::ScannerContext app::getScannerContext(){
-	return scanner.getCurrentContext();
+piscan::server::context::ScannerContext app::scanner::getScannerContext(){
+	return scannerInst.getCurrentContext();
 }
 
-void app::setTunerGain(float gain){
-	demod.setTunerGain(gain);
+void app::demod::setTunerGain(float gain){
+	demodInst.setTunerGain(gain);
 }
 
-void app::setDemodSquelch(float level){
-	demod.setSquelch(level);
+void app::demod::setDemodSquelch(float level){
+	demodInst.setSquelch(level);
 }
 
-piscan::server::context::DemodContext app::getDemodContext(){
-	return piscan::server::context::DemodContext(demod.getTunerGain(), demod.getSquelch());
+piscan::server::context::DemodContext app::demod::getDemodContext(){
+	return piscan::server::context::DemodContext(demodInst.getTunerGain(), demodInst.getSquelch());
 }
 
-void app::squelchBreak(bool mute){
-	demod.squelchBreak(mute);
+void app::demod::squelchBreak(bool mute){
+	demodInst.squelchBreak(mute);
 }
 
-long long app::getTunerSampleRate() {
-	return demod.getTunerSampleRate();
+long long app::demod::getTunerSampleRate() {
+	return demodInst.getTunerSampleRate();
 }
 
-const piscan::server::context::SystemInfo app::getSystemInfo(){
+/*void app::demod::setTunerPPM(int ppm) {
+	// TODO
+}*/
+
+const piscan::server::context::SystemInfo app::system::getSystemInfo(){
 	piscan::server::context::SystemInfo info = {
 			.version = PISCAN_VERSION,
 			.buildNumber = 0,
@@ -408,15 +173,15 @@ const piscan::server::context::SystemInfo app::getSystemInfo(){
 	return info;
 }
 
-void app::scannerContextUpdate(piscan::server::context::ScannerContext ctx){
+void app::server::scannerContextUpdate(piscan::server::context::ScannerContext ctx){
 	connectionManager.giveMessage(make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::ScannerContext(ctx)));
 }
 
-void app::demodContextUpdate(piscan::server::context::DemodContext ctx){
+void app::server::demodContextUpdate(piscan::server::context::DemodContext ctx){
 	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::DemodContext(ctx)));
 }
 
-void app::signalLevelUpdate(int level){
+void app::server::signalLevelUpdate(int level){
 	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::SIGNAL_LEVEL, new int(level)));
 }
 
@@ -435,6 +200,7 @@ int main(int argc, char **argv) {
 	LOG_F(INFO, "Starting PiScan, version %s", PISCAN_VERSION);
 
 	piscan::config::Configuration& config = piscan::config::Configuration::getConfig();
+	piscan::config::State& state = piscan::config::State::getState();
 	bool useDebugConsole = false;
 	bool spawnClient = false;
 
@@ -460,55 +226,34 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	
-	config.loadConfig();
-	config.loadState();
+	config.loadFromFile();
+	state.loadFromFile();
 
 	loguru::add_file(config.getDatedLogPath().c_str(), loguru::Truncate, logVerbosity);
 	loguru::add_file(config.getLatestLogPath().c_str(), loguru::Truncate, logVerbosity);
 
-	messageManager.setReceiver(SYSTEM_CONTROL, &sysControl);
-	messageManager.setReceiver(SCANNER_SM, &scanner);
-	messageManager.setReceiver(DEMOD, &demod);
-	messageManager.setReceiver(SERVER_MAN, &connectionManager);
-	//messageManager.setReceiver(AUDIO_MAN, &audioControl);
-
-	//connectionManager.useDebugServer(useDebugConsole);
-
 	try {
-		messageManager.start();
-		//sysControl.start();
-
 		{
-			scanner.start();
+			scannerInst.start();
 			connectionManager.start(useDebugConsole, spawnClient);
-			demod.start();
-
-			/*while(sysRun){
-			//_flagLock.lock();
-				if(_activeModules == ALL_FLAG){
-					//_flagLock.unlock();
-					break;
-				}
-			//_flagLock.unlock();
-			}*/
+			demodInst.start();
 
 			LOG_F(4, "scanner wait");
-			scanner.waitReady();
+			scannerInst.waitReady();
 			LOG_F(4, "server wait");
 			connectionManager.waitReady();
 			LOG_F(4, "demod wait");
-			demod.waitReady();
+			demodInst.waitReady();
 
 			connectionManager.allowConnections();
-			scanner.startScanner();
+			scannerInst.startScanner();
 
 			sysRun = true;
 		}
 
 		ioThread = std::thread(runIO);
 	} catch (std::exception& e) {
-		LOG_F(ERROR, e.what());
+		LOG_F(ERROR, "%s", e.what());
 		goto sysexit;
 	}
 
@@ -525,37 +270,25 @@ int main(int argc, char **argv) {
 
 		{
 			LOG_F(INFO, "Stopping system");
-		scanner.stopScanner();
-		//_centralQueue.giveMessage(std::make_shared<ServerMessage>(SYSTEM_CONTROL, ServerMessage::STOP, nullptr));
+		scannerInst.stopScanner();
 		connectionManager.stop();
-		demod.stop();
-
-		/*while(1){
-			//_flagLock.lock();
-			if(_activeModules == 0){
-				//_flagLock.unlock();
-				break;
-			}
-			//_flagLock.unlock();
-		}*/
+		demodInst.stop();
 
 		LOG_F(4, "scanner wait");
-		scanner.waitDeinit();
+		scannerInst.waitDeinit();
 		LOG_F(4, "server wait");
 		connectionManager.waitDeinit();
 		LOG_F(4, "demod wait");
-		demod.waitDeinit();
+		demodInst.waitDeinit();
 
 		LOG_F(2, "All modules stopped");
 		}
-
-		messageManager.stop(true);
 	} catch (std::exception& e) {
-		LOG_F(ERROR, e.what());
+		LOG_F(ERROR, "%s", e.what());
 	}
 
-	config.saveState();
-	config.saveConfig();
+	state.saveToFile();
+	config.saveToFile();
 
 	piscan::exit(0);
 

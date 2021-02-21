@@ -12,6 +12,7 @@ from threading import Thread
 
 from time import sleep
 
+import audio_manager
 import common
 import constants
 import connect
@@ -27,8 +28,10 @@ import google.protobuf.message as proto
 
 class PiScanClient(QWidget, common.AppInterface):
     dataReceived = Signal(bytes)
+    manualDisconnectInitiated = False
+    manualDisconnectMessage = None
 
-    def __init__(self, parent=None, address=None, port=None):
+    def __init__(self, parent=None, address=None, port=None, use_audio=False, rtsp_port=None):
         super(PiScanClient, self).__init__(parent)
         common.setInstance(self)
         ui_file = 'scan_client.ui'
@@ -59,6 +62,9 @@ class PiScanClient(QWidget, common.AppInterface):
 
         self.inmsg = messages_pb2.ServerToClient()
 
+        self.use_audio = use_audio
+        self.audio = audio_manager.AudioManager()
+
     def mainWidget(self):
         return self.window
 
@@ -72,16 +78,40 @@ class PiScanClient(QWidget, common.AppInterface):
         self.setWindowMode(common.WindowMode.DIALOG)
 
     def receive(self):
+        disconnectMessage = None
+
         while True:
             try:
                 data = self.sock.recv(2048)
+                if not data:
+                    disconnectMessage = 'Connection closed by host'
+                    break
                 self.dataReceived.emit(data)
+            except ConnectionAbortedError:
+                if not self.manualDisconnectInitiated:
+                    disconnectMessage = 'Connection aborted'
+                break
+            except OSError as err:
+                if not self.manualDisconnectInitiated:
+                    disconnectMessage = str(err)
+                break
             except:
                 e = sys.exc_info()[0]
-                self.showConnectDialog(repr(e))
+                disconnectMessage = 'Unhandled exception: ' + str(e)
                 break
 
-        print("Closing connection")
+        if not disconnectMessage:
+            disconnectMessage = self.manualDisconnectMessage
+
+        if disconnectMessage:
+            print('Closing connection. Reason: ' + disconnectMessage)
+        else:
+            print('Disconnecting...')
+        
+        if self.use_audio:
+            self.audio.stopRtspAudioStream()
+        self.manualDisconnectInitiated = False
+        self.showConnectDialog(disconnectMessage)
 
     def handleReceived(self, data):
         self.inmsg.ParseFromString(data)
@@ -90,18 +120,18 @@ class PiScanClient(QWidget, common.AppInterface):
     def decodeMessage(self, message):
         #print(message)
         if message.WhichOneof('content') == 'systemInfo':
-            print('system info')
+            #print('system info')
             self.scanner.setSquelchRange(message.systemInfo.squelchScaleMin, message.systemInfo.squelchScaleMax)
             for mode in message.systemInfo.supportedModulations:
                 self.dialogs.manualEntry.addModulation(mode)
         elif message.type == messages_pb2.ServerToClient.Type.Value('SCANNER_CONTEXT'):
-            print('scanner context')
+            #print('scanner context')
             self.scanner.updateScanContext(message.scannerContext)
             if self.contextWait:
                 self.setWindowMode(common.WindowMode.SCANNER)
                 self.contextWait = False
         elif message.type == messages_pb2.ServerToClient.Type.Value('DEMOD_CONTEXT'):
-            print('demod context')
+            #print('demod context')
             self.scanner.updateDemodContext(message.demodContext)
         #elif message.type == messages_pb2.ServerToClient.Type.Value('GENERAL_MESSAGE'):
         elif message.WhichOneof('content') == 'signalLevel':
@@ -110,20 +140,15 @@ class PiScanClient(QWidget, common.AppInterface):
 
     def closeEvent(self, event):
         print('Exiting...')
-        try:
-            if self.sock:
-                self.sock.close()
-                #self.rcv_thread.join()
-        except:
-            pass
+        self.disconnect()
 
     ## AppInterface methods
     #def attemptConnection(self, sock):
 
 
-    def completeConnection(self, sock):
+    def completeConnection(self, sock, host, use_audio, audio_port):
         self.sock = sock
-        self.rcv_thread = Thread(target=self.receive)
+        self.rcv_thread = Thread(target=self.receive, name='socket monitor')
         self.rcv_thread.start()
         self.contextWait = True
         self.connectDialog.contextWait()  
@@ -131,29 +156,36 @@ class PiScanClient(QWidget, common.AppInterface):
         message1 = messages_pb2.ClientToServer()
         message1.type = messages_pb2.ClientToServer.Type.Value('GENERAL_REQUEST')
         message1.generalRequest.type = request_pb2.GeneralRequest.RequestType.Value('SCANNER_CONTEXT')
-        self.sock.send(message1.SerializeToString())
+        self.sendData(message1.SerializeToString())
         sleep(0.25)
         message2 = messages_pb2.ClientToServer()
         message2.type = messages_pb2.ClientToServer.Type.Value('GENERAL_REQUEST')
         message2.generalRequest.type = request_pb2.GeneralRequest.RequestType.Value('DEMOD_CONTEXT')
-        self.sock.send(message2.SerializeToString())
+        self.sendData(message2.SerializeToString())
         sleep(0.25)
         message3 = messages_pb2.ClientToServer()
         message3.type = messages_pb2.ClientToServer.Type.Value('GENERAL_REQUEST')
         message3.generalRequest.type = request_pb2.GeneralRequest.RequestType.Value('SYSTEM_INFO')
-        self.sock.send(message3.SerializeToString())
+        self.sendData(message3.SerializeToString()) 
+
+        if use_audio:
+            self.use_audio = self.audio.startRtspAudioStream(host, audio_port) 
+            #self.setAudioVolume(50) 
+        else:
+            self.use_audio = False
+        self.scanner.setVolumeVisible(self.use_audio)
 
     def scan(self):
         message = messages_pb2.ClientToServer()
         message.type = messages_pb2.ClientToServer.Type.Value('SCANNER_STATE_REQUEST')
         message.scanStateRequest.state = request_pb2.ScannerStateRequest.NewState.Value('SCAN')
-        self.sock.send(message.SerializeToString())
+        self.sendData(message.SerializeToString())
 
     def hold(self):
         message = messages_pb2.ClientToServer()
         message.type = messages_pb2.ClientToServer.Type.Value('SCANNER_STATE_REQUEST')
         message.scanStateRequest.state = request_pb2.ScannerStateRequest.NewState.Value('HOLD')
-        self.sock.send(message.SerializeToString())
+        self.sendData(message.SerializeToString())
 
     def manualEntry(self, frequency, modulation):
         message = messages_pb2.ClientToServer()
@@ -161,7 +193,7 @@ class PiScanClient(QWidget, common.AppInterface):
         message.scanStateRequest.state = request_pb2.ScannerStateRequest.NewState.Value('MANUAL')
         message.scanStateRequest.manFreq = frequency
         message.scanStateRequest.manModulation = modulation
-        self.sock.send(message.SerializeToString())
+        self.sendData(message.SerializeToString())
 
     def showConnectDialog(self, errorMessage = ''):
         self.clearWindowTitleInfo()
@@ -189,20 +221,20 @@ class PiScanClient(QWidget, common.AppInterface):
         message.type = messages_pb2.ClientToServer.Type.Value('DEMOD_REQUEST')
         message.demodRequest.type = request_pb2.DemodRequest.DemodFunc.Value('SET_GAIN')
         message.demodRequest.level = value
-        self.sock.send(message.SerializeToString())
+        self.sendData(message.SerializeToString())
 
     def setSquelch(self, value):
         message = messages_pb2.ClientToServer()
         message.type = messages_pb2.ClientToServer.Type.Value('DEMOD_REQUEST')
         message.demodRequest.type = request_pb2.DemodRequest.DemodFunc.Value('SET_SQUELCH')
         message.demodRequest.level = value
-        self.sock.send(message.SerializeToString())
+        self.sendData(message.SerializeToString())
 
     def dialogClosed(self):
         self.setWindowMode(self.lastMode)
 
-    def tryConnect(self, address, port):
-        self.connectDialog.tryConnect(address, port)
+    def tryConnect(self, address, port, use_audio, rtsp_port):
+        self.connectDialog.tryConnect(address, port, use_audio, rtsp_port)
 
     def setWindowTitleInfo(self, message):
         if isinstance(self.parentWindow, QtWidgets.QMainWindow):
@@ -216,11 +248,37 @@ class PiScanClient(QWidget, common.AppInterface):
         else:
             self.setWindowTitle('PiScan')
 
+    def disconnect(self, message=''):
+        self.manualDisconnectInitiated = True
+        self.manualDisconnectMessage = message
+        try:
+            if self.sock:
+                self.sock.close()
+                #self.rcv_thread.join()
+        except Exception as e:
+            print(e)
+
+    def setAudioVolume(self, level):
+        if self.use_audio:
+            self.audio.setAudioVolume(level)
+
+    def setAudioMute(self, mute):
+        if self.use_audio:
+            self.audio.setAudioMute(mute)
+
+    def sendData(self, message):
+        try:
+            self.sock.send(message)
+        except OSError as err:
+            self.disconnect('Connection error: ' + str(err))
+        except Exception as e:
+            print(e)
+
 class HostWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None, address=None, port=None):
+    def __init__(self, parent=None, address=None, port=None, use_audio=False, rtsp_port=None):
         super(HostWindow, self).__init__(parent)
 
-        form = PiScanClient(self, address, port)
+        form = PiScanClient(self, address, port, use_audio, rtsp_port)
 
         mainWidget = form.mainWidget()
         self.setPalette(mainWidget.palette())
@@ -235,22 +293,24 @@ class HostWindow(QtWidgets.QMainWindow):
         if address:
             if not port:
                 port = constants.DEFAULT_TCP_PORT
-            form.tryConnect(address, port)
+            form.tryConnect(address, port, use_audio, rtsp_port)
 
     def closeEvent(self, event):
-        print('exit')
+        #print('exit')
         common.getApp().closeEvent(event)
         event.accept()
 
 if __name__ == '__main__':
-    shortOpts = 'la:p:w'
-    longOpts = ['--local', '--address', '--port', '--pi_mode']
+    shortOpts = 'la:p:wsr:'
+    longOpts = ['--local', '--address', '--port', '--pi_mode', '--audio', '--rtsp_port']
 
     options, remainder = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
 
     address = None
     port = None
     piMode = False
+    use_audio = False
+    rtsp_port = 8554
 
     for opt, arg in options:
         if opt in ('-l', '--local'):
@@ -261,9 +321,13 @@ if __name__ == '__main__':
             port = int(arg)
         elif opt in ('-w', '--pi_mode'):
             piMode = True
+        elif opt in ('-s', '--audio'):
+            use_audio = True
+        elif opt in ('-r', '--rtsp_port'):
+            rtsp_port = int(arg)
 
     app = QApplication(sys.argv)
-    window = HostWindow(address=address, port=port)
+    window = HostWindow(address=address, port=port, use_audio=use_audio, rtsp_port=rtsp_port)
     if piMode:
         flags = Qt.WindowFlags(Qt.CustomizeWindowHint | Qt.FramelessWindowHint | Qt.Tool)
         window.setWindowFlags(flags)

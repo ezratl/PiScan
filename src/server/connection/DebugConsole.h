@@ -12,7 +12,9 @@
 #include "connection.h"
 #include "DebugServer.h"
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
 class DebugConsole : public Connection {
 public:
@@ -23,7 +25,6 @@ public:
 
 	bool connect();
 	void disconnect();
-	void giveMessage(std::shared_ptr<Message> message);
 	void contextUpdate(const piscan::server::context::ScannerContext context);
 	void contextUpdate(const piscan::server::context::DemodContext context);
 	void handleSystemMessage(const piscan::server::context::GeneralMessage message);
@@ -45,4 +46,6 @@ private:
 	void gainReceived(int handle, int gain);
 };
 
+}
+}
 }

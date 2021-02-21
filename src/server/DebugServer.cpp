@@ -18,7 +18,8 @@
 #include "threadname.h"
 #include "BackendServer.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 DebugServer::DebugServer(ServerInterface& host) : BackendServer(host), _connection(new connection::DebugConsole()) {}
 
@@ -34,8 +35,5 @@ void DebugServer::stop(){
 		_connection->disconnect();
 }
 
-void DebugServer::giveMessage(std::shared_ptr<Message> message){
-	//delete &message;
 }
-
 }

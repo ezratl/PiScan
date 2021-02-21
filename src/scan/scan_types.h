@@ -2,7 +2,8 @@
 
 #include <memory>
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
     class Entry;
     class RadioSystem;
     class SystemList;
@@ -39,4 +40,5 @@ namespace piscan::scan {
             constexpr char code_key[] = "code";
         }
     }
+}
 }

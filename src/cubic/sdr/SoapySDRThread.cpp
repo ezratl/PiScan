@@ -389,7 +389,7 @@ int SDRThread::readStream(SDRThreadIQDataQueuePtr iqDataOutQueue) {
         if(!stopping.load()){
         	if(++blocked_attempts >= 50){
         		LOG_F(ERROR, "SDRPostThread is blocked - possible deadlock, exiting");
-        		piscan::app::stopSystem();
+        		piscan::app::system::stopSystem();
             }
         	LOG_F(WARNING, "SDRThread::readStream(): 3.1 iqDataOutQueue output queue is full, discard processing of the batch...");
         }

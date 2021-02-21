@@ -1,7 +1,7 @@
 import sys
 
 from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit
+from PySide2.QtWidgets import QWidget, QLabel, QPushButton, QLineEdit, QCheckBox
 from PySide2.QtCore import QObject
 from PySide2.QtGui import QMovie, QPixmap
 
@@ -11,7 +11,7 @@ import common
 import constants
 
 class ConnectDialog:
-    def __init__(self, parentWindow, address=None, port=None):
+    def __init__(self, parentWindow, address=None, port=None, use_audio=False, rtsp_port=None):
         self.widget = parentWindow.findChild(QWidget, 'connectPage')
         self.errorLabel = parentWindow.findChild(QLabel, 'connect_errorLabel')
         self.confirmButton = parentWindow.findChild(QPushButton, 'connect_confirmButton')
@@ -21,6 +21,9 @@ class ConnectDialog:
         self.logo = parentWindow.findChild(QLabel, 'connect_logoImage')
         self.hostLabel = parentWindow.findChild(QLabel, 'hostLabel')
         self.portLabel = parentWindow.findChild(QLabel, 'hostPortLabel')
+        self.audioCheckBox = parentWindow.findChild(QCheckBox, 'connect_audioCheckBox')
+        self.rtspPortPanel = parentWindow.findChild(QWidget, 'connect_rtspPortPanel')
+        self.rtspPortLineEdit = parentWindow.findChild(QLineEdit, 'connect_rtspPortLineEdit')
 
         self.logo.setPixmap(QPixmap("resources/icon-256.png"))
         self.logo.setVisible(False)
@@ -39,18 +42,24 @@ class ConnectDialog:
         self.hostLineEdit.returnPressed.connect(self.onConfirm)
         self.portLineEdit.returnPressed.connect(self.onConfirm)
 
+        self.rtspPortPanel.setVisible(False)
+
     def onConfirm(self):
         host = self.hostLineEdit.text()
         port = int(self.portLineEdit.text())
-        self.tryConnect(host, port)
+        audio = self.audioCheckBox.isChecked()
+        rtsp_port = int(self.rtspPortLineEdit.text())
+        self.tryConnect(host, port, audio, rtsp_port)
 
-    def tryConnect(self, address, port):
+    def tryConnect(self, address, port, use_audio=False, rtsp_port=8554):
         print('connect confirm')
         try:
             self.connectIndicator.setVisible(True)
             self.errorLabel.setVisible(False)
             self.hostLineEdit.setText(address)
             self.portLineEdit.setText(str(port))
+            self.audioCheckBox.setChecked(use_audio)
+            self.rtspPortLineEdit.setText(str(rtsp_port))
             self.widget.repaint()
             
             print('Connecting to ', address, ':', port)
@@ -62,11 +71,16 @@ class ConnectDialog:
 
             self.connectIndicator.setVisible(False)
 
-            common.getApp().completeConnection(sock)
-
+            common.getApp().completeConnection(sock, address, use_audio, rtsp_port)
+        except ConnectionRefusedError:
+            self.connectFailed('Connect failed - Connection refused')
+        except gaierror as err:
+            self.connectFailed('Connect failed - ' + str(err))
+        except TimeoutError:
+            self.connectFailed('Connect failed - Timed out')
         except:
             e = sys.exc_info()[0]
-            self.connectFailed(repr(e))
+            self.connectFailed('Connect failed - Unhandled exception: ' + str(e))
             
 
     def contextWait(self):

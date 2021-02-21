@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Configuration.h
  *
@@ -5,11 +7,9 @@
  *      Author: ezra
  */
 
-#ifndef SERVER_CONFIGURATION_H_
-#define SERVER_CONFIGURATION_H_
-
 #include <string>
 #include <vector>
+#include <set>
 #include <boost/property_tree/ptree.hpp>
 
 #include "constants.h"
@@ -23,10 +23,42 @@
 #define STATE_FILE		"state.json"
 #define SYSTEMS_FILE	"systems.json"
 
-namespace piscan::config {
+namespace piscan {
+namespace config {
 
-struct GeneralConfig {
+namespace path {
+	static constexpr char path_seperator[] = ".";
+	static constexpr char config_base_path[] = "config";
+	static constexpr char state_base_path[] = "state";
+}
+
+class ConfigManager {
+public:
+	virtual boost::property_tree::ptree& pTree() = 0;
+
+	virtual void invalidate() = 0;
+};
+
+struct ConfigBase {
+public:
+	ConfigBase(ConfigManager& cm, std::string path) : base(cm), basePath(std::move(path)) {};
+
+	virtual void save() = 0;
+	virtual void load() = 0;
+
+protected:
+	ConfigManager& base;
+	std::string basePath;
+};
+
+struct GeneralConfig : public ConfigBase {
+public:
+	GeneralConfig(ConfigManager& cm, std::string path);
+
 	int logfileVerbosity = DEFAULT_LOGFILE_VERBOSITY;
+
+	virtual void save();
+	virtual void load();
 };
 
 #define DEFAULT_TCP_PORT			1234
@@ -35,12 +67,18 @@ struct GeneralConfig {
 #define DEFAULT_PY_CLIENT_LOCATION	"./"
 #define DEFAULT_PY_ENV_LOCATION	"python"
 
-struct SocketServerConfig {
+struct SocketServerConfig : public ConfigBase {
+public:
+	SocketServerConfig(ConfigManager& cm, std::string path);
+
 	int tcpPort = DEFAULT_TCP_PORT;
 	int maxConnections = MAX_TCP_CONNECTIONS;
 	bool spawnLocalClient = DEFAULT_SPAWN_CLIENT;
 	std::string pythonClient = DEFAULT_PY_CLIENT_LOCATION;
 	std::string pythonBinary = DEFAULT_PY_ENV_LOCATION;
+
+	virtual void save();
+	virtual void load();
 };
 
 #define TUNER_RETUNE_TIME	225000
@@ -52,26 +90,71 @@ struct SocketServerConfig {
 
 #define DEFAULT_SQUELCH_MODE	(SQUELCH_DBM)
 
-struct DemodConfig {
+struct DemodConfig : public ConfigBase {
+	DemodConfig(ConfigManager& cm, std::string path);
+
 	long int retuneDelay = TUNER_RETUNE_TIME;
 	long int demodDelay = DEMOD_BUFFER_TIME;
 	int squelchType = DEFAULT_SQUELCH_MODE;
+	
+	virtual void save();
+	virtual void load();
+};
+
+#define DEFAULT_RANK	0
+#define DEFAULT_DESC	"null"
+#define DEFAULT_DRIVER	"null"
+#define DEFAULT_PPM		0
+#define DEFAULT_TUNER_SAMPLE_RATE	2048000
+
+struct TunerConfig {
+	int rank = DEFAULT_RANK;
+	std::string descriptor = DEFAULT_DESC;
+	std::string driver = DEFAULT_DRIVER;
+	int ppmCorrection = DEFAULT_PPM;
+	long int sampleRate = DEFAULT_TUNER_SAMPLE_RATE;
+};
+
+struct TunerList : public ConfigBase {
+	class TunerComparator : public std::less<TunerConfig> {
+    public:
+        constexpr bool operator()(const TunerConfig& left, const TunerConfig& right) const {
+            return left.rank < right.rank;
+        }
+    };
+public:
+
+	TunerList(ConfigManager& cm, std::string path);
+	std::set<TunerConfig, TunerComparator> tuners;
+
+	virtual void save();
+	virtual void load();
 };
 
 #define DEFAULT_RTSP_PORT	8554
 #define DEFAULT_RTSP_OVER_HTTP	false
 
-struct AudioServerConfig {
+struct AudioServerConfig : public ConfigBase {
+	AudioServerConfig(ConfigManager& cm, std::string path);
+
 	int rtspPort = DEFAULT_RTSP_PORT;
 	bool httpTunneling = DEFAULT_RTSP_OVER_HTTP;
+		
+	virtual void save();
+	virtual void load();
 };
 
 #define DEFAULT_SQUELCH	0
 #define DEFAULT_GAIN	(AUTO_GAIN)
 
-struct DemodState {
+struct DemodState : public ConfigBase {
+	DemodState(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+
 	float squelch = DEFAULT_SQUELCH;
 	float gain = DEFAULT_GAIN;
+			
+	virtual void save();
+	virtual void load();
 };
 
 #define	SCAN_STATE_SCAN		0
@@ -79,39 +162,44 @@ struct DemodState {
 #define SCAN_STATE_MANUAL	2
 #define DEFAULT_SCAN_STATE	(SCAN_STATE_SCAN)
 
-struct ScannerState {
+struct ScannerState : public ConfigBase {
+	ScannerState(ConfigManager& cm, std::string path) : ConfigBase(cm, std::move(path)) {};
+
 	int scanState = DEFAULT_SCAN_STATE;
 	long long manualFreq = 0;
 	std::string manualModualtion = "";
 	std::vector<int> holdIndex = {};
 	std::string holdKey = "";
+			
+	virtual void save();
+	virtual void load();
 };
 
-class Configuration {
+class Configuration : public ConfigManager {
 public:
-
-	~Configuration();
-
 	static Configuration& getConfig();
 
 	void setWorkingDirectory(std::string path);
 	std::string getWorkingDirectory();
-	void loadConfig();
-	void loadState();
-	void saveConfig();
-	void saveState();
+
+	bool loadFromFile();
+	bool saveToFile();
+
+	void loadAll();
+	void saveAll();
 
 	GeneralConfig& getGeneralConfig() { return _generalConfig; };
 	SocketServerConfig& getSocketConfig() { return _socketConfig; };
 	DemodConfig& getDemodConfig() { return _demodConfig; };
 	AudioServerConfig& getAudioServerConfig() { return _rtspConfig; };
-
-	DemodState& getDemodState() { return _demodState; };
-	ScannerState& getScannerState() { return _scannerState; };
+	TunerList& getTunerList() { return _tunerList; };
 
 	std::string getLogDirectory();
 	std::string getDatedLogPath();
 	std::string getLatestLogPath();
+
+	boost::property_tree::ptree& pTree() { return _pt; };
+	void invalidate();
 
 private:
 	static Configuration* _config;
@@ -121,15 +209,39 @@ private:
 	SocketServerConfig _socketConfig;
 	DemodConfig _demodConfig;
 	AudioServerConfig _rtspConfig;
+	TunerList _tunerList;
+
+	Configuration();
+
+	boost::property_tree::ptree _pt;
+};
+
+class State : public ConfigManager {
+public:
+	static State& getState();
+
+	bool loadFromFile();
+	bool saveToFile();
+
+	void loadAll();
+	void saveAll();
+
+	DemodState& getDemodState() { return _demodState; };
+	ScannerState& getScannerState() { return _scannerState; };
+
+	boost::property_tree::ptree& pTree() { return _pt; };
+	void invalidate();
+
+private:
+	static State* _state;
 
 	DemodState _demodState;
 	ScannerState _scannerState;
 
-	Configuration();
+	State();
 
-	boost::property_tree::ptree _ptConfig;
-	boost::property_tree::ptree _ptState;
+	boost::property_tree::ptree _pt;
 };
 
 }
-#endif /* SERVER_CONFIGURATION_H_ */
+}

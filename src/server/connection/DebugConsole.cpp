@@ -17,7 +17,9 @@
 #include "connection/DebugConsole.h"
 #include "constants.h"
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
 #define DS_THREAD_NAME	"DebugConsole"
 
@@ -36,10 +38,6 @@ void DebugConsole::disconnect(){
 	std::fprintf(stdin, "\n");
 	std::cerr << "\nConsole disconnected\n";
 	notifyDisconnected();
-}
-
-void DebugConsole::giveMessage(std::shared_ptr<Message> message){
-
 }
 
 void DebugConsole::_consoleInputFunc() {
@@ -208,4 +206,6 @@ void DebugConsole::handleSignalLevel(const int level){
 	std::cerr << "\r" << "Signal: " << level << "\t\t\t\t";
 }
 
+}
+}
 }

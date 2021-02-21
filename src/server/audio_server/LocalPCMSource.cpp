@@ -16,12 +16,14 @@
 #include "AudioThread.h"
 #include "PiScan.h"
 
-namespace piscan::server::audio {
+namespace piscan {
+namespace server {
+namespace audio {
 
 LocalPCMSource*
 LocalPCMSource::createNew(UsageEnvironment& env) {
   do {
-	AudioThread* controller = app::getAudioController();
+	AudioThread* controller = app::audio::getAudioController();
 	if(!controller)
 		break;
 
@@ -39,7 +41,7 @@ LocalPCMSource::createNew(UsageEnvironment& env) {
 
 LocalPCMSource::LocalPCMSource(UsageEnvironment& env, AudioThread* audioController)
   : AudioInputDevice(env, 0, 0, 0, 0)/* set the real parameters later */,
-    fFidIsSeekable(False), fLastPlayTime(0), fHaveStartedReading(False), _audioController(audioController) {
+    fLastPlayTime(0), _audioController(audioController) {
 
   do {
 
@@ -158,3 +160,5 @@ double LocalPCMSource::getAverageLevel() const {
 
 
 } /* namespace piscan */
+}
+}

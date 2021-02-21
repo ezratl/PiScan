@@ -24,7 +24,9 @@ using ip::tcp;
 #define READ_BUFFER_LENGTH	1024
 #define WRITE_BUFFER_LENGTH	1024
 
-namespace piscan::server::connection {
+namespace piscan {
+namespace server {
+namespace connection {
 
 typedef boost::shared_ptr<SocketConnection> SocketConnectionPtr;
 
@@ -33,7 +35,6 @@ public:
 	SocketConnection(boost::asio::io_service& io_service, ConnectionLevel lvl) : Connection(lvl), _socket(io_service) {};
 	~SocketConnection() {};
 
-	void giveMessage(std::shared_ptr<Message> message);
 	bool connect();
 	void disconnect();
 	void contextUpdate(const piscan::server::context::ScannerContext context);
@@ -70,4 +71,6 @@ private:
 
 };
 
+}
+}
 }

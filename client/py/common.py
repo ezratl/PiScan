@@ -31,7 +31,7 @@ class AppInterface:
     #def attemptConnection(self, sock):
     #    pass
 
-    def completeConnection(self, sock):
+    def completeConnection(self, sock, host, use_audio, audio_port):
         pass
 
     def scan(self):
@@ -67,11 +67,20 @@ class AppInterface:
     def closeEvent(self, event):
         pass
 
-    def tryConnect(self, address, port):
+    def tryConnect(self, address, port, use_audio, rtsp_port):
         pass
 
     def setWindowTitleInfo(self, message):
         pass
 
     def clearWindowTitleInfo(self):
+        pass
+
+    def disconnect(self):
+        pass
+
+    def setAudioVolume(self, level):
+        pass
+
+    def setAudioMute(self, mute):
         pass

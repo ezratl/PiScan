@@ -12,7 +12,9 @@
 
 #include "OnDemandServerMediaSubsession.hh"
 
-namespace piscan::server::audio {
+namespace piscan {
+namespace server {
+namespace audio {
 
 class AudioServerMediaSubsession: public OnDemandServerMediaSubsession{
 public:
@@ -52,3 +54,5 @@ protected:
 };
 
 } /* namespace piscan */
+}
+}

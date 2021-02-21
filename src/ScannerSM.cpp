@@ -27,13 +27,13 @@
 using namespace piscan;
 using namespace std;
 
-ScannerSM::ScannerSM(MessageReceiver& central, piscan::scan::SystemList& dataSource) :
-		StateMachine(7), _centralQueue(central), _systems(dataSource), _externalHold(false), _manualMode(false) {
+ScannerSM::ScannerSM(piscan::scan::SystemList &dataSource) : StateMachine(7), _systems(dataSource), _externalHold(false), _manualMode(false)
+{
 }
 
 void ScannerSM::startScanner(){
 	LOG_F(1, "Loading saved scanner state");
-	piscan::config::ScannerState& state = app::getConfig().getScannerState();
+	piscan::config::ScannerState& state = app::system::getState().getScannerState();
 	piscan::scan::EntryPtr entry;
 	switch(state.scanState){
 	case SCAN_STATE_HOLD:
@@ -113,21 +113,21 @@ void ScannerSM::manualEntry(app::ManualEntryData* freq){
 	END_TRANSITION_MAP(new EventData(freq))
 }
 
-void ScannerSM::ST_Load(EventData* data){
+void ScannerSM::ST_Load(EventData* /* data */){
 	setThreadName(SCANNER_THREAD_NAME);
 	DLOG_F(9, "ST_Load");
 	_systems.populateFromFile();
-	LOG_F(INFO, "Loaded %u systems", _systems.size());
+	LOG_F(INFO, "Loaded %lu systems", _systems.size());
 
 	//_currentSystem = _systems[0];
-	_systems.sortBins(app::getTunerSampleRate());
+	_systems.sortBins(app::demod::getTunerSampleRate());
 
 	// do not issue event - SM will wait until an event is generated before proceeding
 	LOG_F(1, "ScannerSM ready");
 	notifyReady();
 }
 
-void ScannerSM::ST_Scan(EventData* data){
+void ScannerSM::ST_Scan(EventData* /* data */){
 	DLOG_F(9, "ST_Scan");
 	if(currentState != lastState){
 		_squelchHits = 0;
@@ -169,7 +169,7 @@ void ScannerSM::ST_Scan(EventData* data){
 
 }
 
-void ScannerSM::ST_Hold(EventData* data){
+void ScannerSM::ST_Hold(EventData* /* data */){
 	DLOG_F(9, "ST_Hold");
 	if(currentState != lastState)
 		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
@@ -235,7 +235,7 @@ void ScannerSM::ST_Hold(EventData* data){
 	usleep(1000);
 }
 
-void ScannerSM::ST_Receive(EventData* data){
+void ScannerSM::ST_Receive(EventData* /* data */){
 	DLOG_F(9, "ST_Receive");
 	if(currentState != lastState)
 		DLOG_F(6, "State change: %i -> %i", lastState, currentState);
@@ -295,10 +295,10 @@ void ScannerSM::ST_Manual(EventData* data){
 	
 }
 
-void ScannerSM::ST_SaveAll(EventData* data){
+void ScannerSM::ST_SaveAll(EventData* /* data */){
 	DLOG_F(9, "ST_SaveAll");
 	LOG_F(1, "Saving state");
-	piscan::config::ScannerState& state = app::getConfig().getScannerState();
+	piscan::config::ScannerState& state = app::system::getState().getScannerState();
 	state.holdIndex = {};
 	state.holdKey = "";
 	state.manualFreq = 0;
@@ -325,11 +325,9 @@ void ScannerSM::ST_SaveAll(EventData* data){
 	InternalEvent(ST_STOPPED);
 }
 
-void ScannerSM::ST_Stopped(EventData* data){
+void ScannerSM::ST_Stopped(EventData* /* data */){
 	DLOG_F(9, "ST_Stopped");
 	stop(false);
-	//auto message = make_shared<ControllerMessage>(SCANNER_SM, ControllerMessage::NOTIFY_STOPPED);
-	//_centralQueue.giveMessage(message);
 	LOG_F(1, "ScannerSM stopped");
 	notifyDeinit();
 }
@@ -360,86 +358,12 @@ void ScannerSM::_broadcastContextUpdate() {
 	else {
 		_currentContext.clearFields();
 	}
-
-	//auto message = make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::ScannerContext(_currentContext));
-
-	//_centralQueue.giveMessage(message);
-	app::scannerContextUpdate(_currentContext);
+	
+	app::server::scannerContextUpdate(_currentContext);
 }
 
 void ScannerSM::_enableAudioOut(bool en){
-	app::squelchBreak(en);
-}
-
-void ScannerSM::giveMessage(shared_ptr<Message> message) {
-	auto msg = dynamic_pointer_cast<ScannerMessage>(message);
-
-	DLOG_F(7, "Message rcv - src:%i | type:%i", msg->source, msg->type);
-
-	switch (msg->type) {
-	/* stop call */
-	case ScannerMessage::STOP:
-		stopScanner();
-		break;
-
-	/* handle client request */
-	case ScannerMessage::CLIENT_REQUEST:
-		_handleRequest(*(static_cast<ClientRequest*>(msg->pData)));
-		break;
-	/* handle external state trigger */
-	case ScannerMessage::STATE_CHANGE:
-		auto newState = static_cast<States>(reinterpret_cast<size_t>(msg->pData) & 0xFF);
-		switch (newState) {
-		case ScannerMessage::STATE_SCAN:
-			startScan();
-			break;
-		case ScannerMessage::STATE_HOLD:
-			holdScan();
-			break;
-		default:
-			DLOG_F(WARNING, "Invalid state request");
-			break;
-		}
-		break;
-
-	}
-
-}
-
-void ScannerSM::_handleRequest(ClientRequest& request) {
-	ClientRequest* rq = &request;
-	if (rq->rqInfo.type == SCANNER_FUNCTION) {
-		switch (rq->rqInfo.subType) {
-		case SCANNER_STATE_SCAN:
-			startScan();
-			break;
-		case SCANNER_STATE_HOLD:
-			if(request.pData != nullptr){
-				vector<int>* indexData = reinterpret_cast<vector<int>*>(request.pData);
-				holdScan(*indexData);
-				delete indexData;
-			}
-			else
-				holdScan();
-			break;
-		/*case SCANNER_STATE_MANUAL:
-			manualEntry(reinterpret_cast<uint32_t*>(rq->pData));
-			break;*/
-		default:
-			break;
-		}
-	}
-	else if (rq->rqInfo.type == GET_CONTEXT){
-		unique_lock<mutex> lock(_contextMutex);
-		piscan::server::context::ScannerContext* context = new piscan::server::context::ScannerContext(_currentContext);
-		lock.unlock();
-		rq->connection->scannerContextRequestCallback(rq->rqHandle, context);
-	}
-	else{
-		DLOG_F(WARNING, "Invalid scanner request type: %i", rq->rqInfo.type);
-	}
-
-	delete rq;
+	app::demod::squelchBreak(en);
 }
 
 piscan::server::context::ScannerContext ScannerSM::getCurrentContext(){

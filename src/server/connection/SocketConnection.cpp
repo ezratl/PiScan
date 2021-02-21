@@ -16,11 +16,9 @@
 #include "messages.pb.h"
 #include "connection/SocketConnection.h"
 
-namespace piscan::server::connection {
-
-void SocketConnection::giveMessage(std::shared_ptr<Message> message){
-
-}
+namespace piscan {
+namespace server {
+namespace connection {
 
 bool SocketConnection::connect(){
 	_startRead();
@@ -195,7 +193,7 @@ void SocketConnection::_handleRead(const boost::system::error_code& err,
 }
 
 void SocketConnection::_handleWrite(const boost::system::error_code& err,
-		size_t bytes_transferred) {
+		size_t /* bytes_transferred */) {
 	if (!err) {
 
 	} else if (err == boost::asio::error::eof || err == boost::asio::error::connection_reset || err == boost::asio::error::broken_pipe){
@@ -264,4 +262,6 @@ void SocketConnection::_handleDemodRequest(const piscan_pb::DemodRequest& rq) {
 	}
 }
 
+}
+}
 }

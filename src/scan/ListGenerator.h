@@ -13,7 +13,8 @@
 
 #include "scan_types.h"
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 //class SystemList;
 
@@ -42,5 +43,5 @@ private:
 };
 
 }
-
+}
 #endif /* SCAN_SENTINELFILE_H_ */

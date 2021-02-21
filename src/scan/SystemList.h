@@ -18,7 +18,8 @@
 
 using ptree = boost::property_tree::ptree;
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 class SystemList {
 public:
@@ -72,5 +73,6 @@ private:
 
 	static RadioSystemPtr makeAnalogSystem(ptree& pt, size_t index);
 };
+}
 }
 #endif /* SYSTEMLIST_H_ */

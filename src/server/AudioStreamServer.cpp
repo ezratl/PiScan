@@ -16,10 +16,11 @@
 #include "threadname.h"
 #include "audio_server/AudioServerMediaSubsession.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 AudioStreamServer::AudioStreamServer(ServerInterface& host) : BackendServer(host) {
-	piscan::config::AudioServerConfig& config = app::getConfig().getAudioServerConfig();
+	piscan::config::AudioServerConfig& config = app::system::getConfig().getAudioServerConfig();
 
 
 	// Begin by setting up our usage environment:
@@ -73,10 +74,10 @@ void AudioStreamServer::start(){
 
 
 	LOG_F(INFO, "RTSP audio server available on port %i",
-			app::getConfig().getAudioServerConfig().rtspPort);
+			app::system::getConfig().getAudioServerConfig().rtspPort);
 	LOG_F(1, "URL for stream clients: %s", _rtspServer->rtspURL(sms));
 
-	if (app::getConfig().getAudioServerConfig().httpTunneling) {
+	if (app::system::getConfig().getAudioServerConfig().httpTunneling) {
 		// Also, attempt to create a HTTP server for RTSP-over-HTTP tunneling.
 		// Try first with the default HTTP port (80), and then with the alternative HTTP
 		// port numbers (8000 and 8080).
@@ -103,3 +104,4 @@ void AudioStreamServer::stop() {
 }
 
 } /* namespace piscan */
+}

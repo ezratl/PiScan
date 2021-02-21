@@ -1,6 +1,7 @@
 #pragma once
 
-namespace piscan::sigproc {
+namespace piscan {
+namespace sigproc {
 	enum Modulation {
 		NFM,
 		FM,
@@ -24,4 +25,6 @@ namespace piscan::sigproc {
 	};
 
     class Demodulator;
+	class TunerManager;
+}
 }

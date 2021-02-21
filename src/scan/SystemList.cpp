@@ -20,7 +20,8 @@
 using namespace std::experimental;
 using ptree = boost::property_tree::ptree;
 
-namespace piscan::scan {
+namespace piscan {
+namespace scan {
 
 std::unordered_map<std::string, std::function<RadioSystemPtr(ptree&, size_t)>> SystemList::_makeSystem = {
 		{database::systems::type_analog, makeAnalogSystem}
@@ -80,7 +81,7 @@ bool SystemList::writeToFile(){
 	path += filesystem::path::preferred_separator;
 	path += SYSTEMS_FILE;
 
-	LOG_F(1, "Systems file path", path.c_str());
+	LOG_F(1, "Systems file path %s", path.c_str());
 	LOG_F(INFO, "Saving systems file");
 
 	ptree pt, systems;
@@ -275,4 +276,5 @@ RadioSystemPtr SystemList::makeAnalogSystem(ptree& pt, size_t index){
 	return system;
 }
 
+}
 }

@@ -18,20 +18,21 @@
 #include "Configuration.h"
 #include "synchronize.h"
 #include "IntervalTimer.h"
+#include "TunerManager.h"
 
 
-namespace piscan::sigproc {
+namespace piscan {
+namespace sigproc {
 
-class Demodulator : public MessageReceiver, public DemodInterface, public Synchronizable {
+class Demodulator : public DemodInterface, public Synchronizable {
 public:
-	Demodulator(MessageReceiver& central);
+	Demodulator();
 	~Demodulator() {
 	};
 
 	void start();
 	void stop();
 
-	void giveMessage(std::shared_ptr<Message> message);
 	bool setFrequency(long long freq);
 	bool setTunerFrequency(long long freq);
 	float getSignalLevel();
@@ -49,7 +50,6 @@ public:
 	long long getTunerSampleRate();
 
 private:
-	MessageReceiver& _centralQueue;
 	Modulation _currentModem = NFM;
 	float _squelchLevel = DEFAULT_SQUELCH;
 	long long _currentFreq = 0;
@@ -57,6 +57,7 @@ private:
 
 	std::shared_ptr<CubicSDR> _cubic;
 	DemodulatorMgr& _demodMgr;
+	TunerManager _tunerManager;
 
 	std::map<Modulation, DemodulatorInstancePtr> _demods;
 
@@ -67,5 +68,6 @@ private:
 	void _contextUpdate();
 };
 
+}
 }
 #endif /* SIGPROC_DEMODULATOR_H_ */

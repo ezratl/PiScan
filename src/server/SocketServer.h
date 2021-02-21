@@ -23,7 +23,8 @@
 using namespace boost::asio;
 using ip::tcp;
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 namespace connection {
 typedef boost::shared_ptr<SocketConnection> SocketConnectionPtr;
@@ -39,12 +40,11 @@ public:
 	void stop();
 	void spawnLocalClient();
 
-	void giveMessage(std::shared_ptr<Message> message);
 private:
 	io_service& _ioService;
 	tcp::acceptor _acceptor;
 	uint16_t _listenPort = DEFAULT_TCP_PORT;
-	int _activeConnections = 0;
+	// int _activeConnections = 0;
 	pid_t _clientPid = 0;
 
 	void start_accept();
@@ -54,5 +54,6 @@ private:
 	void _spawnPythonClient();
 	void _stopPythonClient();
 };
+}
 }
 #endif /* SERVER_SOCKETSERVER_H_ */

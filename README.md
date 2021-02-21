@@ -1,5 +1,8 @@
 # PiScan
 This software can take a Raspberry Pi (or another embedded computer) and turn it into a radio scanner. With only a $40 Pi and a $20 RTL-SDR dongle, you can build an inexpensive scanner with the capabilities of much more expensive equipment (at least that's the goal for this).
+
+![PiScan on a Raspberry Pi](doc/img/pi-deployment.JPG)
+
 ## License
 A license hasn't been selected yet, though it's likely to be GPL - have to make sure there won't be issues down the line when trunking is added
 ## Features
@@ -20,7 +23,6 @@ A license hasn't been selected yet, though it's likely to be GPL - have to make 
 - AM demodulation
 - Run-time manipulation of scan database and config
 - Temporary channel lockout
-- SDR configuration
 #### Long term:
 - P25 trunking
 - DMR trunking
@@ -77,7 +79,7 @@ There are three options available for audio output: PulseAudio, ALSA, JACK, and 
 	cmake .. -DUSE_AUDIO_JACK=ON
 Do note that PulseAudio uses significantly more CPU than ALSA when streaming PiScan audio.
 
-Additionally, some versions of liquid, particularly `libliquid-dev` versions `1.3.2` and greater, have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
+Additionally, some versions of liquid, particularly `libliquid2d` and `libliquid-dev` versions `1.3.2` and greater, have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
 
 	cmake .. -DLIQUID_API_OLD=OFF
 ### Building
@@ -123,6 +125,18 @@ All data used by PiScan is stored in its working directory (this is the `data` d
 	- `systems.json` contains the scan database - more on what that looks like below
 On the first run of PiScan, these files likely won't exist. It will continue running with default parameters, and a config and state file will be generated with these defaults when the program ends.
 If there is no scan file, PiScan cannot scan so it will instead hold at 100MHz. It will not allow the user to scan, but will allow manual frequency tuning.
+
+#### SDR configuration
+PiScan allows for configuring specific RTL dongles to run with it. By default, it doesn't have any pre-configured SDR's, so it will select the first available device and save it to the config file. One it's in the config file it will be given a rank (for specifying the order PiScan chooses from configured devies) and a descriptor, which contains the device name and serial number. There, the dongle's PPM correction and preferred sample rate can be set. The format of each device config is as such:
+
+	{
+		"rank": "0",
+		"descriptor": "Generic RTL2832U OEM :: 00000001",
+		"driver": "rtlsdr",
+		"ppm_correction": "0",
+		"sample_rate": "2048000"
+	}
+
 #### Scan Database File
 `systems.json` MUST adhere to this format (minus the comments) for PiScan to read it correctly. Use the sample file in `data/defaults` as a starting point for your database if writing it manually.
 
@@ -167,12 +181,10 @@ A scan file can be generated from an `.hpd` file, which is a plaintext format us
 	build/scan/piscan_hpdconv -i <path_to_hpd_file> -o <directory_for_output_file>
 A generator for CSV input will probably come soon, followed eventually by a GUI editor
 ### Interfacing
-The primary way to interact with PiScan is through the [client program](https://github.com/ezratl/PiScan-Client). Guides on its usage can be found there.
+The primary way to interact with PiScan is through the [client program](client/). Guides on its usage can be found there.
 In short, it communicates through a TCP connection, with a default port 1234.
 
-To listen to PiScan's audio feed remotely, use a stream client that supports RTSP, such as VLC, and enter the MRL `rtsp://<host_address>:8554/audio`. Setting a low network caching time is advised to reduce audio latency.
-
-Note: The client is being migrated to this repository to simplify API development. The version in the separate repo is still recommended for now, but it will be deprecated in the next update.
+To listen to PiScan's audio feed remotely without the client, use a stream client that supports RTSP, such as VLC, and enter the MRL `rtsp://<host_address>:8554/audio`. Setting a low network caching time is advised to reduce audio latency.
 
 ## Troubleshooting
 If build errors are occuring with ModemAM.cpp or similar sources, the LIQUID_API_OLD CMake flag needs toggled. Generally it needs to be set to OFF for liquid versions >= 1.3.2, but swapping its value may help in other cases.

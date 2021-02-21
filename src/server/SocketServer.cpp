@@ -16,7 +16,8 @@
 #include "context.pb.h"
 #include "messages.pb.h"
 
-namespace piscan::server {
+namespace piscan {
+namespace server {
 
 void SocketServer::start() {
 	piscan::config::SocketServerConfig& config = piscan::config::Configuration::getConfig().getSocketConfig();
@@ -55,10 +56,6 @@ void SocketServer::spawnLocalClient(){
 	piscan::config::SocketServerConfig& config = piscan::config::Configuration::getConfig().getSocketConfig();
 	if(!config.spawnLocalClient)
 		_spawnPythonClient();
-}
-
-void SocketServer::giveMessage(std::shared_ptr<Message> message){
-
 }
 
 void SocketServer::start_accept() {
@@ -108,12 +105,12 @@ void SocketServer::_spawnPythonClient(){
 		LOG_F(1, "Python command: %s", argv[0]);
 		LOG_F(1, "Client path: %s", argv[1]);
 
-		chdir(scriptPath.c_str());
+		int ret = chdir(scriptPath.c_str());
 
-		execvp(argv[0], const_cast<char* const*>(argv));
+		ret = execvp(argv[0], const_cast<char* const*>(argv));
 
 		LOG_F(ERROR, "Starting client failed: %s", strerror(errno));
-		exit(0);
+		exit(ret);
 	}
 	else if(_clientPid > 0){
 		// parent
@@ -135,4 +132,5 @@ void SocketServer::_stopPythonClient(){
 		LOG_F(ERROR, "waitpid failed");
 }
 
+}
 }

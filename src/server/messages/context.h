@@ -13,7 +13,9 @@
 #include "scan_types.h"
 
 using namespace std;
-namespace piscan::server::context {
+namespace piscan {
+namespace server {
+namespace context {
 
 struct SystemInfo {
 	string version;
@@ -82,5 +84,6 @@ struct DemodContext {
 };
 
 }
-
+}
+}
 #endif /* COMMON_CLIENTMESSAGE_H_ */

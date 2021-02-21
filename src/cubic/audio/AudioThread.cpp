@@ -28,7 +28,7 @@ std::recursive_mutex AudioThread::m_device_mutex;
 
 static AudioThread* controllerInstance = nullptr;
 
-AudioThread* piscan::app::getAudioController() { return controllerInstance; }
+AudioThread* piscan::app::audio::getAudioController() { return controllerInstance; }
 
 AudioThread::AudioThread() : IOThread(), nBufferFrames(1024), sampleRate(0), controllerThread(nullptr) {
 
@@ -124,7 +124,7 @@ static int audioCallback(void *outputBuffer, void * /* inputBuffer */, unsigned 
 
     if (status) {
         //std::cout << "Audio buffer underflow.." << (src->underflowCount++) << std::endl << std::flush;
-        LOG_F(WARNING, "Audio buffer underflow: %i", src->underflowCount++);
+        LOG_F(WARNING, "Audio buffer underflow: %lu", src->underflowCount++);
     }
 
     double peak = 0.0;

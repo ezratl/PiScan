@@ -10,12 +10,12 @@
 
 #include <ctime>
 #include <chrono>
+#include <atomic>
 
 #include "scan_types.h"
 #include "StateMachine.h"
 #include "synchronize.h"
 #include "messages/context.h"
-#include "messages.h"
 
 namespace piscan {
 
@@ -29,9 +29,9 @@ namespace app{
 	struct ManualEntryData;
 };
 
-class ScannerSM: public MessageReceiver, public StateMachine, public Synchronizable {
+class ScannerSM: public StateMachine, public Synchronizable {
 public:
-	ScannerSM(MessageReceiver& central, piscan::scan::SystemList& dataSource);
+	ScannerSM(piscan::scan::SystemList& dataSource);
 	~ScannerSM() {};
 
 	void startScanner();
@@ -39,7 +39,6 @@ public:
 	void holdScan(std::vector<int> index = std::vector<int>());
 	void stopScanner();
 	void manualEntry(app::ManualEntryData* freq);
-	void giveMessage(std::shared_ptr<Message> message);
 
 	piscan::server::context::ScannerContext getCurrentContext();
 private:
@@ -74,8 +73,6 @@ private:
 	};
 
 private:
-	MessageReceiver& _centralQueue;
-	//moodycamel::ReaderWriterQueue<Message> _msgQueue;
 	piscan::scan::SystemList& _systems;
 	//RadioSystem* _currentSystem;
 	piscan::scan::EntryPtr _currentEntry;
