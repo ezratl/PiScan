@@ -1,5 +1,8 @@
 # PiScan
 This software can take a Raspberry Pi (or another embedded computer) and turn it into a radio scanner. With only a $40 Pi and a $20 RTL-SDR dongle, you can build an inexpensive scanner with the capabilities of much more expensive equipment (at least that's the goal for this).
+
+![PiScan on a Raspberry Pi](doc/img/pi-deployment.JPG)
+
 ## License
 A license hasn't been selected yet, though it's likely to be GPL - have to make sure there won't be issues down the line when trunking is added
 ## Features
@@ -160,12 +163,10 @@ A scan file can be generated from an `.hpd` file, which is a plaintext format us
 	build/scan/piscan_hpdconv -i <path_to_hpd_file> -o <directory_for_output_file>
 A generator for CSV input will probably come soon, followed eventually by a GUI editor
 ### Interfacing
-The primary way to interact with PiScan is through the [client program](https://github.com/ezratl/PiScan-Client). Guides on its usage can be found there.
+The primary way to interact with PiScan is through the [client program](client/). Guides on its usage can be found there.
 In short, it communicates through a TCP connection, with a default port 1234.
 
-To listen to PiScan's audio feed remotely, use a stream client that supports RTSP, such as VLC, and enter the MRL `rtsp://<host_address>:8554/audio`. Setting a low network caching time is advised to reduce audio latency.
-
-Note: The client is being migrated to this repository to simplify API development. The version in the separate repo is still recommended for now, but it will be deprecated in the next update.
+To listen to PiScan's audio feed remotely without the client, use a stream client that supports RTSP, such as VLC, and enter the MRL `rtsp://<host_address>:8554/audio`. Setting a low network caching time is advised to reduce audio latency.
 
 ## Troubleshooting
 If build errors are occuring with ModemAM.cpp or similar sources, the LIQUID_API_OLD CMake flag needs toggled. Generally it needs to be set to OFF for liquid versions >= 1.3.2, but swapping its value may help in other cases.
