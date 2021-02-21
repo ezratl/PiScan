@@ -23,7 +23,6 @@ A license hasn't been selected yet, though it's likely to be GPL - have to make 
 - AM demodulation
 - Run-time manipulation of scan database and config
 - Temporary channel lockout
-- SDR configuration
 #### Long term:
 - P25 trunking
 - DMR trunking
@@ -80,7 +79,7 @@ There are three options available for audio output: PulseAudio, ALSA, JACK, and 
 	cmake ../src -DUSE_AUDIO_JACK=ON
 Do note that PulseAudio uses significantly more CPU than ALSA when streaming PiScan audio.
 
-Additionally, some versions of liquid, particularly `libliquid-dev` versions `1.3.2` and greater, have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
+Additionally, some versions of liquid, particularly `libliquid2d` and `libliquid-dev` versions `1.3.2` and greater, have a different API, resulting in build errors in the "Modem" files of the `cubic` module. If that happens, try running this from `build`:
 
 	cmake ../src -DLIQUID_API_OLD=OFF
 ### Building
@@ -119,6 +118,18 @@ All data used by PiScan is stored in its working directory (this is the `data` d
 	- `systems.json` contains the scan database - more on what that looks like below
 On the first run of PiScan, these files likely won't exist. It will continue running with default parameters, and a config and state file will be generated with these defaults when the program ends.
 If there is no scan file, PiScan cannot scan so it will instead hold at 100MHz. It will not allow the user to scan, but will allow manual frequency tuning.
+
+#### SDR configuration
+PiScan allows for configuring specific RTL dongles to run with it. By default, it doesn't have any pre-configured SDR's, so it will select the first available device and save it to the config file. One it's in the config file it will be given a rank (for specifying the order PiScan chooses from configured devies) and a descriptor, which contains the device name and serial number. There, the dongle's PPM correction and preferred sample rate can be set. The format of each device config is as such:
+
+	{
+		"rank": "0",
+		"descriptor": "Generic RTL2832U OEM :: 00000001",
+		"driver": "rtlsdr",
+		"ppm_correction": "0",
+		"sample_rate": "2048000"
+	}
+
 #### Scan Database File
 `systems.json` MUST adhere to this format (minus the comments) for PiScan to read it correctly. Use the sample file in `data/defaults` as a starting point for your database if writing it manually.
 
