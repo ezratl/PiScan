@@ -171,6 +171,8 @@ class PiScanClient(QWidget, common.AppInterface):
         if use_audio:
             self.use_audio = self.audio.startRtspAudioStream(host, audio_port) 
             #self.setAudioVolume(50) 
+        else:
+            self.use_audio = False
         self.scanner.setVolumeVisible(self.use_audio)
 
     def scan(self):
