@@ -12,6 +12,7 @@ from threading import Thread
 
 from time import sleep
 
+import ui_scan_client
 import audio_manager
 import common
 import constants
@@ -34,13 +35,9 @@ class PiScanClient(QWidget, common.AppInterface):
     def __init__(self, parent=None, address=None, port=None, use_audio=False, rtsp_port=None):
         super(PiScanClient, self).__init__(parent)
         common.setInstance(self)
-        ui_file = 'scan_client.ui'
-        ui_file = QFile(ui_file)
-        ui_file.open(QFile.ReadOnly)
 
-        loader = QUiLoader()
-        self.window = loader.load(ui_file)
-        ui_file.close()
+        self.window = ui_scan_client.Ui_Form()
+        self.window.setupUi(self)
 
         self.parentWindow = parent
         #layout = QGridLayout(self)
@@ -53,7 +50,7 @@ class PiScanClient(QWidget, common.AppInterface):
         self.scanner = scanner.Scanner(self.window)
         self.dialogs = dialogs.Dialogs(self.window)
 
-        self.contextStack = self.window.findChild(QStackedWidget, 'contextStack')
+        self.contextStack = self.window.contextStack
         #self.setWindowMode(common.WindowMode.CONNECT)
         self.showConnectDialog()
         #self.setWindowMode(common.WindowMode.SCANNER)
@@ -280,12 +277,11 @@ class HostWindow(QtWidgets.QMainWindow):
 
         form = PiScanClient(self, address, port, use_audio, rtsp_port)
 
-        mainWidget = form.mainWidget()
-        self.setPalette(mainWidget.palette())
-        self.setGeometry(mainWidget.geometry())
-        self.setWindowTitle(mainWidget.windowTitle())
+        self.setPalette(form.palette())
+        self.setGeometry(form.geometry())
+        self.setWindowTitle(form.windowTitle())
 
-        self.setCentralWidget(mainWidget)
+        self.setCentralWidget(form)
         #self.actionQuit.triggered.connect(self.closeEvent)
 
         #self.show()

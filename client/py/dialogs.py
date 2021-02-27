@@ -10,11 +10,11 @@ class Dialogs:
     dialogStack = deque()
 
     def __init__(self, parent):
-        self.widget = parent.findChild(QWidget, 'dialogsPage')
-        self.header = parent.findChild(QWidget, 'dialogHeader')
-        self.backButton = parent.findChild(QPushButton, 'dialog_backButton')
-        self.titleLabel = parent.findChild(QLabel, 'dialog_titleLabel')
-        self.dialogStackWidget = parent.findChild(QStackedWidget, 'dialogsStack')
+        self.widget = parent.dialogsPage
+        self.header = parent.dialogHeader
+        self.backButton = parent.dialog_backButton
+        self.titleLabel = parent.dialog_titleLabel
+        self.dialogStackWidget = parent.dialogsStack
 
         self.backButton.clicked.connect(self.dialogReturn)
         self.dialogStackWidget.currentChanged.connect(self.updateTitle)
@@ -47,10 +47,10 @@ class Dialogs:
 
     class ManualEntry:
         def __init__(self, parentWindow, dialogHost):
-            self.widget = parentWindow.findChild(QWidget, 'manualEntryDialog')
-            self.confirmButton = parentWindow.findChild(QPushButton, 'manual_confirmButton')
-            self.freqLineEdit = parentWindow.findChild(QLineEdit, 'manual_freqLineEdit')
-            self.modulationCombo = parentWindow.findChild(QComboBox, 'manual_modulationCombo')
+            self.widget = parentWindow.manualEntryDialog
+            self.confirmButton = parentWindow.manual_confirmButton
+            self.freqLineEdit = parentWindow.manual_freqLineEdit
+            self.modulationCombo = parentWindow.manual_modulationCombo
             self.host = dialogHost
 
             self.confirmButton.clicked.connect(self.onConfirm)
@@ -68,12 +68,12 @@ class Dialogs:
 
     class EditEntry:
         def __init__(self, parent):
-            self.widget = parent.findChild(QWidget, 'editEntryDialog')
-            self.codeLineEdit = parent.findChild(QLineEdit, 'entry_codeLineEdit')
-            self.delayLineEdit = parent.findChild(QLineEdit, 'entry_delayLineEdit')
-            self.freqLineEdit = parent.findChild(QLineEdit, 'entry_freqLineEdit')
-            self.lockoutCheckbox = parent.findChild(QCheckBox, 'entry_lockoutCheckbox')
-            self.modulationCombo = parent.findChild(QComboBox, 'entry_modulationCombo')
-            self.systemCombo = parent.findChild(QComboBox, 'entry_systemCombo')
-            self.tagLineEdit = parent.findChild(QLineEdit, 'entry_tagLineEdit')
+            self.widget = parent.editEntryDialog
+            self.codeLineEdit = parent.entry_codeLineEdit
+            self.delayLineEdit = parent.entry_delayLineEdit
+            self.freqLineEdit = parent.entry_freqLineEdit
+            self.lockoutCheckbox = parent.entry_lockoutCheckbox
+            self.modulationCombo = parent.entry_modulationCombo
+            self.systemCombo = parent.entry_systemCombo
+            self.tagLineEdit = parent.entry_tagLineEdit
 

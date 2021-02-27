@@ -12,18 +12,18 @@ import constants
 
 class ConnectDialog:
     def __init__(self, parentWindow, address=None, port=None, use_audio=False, rtsp_port=None):
-        self.widget = parentWindow.findChild(QWidget, 'connectPage')
-        self.errorLabel = parentWindow.findChild(QLabel, 'connect_errorLabel')
-        self.confirmButton = parentWindow.findChild(QPushButton, 'connect_confirmButton')
-        self.connectIndicator = parentWindow.findChild(QLabel, 'connect_indicator')
-        self.hostLineEdit = parentWindow.findChild(QLineEdit, 'connect_hostnameLineEdit')
-        self.portLineEdit = parentWindow.findChild(QLineEdit, 'connect_portLineEdit')
-        self.logo = parentWindow.findChild(QLabel, 'connect_logoImage')
-        self.hostLabel = parentWindow.findChild(QLabel, 'hostLabel')
-        self.portLabel = parentWindow.findChild(QLabel, 'hostPortLabel')
-        self.audioCheckBox = parentWindow.findChild(QCheckBox, 'connect_audioCheckBox')
-        self.rtspPortPanel = parentWindow.findChild(QWidget, 'connect_rtspPortPanel')
-        self.rtspPortLineEdit = parentWindow.findChild(QLineEdit, 'connect_rtspPortLineEdit')
+        self.widget = parentWindow.connectPage
+        self.errorLabel = parentWindow.connect_errorLabel
+        self.confirmButton = parentWindow.connect_confirmButton
+        self.connectIndicator = parentWindow.connect_indicator
+        self.hostLineEdit = parentWindow.connect_hostnameLineEdit
+        self.portLineEdit = parentWindow.connect_portLineEdit
+        self.logo = parentWindow.connect_logoImage
+        self.hostLabel = parentWindow.hostLabel
+        self.portLabel = parentWindow.hostPortLabel
+        self.audioCheckBox = parentWindow.connect_audioCheckBox
+        self.rtspPortPanel = parentWindow.connect_rtspPortPanel
+        self.rtspPortLineEdit = parentWindow.connect_rtspPortLineEdit
 
         self.logo.setPixmap(QPixmap("resources/icon-256.png"))
         self.logo.setVisible(False)

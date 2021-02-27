@@ -17,43 +17,41 @@ class Scanner:
     squelchFromContext = False
 
     def __init__(self, parentWindow):
-        self.widget = parentWindow.findChild(QWidget, 'scannerPage')
-        self.contextStack = parentWindow.findChild(QStackedWidget, 'scanContextStack')
-        self.holdPage = parentWindow.findChild(QWidget, 'scanner_holdPage')
-        self.scanPage = parentWindow.findChild(QWidget, 'scanner_scanPage')
-        self.entryTagLabel = parentWindow.findChild(QLabel, 'scanner_entryTagLabel')
-        self.frequencyLabel = parentWindow.findChild(QLabel, 'scanner_frequencyLabel')
-        self.modulationLabel = parentWindow.findChild(QLabel, 'scanner_modulationLabel')
-        self.systemTagLabel = parentWindow.findChild(QLabel, 'scanner_systemTagLabel')
-        self.entryNumLabel = parentWindow.findChild(QLabel, 'scanner_entryNumLabel')
-        self.delayLabel = parentWindow.findChild(QLabel, 'scanner_delayLabel')
-        self.lockoutDurationLabel = parentWindow.findChild(QLabel, 'scanner_lockoutDurationLabel')
-        self.scanModeLabel = parentWindow.findChild(QLabel, 'scanner_scanModeLabel')
-        self.lockoutDurationButton = parentWindow.findChild(QPushButton, 'scanner_lockoutDurationButton')
-        self.scanIndicator = parentWindow.findChild(QLabel, 'scanner_scanIndicator')
-        self.gainSlider = parentWindow.findChild(QSlider, 'scanner_gainSlider')
-        ##self.gainLabel = parentWindow.findChild(QLabel, 'scanner_gainLabel')
-        self.sigStrengthBar = parentWindow.findChild(QProgressBar, 'scanner_sigStrengthBar')
-        self.squelchSlider = parentWindow.findChild(QSlider, 'scanner_squelchSlider')
-        ##self.squelchLabel = parentWindow.findChild(QLabel, 'scanner_squelchLabel')
-        self.fnButtonsWidget = parentWindow.findChild(QWidget, 'scanner_fnButtonsWidget')
-        self.fnButton1 = parentWindow.findChild(QPushButton, 'scanner_fnButton1')
-        self.fnButton2 = parentWindow.findChild(QPushButton, 'scanner_fnButton2')
-        self.fnButton3 = parentWindow.findChild(QPushButton, 'scanner_fnButton3')
-        self.fnButton4 = parentWindow.findChild(QPushButton, 'scanner_fnButton4')
+        self.widget = parentWindow.scannerPage
+        self.contextStack = parentWindow.scanContextStack
+        self.holdPage = parentWindow.scanner_holdPage
+        self.scanPage = parentWindow.scanner_scanPage
+        self.entryTagLabel = parentWindow.scanner_entryTagLabel
+        self.frequencyLabel = parentWindow.scanner_frequencyLabel
+        self.modulationLabel = parentWindow.scanner_modulationLabel
+        self.systemTagLabel = parentWindow.scanner_systemTagLabel
+        self.entryNumLabel = parentWindow.scanner_entryNumLabel
+        self.delayLabel = parentWindow.scanner_delayLabel
+        self.lockoutDurationLabel = parentWindow.scanner_lockoutDurationLabel
+        self.scanModeLabel = parentWindow.scanner_scanModeLabel
+        self.lockoutDurationButton = parentWindow.scanner_lockoutDurationButton
+        self.scanIndicator = parentWindow.scanner_scanIndicator
+        self.gainSlider = parentWindow.scanner_gainSlider
+        self.sigStrengthBar = parentWindow.scanner_sigStrengthBar
+        self.squelchSlider = parentWindow.scanner_squelchSlider
+        self.fnButtonsWidget = parentWindow.scanner_fnButtonsWidget
+        self.fnButton1 = parentWindow.scanner_fnButton1
+        self.fnButton2 = parentWindow.scanner_fnButton2
+        self.fnButton3 = parentWindow.scanner_fnButton3
+        self.fnButton4 = parentWindow.scanner_fnButton4
 
-        self.sidebarToggleButton = parentWindow.findChild(QToolButton, 'scanner_sidebarToggle')
-        self.sidebarPanel = parentWindow.findChild(QWidget, 'scanner_sidebarPanel')
+        self.sidebarToggleButton = parentWindow.scanner_sidebarToggle
+        self.sidebarPanel = parentWindow.scanner_sidebarPanel
 
-        self.disconnectButton = parentWindow.findChild(QToolButton, 'scanner_disconnectButton')
-        self.settingsButton = parentWindow.findChild(QToolButton, 'scanner_settingsButton')
-        self.connectInfoButton = parentWindow.findChild(QToolButton, 'scanner_connectInfoButton')
+        self.disconnectButton = parentWindow.scanner_disconnectButton
+        self.settingsButton = parentWindow.scanner_settingsButton
+        self.connectInfoButton = parentWindow.scanner_connectInfoButton
 
-        self.volumeControlPanel = parentWindow.findChild(QWidget, 'scanner_volumeControl')
-        self.volumeSlider = parentWindow.findChild(QWidget, 'scanner_volumeSlider')
-        self.muteButton = parentWindow.findChild(QWidget, 'scanner_volumeMute')
+        self.volumeControlPanel = parentWindow.scanner_volumeControl
+        self.volumeSlider = parentWindow.scanner_volumeSlider
+        self.muteButton = parentWindow.scanner_volumeMute
 
-        self.entryEditButton = parentWindow.findChild(QToolButton, 'scanner_entryEditButton')
+        self.entryEditButton = parentWindow.scanner_entryEditButton
 
         self.fnButton1.clicked.connect(self.onFnButton1)
         self.fnButton2.clicked.connect(self.onFnButton2)
@@ -81,7 +79,7 @@ class Scanner:
         self.entryEditButton.setVisible(False)
         self.delayLabel.setVisible(False)
         self.scanModeLabel.setVisible(False)
-        parentWindow.findChild(QWidget, 'line_4').setVisible(False)
+        parentWindow.line_4.setVisible(False)
 
         movie = QMovie("resources/bar-scan.gif")
         movie.start()
