@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 
+#include "PiScan.h"
 #include "DebugServer.h"
 #include "loguru.hpp"
 #include "threadname.h"
@@ -24,6 +25,7 @@ namespace connection {
 #define DS_THREAD_NAME	"DebugConsole"
 
 using namespace piscan;
+using piscan::app::BasicReturnTuple;
 
 bool DebugConsole::connect(){
 	std::cerr << "\nConnecting...\n";
@@ -48,6 +50,37 @@ void DebugConsole::_consoleInputFunc() {
 	std::stringstream sstream;
 	std::string intermediate;
 	std::cerr << "\nConsole connected\n";
+
+	std::map<app::ReturnStatus, std::string> friendlyReturnCodes;
+	friendlyReturnCodes[app::SUCCESS] = "Success";
+	friendlyReturnCodes[app::INVALID] = "Invalid parameters";
+	friendlyReturnCodes[app::NOT_IMPLEMENTED] = "Function not yet implemented";
+
+	std::map<std::string, std::function<piscan::app::BasicReturnTuple()>> apiMap;
+	apiMap["scanlist"] = []() { return app::data::getScanList(); };
+	apiMap["systems"] = []() { return app::data::getSystemList(); };
+	apiMap["systemat"] = [tokens]() { return app::data::getSystemByIndex(std::stoi(tokens[1])); };
+	apiMap["entrylist"] = [tokens]() { return app::data::getEntryList(std::stoi(tokens[1])); };
+	apiMap["entryat"] = [tokens]() { return app::data::getEntryByIndex(std::stoi(tokens[1]), std::stoi(tokens[2])); };
+	apiMap["createsystem"] = [tokens]() { return app::data::system::create(/*TODO*/); };
+	apiMap["replacesystem"] = [tokens]() { return app::data::system::replace(std::stoi(tokens[1])/*, TODO*/); };
+	apiMap["removesystem"] = [tokens]() { return app::data::system::remove(std::stoi(tokens[1])); };
+	apiMap["locksystem"] = [tokens]() { return app::data::system::setLockout(std::stoi(tokens[1]), std::stoi(tokens[2])); };
+	apiMap["setsystemindex"] = [tokens]() { return app::data::system::setIndex(std::stoi(tokens[1]), std::stoi(tokens[2])); };
+	apiMap["createentry"] = [tokens]() { return app::data::system::entry::create(std::stoi(tokens[1])/*,TODO*/); };
+	apiMap["replaceentry"] = [tokens]() { return app::data::system::entry::replace(std::stoi(tokens[1]), std::stoi(tokens[2])/*, TODO*/); };
+	apiMap["removeentry"] = [tokens]() { return app::data::system::entry::remove(std::stoi(tokens[1]), std::stoi(tokens[2])); };
+	apiMap["lockentry"] = [tokens]() { return app::data::system::entry::setLockout(std::stoi(tokens[1]), std::stoi(tokens[2]), std::stoi(tokens[3])); };
+	apiMap["setentryindex"] = [tokens]() { return app::data::system::entry::setIndex(std::stoi(tokens[1]), std::stoi(tokens[2]), std::stoi(tokens[3])); };
+	apiMap["config"] = []() { return app::configuration::getFullConfig(); };
+	apiMap["setconfig"] = [tokens]() { return app::configuration::setConfig(); };
+	apiMap["generalcfg"] = []() { return app::configuration::getGeneralConfig(); };
+	apiMap["setgeneralcfg"] = [tokens]() { return app::configuration::setGeneralConfig(); };
+	apiMap["demodcfg"] = []() { return app::configuration::getDemodConfig(); };
+	apiMap["setdemodcfg"] = [tokens]() { return app::configuration::setDemodConfig(); };
+	apiMap["rtspcfg"] = []() { return app::configuration::getAudioServerConfig(); };
+	apiMap["setrtspcfg"] = [tokens]() { return app::configuration::setAudioServerConfig(); };
+	apiMap["tunerlist"] = []() { return app::configuration::getTunerList(); };
 
 	getSystemInfo();
 	getScannerContext();
@@ -122,8 +155,16 @@ void DebugConsole::_consoleInputFunc() {
 						<< "\n\tget [subcommand]"
 						<< "\n\t\tcontext\t\tReturns scanner status"
 						<< "\n";
+				for (auto cmd = apiMap.begin(); cmd != apiMap.end(); cmd++) {
+					std::cerr << "\t" << cmd->first << "\n";
+				}
 			} else
+				try {
+					auto ret = apiMap[tokens[0]]();
+					std::cerr << "Status: " << friendlyReturnCodes[std::get<0>(ret)] << "\n";
+				} catch (std::exception& e) {
 				std::cerr << "Invalid command\n";
+				}
 		} catch (std::exception& e) {
 			std::cerr << "Argument missing or typo in the command\n";
 		}

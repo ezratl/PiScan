@@ -1,4 +1,5 @@
 add_library(scan
+	${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Entry.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/RadioSystem.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/SystemList.cpp
