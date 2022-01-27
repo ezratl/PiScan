@@ -12,6 +12,7 @@
 #include "sigproc_types.h"
 #include "Demodulator.h"
 #include "Entry.h"
+#include "EventBroker.h"
 #include "loguru.hpp"
 #include "messages.h"
 #include "ServerManager.h"
@@ -55,6 +56,7 @@ static piscan::scan::SystemList scanSystems;
 static ScannerSM scannerInst(scanSystems);
 static ServerManager connectionManager(io_service);
 static piscan::sigproc::Demodulator demodInst;
+static std::shared_ptr<piscan::EventBroker> eventBroker = nullptr;
 
 static std::atomic_bool steadyState(false);
 
@@ -101,6 +103,10 @@ void exit(int code){
 
 	
 	std::exit(code);
+}
+
+void printEvent(events::EventPtr event) {
+	std::cerr << "**EVENT: " << event->topic << std::endl;
 }
 
 bool app::system::stopSystem(){
@@ -199,6 +205,8 @@ int main(int argc, char **argv) {
 
 	LOG_F(INFO, "Starting PiScan, version %s", PISCAN_VERSION);
 
+	eventBroker = EventBroker::instance();
+
 	piscan::config::Configuration& config = piscan::config::Configuration::getConfig();
 	piscan::config::State& state = piscan::config::State::getState();
 	bool useDebugConsole = false;
@@ -207,7 +215,7 @@ int main(int argc, char **argv) {
 	int logVerbosity = config.getGeneralConfig().logfileVerbosity;
 
 	int c;
-	while((c = getopt(argc,argv,"dp:f:l")) != -1){
+	while((c = getopt(argc,argv,"dp:f:le:")) != -1){
 		switch(c){
 			case 'd':
 				useDebugConsole = true;
@@ -223,6 +231,9 @@ int main(int argc, char **argv) {
 			case 'l':
 				spawnClient = true;
 				break;
+			case 'e':
+				std::cerr << "**Subscribe to event " << optarg << std::endl;
+				events::subscribe(optarg, printEvent);
 		}
 	}
 
@@ -234,6 +245,7 @@ int main(int argc, char **argv) {
 
 	try {
 		{
+			eventBroker->start();
 			scannerInst.start();
 			connectionManager.start(useDebugConsole, spawnClient);
 			demodInst.start();
@@ -260,6 +272,8 @@ int main(int argc, char **argv) {
 	steadyState.store(true);
 	LOG_F(INFO, "System initialized");
 
+	events::publish(std::make_shared<events::Event>("system_started"));
+
 	while(sysRun)
 		usleep(100000);
 
@@ -267,6 +281,7 @@ int main(int argc, char **argv) {
 	steadyState.store(false);
 	try {
 		//sysControl.stop();
+		events::publish(std::make_shared<events::Event>("system_stopping"));
 
 		{
 			LOG_F(INFO, "Stopping system");
@@ -280,6 +295,9 @@ int main(int argc, char **argv) {
 		connectionManager.waitDeinit();
 		LOG_F(4, "demod wait");
 		demodInst.waitDeinit();
+
+		eventBroker->stop();
+		eventBroker->join();
 
 		LOG_F(2, "All modules stopped");
 		}

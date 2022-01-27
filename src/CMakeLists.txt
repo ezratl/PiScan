@@ -130,6 +130,7 @@ target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
 target_include_directories(scan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cubic/sdr)
 
 target_sources(piscan_server PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/EventBroker.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ScannerSM.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ServerManager.cpp
 )
