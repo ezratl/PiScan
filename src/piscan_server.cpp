@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
 				break;
 			case 'e':
 				std::cerr << "**Subscribe to event " << optarg << std::endl;
-				events::subscribe(optarg, printEvent);
+				events::subscribe(optarg, 1, printEvent);
 		}
 	}
 

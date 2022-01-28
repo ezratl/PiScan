@@ -81,7 +81,7 @@ int Connection::systemFunction(SystemFunction function) {
 
 // TODO temporary workaround until new connection interfaces built
 bool Connection::connect() {
-	events::subscribe("scanner_state_change", [this](events::EventPtr event){
+	events::subscribe("scanner_state_change", (1000+_handle), [this](events::EventPtr event){
 		auto evt = std::dynamic_pointer_cast<events::ScannerStateEvent>(event);
 		piscan::server::context::ScannerContext ctx;
 		ctx.state = static_cast<context::ScannerContext::ScannerState>(evt->state);
@@ -95,19 +95,25 @@ bool Connection::connect() {
 
 		contextUpdate(ctx);
 	});
-	events::subscribe("demod_state_change", [this](events::EventPtr event){
+	events::subscribe("demod_state_change", (1000+_handle), [this](events::EventPtr event){
 		auto evt = std::dynamic_pointer_cast<events::DemodStateEvent>(event);
 		piscan::server::context::DemodContext ctx(evt->tunerGainState, evt->squelchState);
 
 		contextUpdate(ctx);
 	});
-	events::subscribe("signal_level", [this](events::EventPtr event){
+	events::subscribe("signal_level", (1000+_handle), [this](events::EventPtr event){
 		auto evt = std::dynamic_pointer_cast<events::SignalLevelEvent>(event);
 
 		handleSignalLevel(evt->level);
 	});
 
 	return true;
+}
+
+void Connection::disconnect() {
+	events::unsubscribe("scanner_state_change", (1000+_handle));
+	events::unsubscribe("demod_state_change", (1000+_handle));
+	events::unsubscribe("signal_level", (1000+_handle));
 }
 
 int Connection::scanStart() {

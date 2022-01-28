@@ -36,6 +36,7 @@ bool DebugConsole::connect(){
 }
 
 void DebugConsole::disconnect(){
+	Connection::disconnect();
 	_run = false;
 
 	std::fprintf(stdin, "\n");

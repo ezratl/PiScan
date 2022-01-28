@@ -17,7 +17,9 @@ namespace piscan {
 
         void publish(EventPtr event);
 
-        void subscribe(std::string topic, EventHandler handler);
+        void subscribe(std::string topic, int subscriber, EventHandler handler);
+
+        void unsubscribe(std::string topic, int subscriber);
 
         /*---------------------------------*/
         struct ScannerStateEvent : public Event {

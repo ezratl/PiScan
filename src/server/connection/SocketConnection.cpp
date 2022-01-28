@@ -27,6 +27,7 @@ bool SocketConnection::connect(){
 }
 
 void SocketConnection::disconnect(){
+	Connection::disconnect();
 	if (_socket.is_open()) {
 		_socket.close();
 		notifyDisconnected();
