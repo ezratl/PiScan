@@ -5,9 +5,14 @@
  *      Author: ezra
  */
 
+#include <memory>
+#include <iostream>
+
 #include "PiScan.h"
 #include "connection.h"
 #include "request.h"
+#include "events.h"
+#include "messages/context.h"
 
 namespace piscan {
 namespace server {
@@ -73,6 +78,37 @@ int Connection::systemFunction(SystemFunction function) {
 	}
 	return issueRequest(params);
 }*/
+
+// TODO temporary workaround until new connection interfaces built
+bool Connection::connect() {
+	events::subscribe("scanner_state_change", [this](events::EventPtr event){
+		auto evt = std::dynamic_pointer_cast<events::ScannerStateEvent>(event);
+		piscan::server::context::ScannerContext ctx;
+		ctx.state = static_cast<context::ScannerContext::ScannerState>(evt->state);
+		ctx.systemTag = evt->systemTag;
+		ctx.entryTag = evt->entryTag;
+		ctx.frequency = evt->frequency;
+		ctx.modulation = evt->modulation;
+		ctx.entryIndex = evt->entryIndex;
+		ctx.delayMS = evt->delayMS;
+		ctx.lockout = evt->lockout;
+
+		contextUpdate(ctx);
+	});
+	events::subscribe("demod_state_change", [this](events::EventPtr event){
+		auto evt = std::dynamic_pointer_cast<events::DemodStateEvent>(event);
+		piscan::server::context::DemodContext ctx(evt->tunerGainState, evt->squelchState);
+
+		contextUpdate(ctx);
+	});
+	events::subscribe("signal_level", [this](events::EventPtr event){
+		auto evt = std::dynamic_pointer_cast<events::SignalLevelEvent>(event);
+
+		handleSignalLevel(evt->level);
+	});
+
+	return true;
+}
 
 int Connection::scanStart() {
 	//ClientRequest::RequestParams params = { .type = SCANNER_FUNCTION, .subType = SCANNER_STATE_SCAN };

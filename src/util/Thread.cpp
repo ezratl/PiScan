@@ -68,10 +68,10 @@ namespace piscan {
         while (isRunning())
         {
             std::unique_lock<std::mutex> lock(_mtx);
-            while(!_workAvailable && !_stopping) {
+            while(!workAvailable && !_stopping) {
                 _cv.wait(lock);
             }
-            if(_workAvailable){
+            if(workAvailable){
                 main();
             }
             else if(_stopping){
@@ -89,7 +89,7 @@ namespace piscan {
 
     void WorkerThread::postWorkAvailable() {
         std::unique_lock<std::mutex> lock(_mtx);
-        _workAvailable = true;
+        workAvailable = true;
         _cv.notify_all();
     }
 }

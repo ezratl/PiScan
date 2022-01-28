@@ -40,6 +40,7 @@ namespace piscan {
     void EventBroker::main() {
         events::EventPtr event;
         if(!_eventQueue.try_dequeue(event)) {
+            workAvailable = false;
             return;
         }
 

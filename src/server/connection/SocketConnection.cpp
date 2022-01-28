@@ -21,6 +21,7 @@ namespace server {
 namespace connection {
 
 bool SocketConnection::connect(){
+	Connection::connect();
 	_startRead();
 	return true;
 }

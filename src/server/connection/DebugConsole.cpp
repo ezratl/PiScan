@@ -28,6 +28,7 @@ using namespace piscan;
 using piscan::app::BasicReturnTuple;
 
 bool DebugConsole::connect(){
+	Connection::connect();
 	std::cerr << "\nConnecting...\n";
 	_run = true;
 	_requestThread = std::thread(&DebugConsole::_consoleInputFunc, this);
@@ -97,7 +98,8 @@ void DebugConsole::_consoleInputFunc() {
 		try {
 			if (!tokens[0].compare("exit")) {
 				_run = false;
-				systemFunction(SystemFunction::STOP);
+				//systemFunction(SystemFunction::STOP);
+				app::system::stopSystem();
 			}
 			else if (!tokens[0].compare("verbosity")){
 				loguru::g_stderr_verbosity = std::stoi(tokens[1]);

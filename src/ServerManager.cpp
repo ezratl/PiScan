@@ -220,7 +220,7 @@ int ServerManager::giveRequest(void* request){
 }
 
 void ServerManager::_handleMessage(std::shared_ptr<Message> message){
-	assert(message->destination == SERVER_MAN);
+	//assert(message->destination == SERVER_MAN);
 	auto msg = std::dynamic_pointer_cast<ServerMessage>(message);
 	int* level = nullptr;
 	switch (msg->type) {

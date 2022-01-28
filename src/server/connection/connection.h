@@ -42,8 +42,8 @@ public:
 		_level(lvl), _audio(aud), _serverManager(nullptr), _handle(HANDLE_NULL) {}
 	virtual ~Connection() {};
 
-	virtual bool connect() = 0;
-	virtual void disconnect() = 0;
+	virtual bool connect();
+	virtual void disconnect() {};
 	virtual void contextUpdate(const piscan::server::context::ScannerContext context) = 0;
 	virtual void contextUpdate(const piscan::server::context::DemodContext context) = 0;
 	virtual void handleSystemMessage(const piscan::server::context::GeneralMessage message) = 0;

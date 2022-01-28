@@ -63,9 +63,9 @@ long long getTunerSampleRate();
 
 /* server functions */
 namespace server {
-void scannerContextUpdate(piscan::server::context::ScannerContext ctx);
+/*void scannerContextUpdate(piscan::server::context::ScannerContext ctx);
 void demodContextUpdate(piscan::server::context::DemodContext ctx);
-void signalLevelUpdate(int level);
+void signalLevelUpdate(int level);*/
 }
 
 /* audio related */

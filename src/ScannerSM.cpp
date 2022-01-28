@@ -7,6 +7,7 @@
 
 #include <unistd.h>
 #include <mutex>
+#include <map>
 
 #include "PiScan.h"
 #include "ScannerSM.h"
@@ -18,7 +19,7 @@
 #include "RadioSystem.h"
 #include "request.h"
 #include "Configuration.h"
-
+#include "events.h"
 
 #define DELAY_TIMEOUT	2.0
 
@@ -334,6 +335,7 @@ void ScannerSM::ST_Stopped(EventData* /* data */){
 
 void ScannerSM::_broadcastContextUpdate() {
 	DLOG_F(6, "Broadcasting context");
+	// TODO old context remain until new request system setup
 	lock_guard<mutex> lock(_contextMutex);
 	if (_currentContext.state != piscan::server::context::ScannerContext::SCAN)
 	{
@@ -359,7 +361,38 @@ void ScannerSM::_broadcastContextUpdate() {
 		_currentContext.clearFields();
 	}
 	
-	app::server::scannerContextUpdate(_currentContext);
+	/*app::server::scannerContextUpdate(_currentContext);*/
+
+	/* EVENT BASED IMPLEMENTATION */
+	events::ScannerStateEvent event;
+	std::map<unsigned char, events::ScannerStateEvent::ScannerState> states = {
+		std::make_pair(States::ST_HOLD, events::ScannerStateEvent::ScannerState::HOLD),
+		std::make_pair(States::ST_SCAN, events::ScannerStateEvent::ScannerState::SCAN),
+		std::make_pair(States::ST_RECEIVE, events::ScannerStateEvent::ScannerState::RECEIVE),
+		std::make_pair(States::ST_LOAD, events::ScannerStateEvent::ScannerState::OTHER_STATE),
+		std::make_pair(States::ST_INVALID, events::ScannerStateEvent::ScannerState::OTHER_STATE),
+	};
+	event.state = states[currentState];
+	if (currentState != States::ST_SCAN) {
+		if (_manualMode)
+		{
+			event.systemTag = "Manual";
+			event.entryTag = "Manual entry";
+			event.entryIndex = "MAN";
+		}
+		else
+		{
+			//event.systemTag = _currentSystem->tag();
+			event.systemTag = _systems[_currentEntry->getSysIndex()]->tag();
+			event.entryTag = _currentEntry->tag();
+			event.entryIndex = to_string(_currentEntry->getSysIndex()) + "-" + to_string(_currentEntry->getEntryIndex());
+		}
+		event.frequency = _currentEntry->freq();
+		event.modulation = _currentEntry->modulation();
+		event.delayMS = _currentEntry->delayMS();
+		event.lockout = _currentEntry->isLockedOut();
+	}
+	events::publish(std::make_shared<events::ScannerStateEvent>(std::move(event)));
 }
 
 void ScannerSM::_enableAudioOut(bool en){

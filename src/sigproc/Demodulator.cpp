@@ -11,6 +11,7 @@
 #include "PiScan.h"
 #include "Demodulator.h"
 #include "loguru.hpp"
+#include "events.h"
 
 #define INIT_FREQUENCY			100000000
 #define NUM_RATES_DEFAULT	4
@@ -115,7 +116,8 @@ void Demodulator::start(){
 		int level = getSignalStrength();
 
 		LOG_F(7, "Signal strength %i", level);
-		app::server::signalLevelUpdate(level);
+		//app::server::signalLevelUpdate(level);
+		events::publish(std::make_shared<events::SignalLevelEvent>(level));
 	});
 	//_sigLevelRefresher = new IntervalTimer();
 	_sigLevelRefresher.create(SIGLEVEL_REFRESH_INTERVAL, func);
@@ -290,7 +292,11 @@ void Demodulator::_handleRequest(ClientRequest& request){
 }
 
 void Demodulator::_contextUpdate(){
-	app::server::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
+	//app::server::demodContextUpdate(piscan::server::context::DemodContext(_gain, _squelchLevel));
+	events::DemodStateEvent event;
+	event.squelchState = _squelchLevel;
+	event.tunerGainState = _gain;
+	events::publish(std::make_shared<events::DemodStateEvent>(std::move(event)));
 }
 
 void Demodulator::setTunerGain(float gain){

@@ -48,11 +48,11 @@ protected:
     virtual void main() = 0;
 
     void postWorkAvailable();
-
+    bool workAvailable;
 private:
     std::mutex _mtx;
     std::condition_variable _cv;
-    bool _workAvailable;
+    
     bool _stopping;
 };
 

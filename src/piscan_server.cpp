@@ -113,6 +113,7 @@ bool app::system::stopSystem(){
 	if(steadyState.load()){
 		return true;
 	}
+	sysRun = false;
 	return false;
 }
 
@@ -179,7 +180,7 @@ const piscan::server::context::SystemInfo app::system::getSystemInfo(){
 	return info;
 }
 
-void app::server::scannerContextUpdate(piscan::server::context::ScannerContext ctx){
+/*void app::server::scannerContextUpdate(piscan::server::context::ScannerContext ctx){
 	connectionManager.giveMessage(make_shared<ServerMessage>(SCANNER_SM, ServerMessage::CONTEXT_UPDATE, new piscan::server::context::ScannerContext(ctx)));
 }
 
@@ -189,7 +190,7 @@ void app::server::demodContextUpdate(piscan::server::context::DemodContext ctx){
 
 void app::server::signalLevelUpdate(int level){
 	connectionManager.giveMessage(make_shared<ServerMessage>(DEMOD, ServerMessage::SIGNAL_LEVEL, new int(level)));
-}
+}*/
 
 }
 
