@@ -147,6 +147,8 @@ bool Demodulator::setFrequency(long long freq) {
 		DLOG_F(9, "Frequency already set");
 		return true;
 	}*/
+	if(freq == _currentFreq) 
+		return true;
 
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 
@@ -161,11 +163,12 @@ bool Demodulator::setFrequency(long long freq) {
 	_demodMgr.getCurrentModem()->setFrequency(freq);
 	//this is totally arbitrary
 	//usleep(DEMOD_BUFFER_TIME);
+	events::publish(std::make_shared<events::GenericNumberEvent>("demod_frequency_set", freq));
 	std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().demodDelay));
 
 	_currentFreq = freq;
 
-
+	
 
 	return true;
 }
@@ -174,6 +177,7 @@ bool Demodulator::setTunerFrequency(long long freq){
     _cubic->setFrequency(freq);
 	_demodMgr.getCurrentModem()->setFrequency(freq);
     //usleep(200000);
+	events::publish(std::make_shared<events::GenericNumberEvent>("demod_frequency_set", freq));
 	std::this_thread::sleep_for(std::chrono::microseconds(app::system::getConfig().getDemodConfig().retuneDelay));
 	return true;
 }

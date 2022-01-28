@@ -31,10 +31,9 @@ private:
     static std::shared_ptr<EventBroker> _instance;
 
     moodycamel::ConcurrentQueue<events::EventPtr> _eventQueue;
-    moodycamel::ConcurrentQueue<std::tuple<std::string, int, events::EventHandler>> _subscribeQueue;
-    moodycamel::ConcurrentQueue<std::tuple<std::string, int>> _unsubscribeQueue;
 
     std::map<std::string, std::map<int, events::EventHandler>> _handlers;
+    std::mutex _handler_mutex;
 
     void _subscribe(std::string topic, int subscriber, events::EventHandler handler);
     void _unsubscribe(std::string topic, int subscriber);

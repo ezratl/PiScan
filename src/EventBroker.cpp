@@ -35,13 +35,9 @@ namespace piscan {
         _eventQueue.enqueue(event);
         postWorkAvailable();
     }
-    
-    void EventBroker::subscribe(std::string topic, int subscriber, events::EventHandler handler) {
-        _subscribeQueue.enqueue(std::make_tuple(topic, subscriber, handler));
-        postWorkAvailable();
-    }
 
-    void EventBroker::_subscribe(std::string topic, int subscriber, events::EventHandler handler) {
+    void EventBroker::subscribe(std::string topic, int subscriber, events::EventHandler handler) {
+        std::unique_lock<std::mutex> lock(_handler_mutex);
         if (_handlers.find(topic) == _handlers.end()) {
             _handlers[topic] = std::map<int, events::EventHandler>();
         }
@@ -50,26 +46,11 @@ namespace piscan {
     }
 
     void EventBroker::unsubscribe(std::string topic, int subscriber) {
-        _unsubscribeQueue.enqueue(std::make_tuple(topic, subscriber));
-        postWorkAvailable();
-    }
-
-    void EventBroker::_unsubscribe(std::string topic, int subscriber) {
+        std::unique_lock<std::mutex> lock(_handler_mutex);
         _handlers[topic].erase(subscriber);
     }
 
     void EventBroker::main() {
-        
-        std::tuple<std::string, int, events::EventHandler> subParams;
-        if(_subscribeQueue.try_dequeue(subParams)) {
-            _subscribe(std::get<0>(subParams), std::get<1>(subParams), std::move(std::get<2>(subParams)));
-        }
-
-        std::tuple<std::string, int> unsubParams;
-        if(_unsubscribeQueue.try_dequeue(unsubParams)) {
-            _unsubscribe(std::get<0>(unsubParams), std::get<1>(unsubParams));
-        }
-
         events::EventPtr event;
         if(!_eventQueue.try_dequeue(event)) {
             workAvailable = false;
@@ -78,6 +59,7 @@ namespace piscan {
 
         std::string& topic = event->topic;
 
+        std::unique_lock<std::mutex> lock(_handler_mutex);
         // Support for regex subscriptions may be added later
         auto found = _handlers.find(topic);
         if (found != _handlers.end()){
