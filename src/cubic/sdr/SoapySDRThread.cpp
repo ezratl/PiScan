@@ -13,6 +13,7 @@
 #include "loguru.hpp"
 #include "threadname.h"
 #include "PiScan.h"
+#include "events.h"
 
 #define SDR_THREAD_NAME   "SDR Interface"
 
@@ -116,10 +117,13 @@ bool SDRThread::init() {
   
     //4. Apply other settings: Frequency, PPM correction, Gains,  Device-specific settings:
     device->setFrequency(SOAPY_SDR_RX,0,"RF",frequency - offset.load());
+    //TEMP
+    piscan::events::publish(std::make_shared<piscan::events::GenericNumberEvent>("tuner_frequency_set", frequency - offset.load()));
 
     if (devInfo->hasCORR(SOAPY_SDR_RX, 0)) {
         hasPPM.store(true);
         device->setFrequency(SOAPY_SDR_RX,0,"CORR",ppm.load());
+        piscan::events::publish(std::make_shared<piscan::events::GenericNumberEvent>("tuner_ppm_set", ppm.load()));
     } else {
         hasPPM.store(false);
     }
@@ -514,6 +518,7 @@ void SDRThread::updateSettings() {
     
     if (ppm_changed.load() && hasPPM.load()) {
         device->setFrequency(SOAPY_SDR_RX,0,"CORR",ppm.load());
+        piscan::events::publish(std::make_shared<piscan::events::GenericNumberEvent>("tuner_ppm_set", ppm.load()));
         ppm_changed.store(false);
     }
     
@@ -521,8 +526,10 @@ void SDRThread::updateSettings() {
         if (frequency_locked.load() && !frequency_lock_init.load()) {
             device->setFrequency(SOAPY_SDR_RX,0,"RF",lock_freq.load());
             frequency_lock_init.store(true);
+            piscan::events::publish(std::make_shared<piscan::events::GenericNumberEvent>("tuner_frequency_set", lock_freq.load()));
         } else if (!frequency_locked.load()) {
             device->setFrequency(SOAPY_SDR_RX,0,"RF",frequency.load() - offset.load());
+            piscan::events::publish(std::make_shared<piscan::events::GenericNumberEvent>("tuner_frequency_set", frequency.load() - offset.load()));
         }
         freq_changed.store(false);
 

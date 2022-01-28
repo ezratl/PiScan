@@ -106,7 +106,7 @@ void exit(int code){
 }
 
 void printEvent(events::EventPtr event) {
-	std::cerr << "**EVENT: " << event->topic << std::endl;
+	std::cerr << event->to_string();
 }
 
 bool app::system::stopSystem(){
